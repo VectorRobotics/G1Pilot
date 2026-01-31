@@ -32,9 +32,9 @@ include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/includ
 # ---- Options & Dependencies ---- #
 
 set(USE_CASADI ON CACHE BOOL "Use CasADi for optimization")
-option(BUILD_TESTING "Build tests" OFF)
+option(BUILD_TESTING "Build tests" ON)
 cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
-cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "ROS2_INTEGRATION" OFF)
+cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "NOT ROS2_INTEGRATION" OFF)
 
 list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 
@@ -49,13 +49,11 @@ find_package(urdfdom REQUIRED)
 find_package(console_bridge REQUIRED)
 find_package(pinocchio REQUIRED)
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/third_party/eigen/eigen")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/third_party/eigen")
 
 # ---- Library ---- #
 
-# file(GLOB_RECURSE SRC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE ARM_IK_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_ik/*.cpp")
-# set(SOURCES ${SRC_SOURCES} ${ARM_IK_SOURCES})
 add_library(arm_ik ${ARM_IK_SOURCES})
 
 target_include_directories(arm_ik PUBLIC 
@@ -70,13 +68,23 @@ if(USE_CASADI)
     target_compile_definitions(arm_ik PRIVATE USE_CASADI)
 endif()
 
+# file(GLOB_RECURSE ARM_MP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp")
+# add_library(arm_mp ${ARM_MP_SOURCES})
+
+# target_include_directories(arm_mp PUBLIC 
+#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#     $<INSTALL_INTERFACE:include>
+# )
+
+# target_link_libraries(arm_mp PUBLIC Eigen3::Eigen)
+
 # ---- Testing ---- #
 
 if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     
-    add_executable(test_ik test/test_ik.cpp)
-    add_executable(test_robot_arm_ik test/test_robot_arm_ik.cpp)
+    add_executable(test_ik test/arm_ik/test_ik.cpp)
+    add_executable(test_robot_arm_ik test/arm_ik/test_robot_arm_ik.cpp)
     target_link_libraries(test_ik PRIVATE arm_ik GTest::gtest_main)
     target_link_libraries(test_robot_arm_ik PRIVATE arm_ik GTest::gtest_main)
 
@@ -85,18 +93,32 @@ if(BUILD_TESTING)
         target_compile_definitions(test_robot_arm_ik PRIVATE USE_CASADI)
     endif()
 
+    # add_executable(math_unittest test/arm_mp/math_unittest.cpp)
+    # add_executable(line_unittest test/arm_mp/line_unittest.cpp)
+    # target_link_libraries(math_unittest PRIVATE arm_mp GTest::GTest GTest::Main pthread)
+    # target_link_libraries(line_unittest PRIVATE arm_mp GTest::GTest GTest::Main pthread)
+
     if (RUN_TESTING)
         include(GoogleTest)
         gtest_discover_tests(test_ik WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
         gtest_discover_tests(test_robot_arm_ik WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+        message(STATUS "GTEST_INCLUDE_DIRS: ${GTEST_INCLUDE_DIRS}")
+        message(STATUS "GTEST_LIBRARIES: ${GTEST_LIBRARIES}")
+
+        # gtest_discover_tests(math_unittest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+        # gtest_discover_tests(line_unittest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
     endif()
+
+
 endif()
 
 # --- Installation --- #
 
 include(GNUInstallDirs)
 
-install(TARGETS arm_ik
+install(TARGETS 
+    arm_ik 
+    # arm_mp
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
