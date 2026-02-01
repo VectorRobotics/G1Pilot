@@ -33,11 +33,11 @@ Follow these instructions.
    ```
 2. Clone the source code
    ```bash
-   git clone https://github.com/VectorRobotics/g1_ik.git
+   git clone https://github.com/VectorRobotics/G1Pilot.git
    ```
 3. Install dependenceis and set environment variables
    ```bash
-   cd g1_ik
+   cd G1Pilot
    chmod +x download_dependencies.sh
    ./download_dependenceis.sh
    ```
@@ -56,11 +56,11 @@ Follow these instructions.
 1. Clone the source code
 
    ```bash
-   git clone https://github.com/VectorRobotics/g1_ik.git
+   git clone https://github.com/VectorRobotics/G1Pilot.git
    ```
 2. Install dependenceis and set environment variables
    ```bash
-   cd g1_ik
+   cd G1Pilot
    chmod +x download_dependencies.sh
    ./download_dependenceis.sh
    ```
@@ -80,12 +80,12 @@ Follow these instructions.
 ## Use with ROS2
 Run the launch file
 ```bash
-ros2 launch g1_ik display.launch.py
+ros2 launch g1_pilot display.launch.py
 ```
 
 If you just want to run the node
 ```bash
-ros2 run g1_ik ik_joint_state_publisher
+ros2 run g1_pilot ik_joint_state_publisher
 ```
 
 ## Use as C++ library
