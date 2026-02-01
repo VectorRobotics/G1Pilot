@@ -1,6 +1,0 @@
--rw-r--r-- 1 rbulk robots 1026 Nov 26 16:15 /local/robotpkg/var/lib/robotpkg/path/coal/patches/patch-aa
--rw-r--r-- 1 rbulk robots 10771 Mar 13 17:13 /local/robotpkg/var/lib/robotpkg/path/coal/PLIST
--rw-r--r-- 1 rbulk robots 1168 Mar 13 17:13 /local/robotpkg/var/lib/robotpkg/path/coal/Makefile
--rw-r--r-- 1 rbulk robots 173 Nov 25 13:45 /local/robotpkg/var/lib/robotpkg/path/coal/DESCR
--rw-r--r-- 1 rbulk robots 238 Mar 13 17:13 /local/robotpkg/var/lib/robotpkg/path/coal/distinfo
--rw-r--r-- 1 rbulk robots 832 Nov 25 13:45 /local/robotpkg/var/lib/robotpkg/path/coal/depend.mk

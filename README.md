@@ -1,10 +1,10 @@
-# G1_IK
+# G1Pilot
   ![Alt text](docs/ik.gif)
 
-`g1_ik` is a ROS2 package and also contains a C++ library for inverse kinematics and collision detection for the Unitree G1 HUmanoid robot.
+`g1_pilot` is a ROS2 package and also contains a C++ library for controls, inverse kinematics and collision detection (motion planing coming soon) for the Unitree G1 HUmanoid robot.
 
 ## Key features
-1. `arm_ik` C++ Library
+1. `arm_pilot` C++ Library
    - Solving for inverse kinematics of the arms of the G1 give SE(3) or 6D pose for the end-effector.
    - Accounting for previous state for closest solution, naturalizing motion
    - Modelled as an optimization problem allowing tuning of weights of different costs (translation, rotation, regularization, and smothening) to achieve desired result.
@@ -35,13 +35,15 @@ Follow these instructions.
    ```bash
    git clone https://github.com/VectorRobotics/g1_ik.git
    ```
-3. Link third_party libraries to dynamic linker
+3. Install dependenceis and set environment variables
    ```bash
-   export LD_LIBRARY_PATH=$PWD/g1_ik/third_party/lib:$LD_LIBRARY_PATH
+   cd g1_ik
+   chmod +x download_dependencies.sh
+   ./download_dependenceis.sh
    ```
 4. Build and install
    ```bash
-   cd ..
+   cd ../..
    colcon build
    ```
 5. Source your workspace installations
@@ -56,13 +58,15 @@ Follow these instructions.
    ```bash
    git clone https://github.com/VectorRobotics/g1_ik.git
    ```
-2. Link third_party libraries to dynamic linker
+2. Install dependenceis and set environment variables
    ```bash
-   export LD_LIBRARY_PATH=$PWD/g1_ik/third_party/lib:$LD_LIBRARY_PATH
+   cd g1_ik
+   chmod +x download_dependencies.sh
+   ./download_dependenceis.sh
    ```
 3. Make build and install directories
    ```bash
-   cd g1_ik && mkdir build install && cd build
+   mkdir build install && cd build
    ```
 4. Configure, make and install
    ```bash
@@ -70,8 +74,6 @@ Follow these instructions.
    make -j4
    make install
    ```
-
-
 
 # How to use
 

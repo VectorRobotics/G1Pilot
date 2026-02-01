@@ -1,5 +1,0 @@
--rw-r--r-- 1 rbulk robots 1224 May 22 18:59 /local/robotpkg/var/lib/robotpkg/optimization/casadi/Makefile
--rw-r--r-- 1 rbulk robots 185 Oct 17  2024 /local/robotpkg/var/lib/robotpkg/optimization/casadi/distinfo
--rw-r--r-- 1 rbulk robots 279 Oct 17  2024 /local/robotpkg/var/lib/robotpkg/optimization/casadi/DESCR
--rw-r--r-- 1 rbulk robots 652 Oct 17  2024 /local/robotpkg/var/lib/robotpkg/optimization/casadi/depend.mk
--rw-r--r-- 1 rbulk robots 8238 Oct 17  2024 /local/robotpkg/var/lib/robotpkg/optimization/casadi/PLIST

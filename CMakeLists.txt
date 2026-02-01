@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(g1_ik)
+project(g1_pilot)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,42 +14,31 @@ if(DEFINED ENV{COLCON_PREFIX_PATH})
     set(ROS2_DEFAULT ON)
 else()
     set(ROS2_DEFAULT OFF)
-endif()
-
-option(ROS2_INTEGRATION "Enable ROS 2 integration" ${ROS2_DEFAULT})
-
-if(NOT ROS2_INTEGRATION)
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install" CACHE PATH "Local install prefix" FORCE)
     endif()
 endif()
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party/lib")
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/lib)
-include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/include)
+list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
+
 
 # ---- Options & Dependencies ---- #
-
-set(USE_CASADI ON CACHE BOOL "Use CasADi for optimization")
-option(BUILD_TESTING "Build tests" OFF)
-cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
-cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "NOT ROS2_INTEGRATION" OFF)
-
-list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
-
-if(USE_CASADI)
-    add_definitions(-DPINOCCHIO_WITH_CASADI)
+set(COAL_DISABLE_HPP_FCL_WARNINGS TRUE)
+option(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" ON)
+if(BUILD_WITH_CASADI_SUPPORT)
+    set(USE_CASADI ON)
     find_package(casadi REQUIRED)
-    message(STATUS "CasADi found: ${casadi_DIR}")
-
+else()
+    set (USE_CASADI OFF)
 endif()
 
-find_package(urdfdom REQUIRED)
-find_package(console_bridge REQUIRED)
 find_package(pinocchio REQUIRED)
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/third_party/eigen")
+option(BUILD_TESTING "Build tests" OFF)
+cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
+cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "NOT ROS2_DEFAULT" OFF)
+
+
 
 # ---- Library ---- #
 
@@ -126,7 +115,7 @@ endif()
 
 # ---- ROS 2 Integration ---- #
 
-if(ROS2_INTEGRATION)
+if(ROS2_DEFAULT)
     find_package(ament_cmake REQUIRED)
     find_package(ament_index_cpp REQUIRED)
     find_package(rclcpp REQUIRED)

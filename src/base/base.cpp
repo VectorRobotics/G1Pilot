@@ -14,6 +14,7 @@ G1DualArm::G1DualArm(
     const RobotConfig* robot_config
 )
 {
+    std::cout << "Init Started" <<std::endl;
     robot_config_ = RobotConfig();
     if (robot_config != nullptr) {
         robot_config_ = *robot_config;
@@ -21,6 +22,7 @@ G1DualArm::G1DualArm(
 
     // (1) Basic Model
     pinocchio::urdf::buildModel(robot_config_.asset_file, robot_model_);
+    std::cout << "Frame model made" <<std::endl;
     pinocchio::urdf::buildGeom(
         robot_model_, 
         robot_config_.asset_file, 
@@ -28,8 +30,10 @@ G1DualArm::G1DualArm(
         geom_robot_model_, 
         robot_config_.asset_root
     );
+    std::cout << "Geom model made" <<std::endl;
     add_end_effector_frames();
     reference_config = Eigen::VectorXd::Zero(robot_model_.nq);
+    std::cout << "Full model made" <<std::endl;
 
 
     // (2) Locked Legs
@@ -48,6 +52,7 @@ G1DualArm::G1DualArm(
         geom_upper_body_
     );
     reference_config = Eigen::VectorXd::Zero(upper_body_.nq);
+    std::cout << "Upper body made" <<std::endl;
 
 
     // (3) Locked Palms
@@ -65,6 +70,8 @@ G1DualArm::G1DualArm(
         upper_body_wo_palms,
         geom_upper_body_wo_palms
     );
+
+    std::cout<< "Models made"<<std::endl;
     
     // Initialize Tools with appropriate models
     ik = new G1_29_ArmIK(

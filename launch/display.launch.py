@@ -12,7 +12,7 @@ from launch.substitutions import Command
 def generate_launch_description():
     ld = LaunchDescription()
 
-    package_path = FindPackageShare('g1_ik')
+    package_path = FindPackageShare('g1_pilot')
     default_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros.urdf'])
     default_rviz_config_path = PathJoinSubstitution([package_path, 'rviz', 'model.rviz'])
 
@@ -56,7 +56,7 @@ def generate_launch_description():
     ))
 
     ld.add_action(Node(
-        package='g1_ik',
+        package='g1_pilot',
         executable='ik_joint_state_publisher',
         name='ik_joint_state_publisher',
         output='screen',

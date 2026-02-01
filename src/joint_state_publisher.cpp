@@ -9,11 +9,11 @@
 #include <filesystem> // Requires C++17
 #include "sensor_msgs/msg/joint_state.hpp"
 
-#include <arm_ik/robot_arm_ik.h>
+#include <g1_pilot/g1_pilot.h>
 
 
 using namespace std::chrono_literals;
-using namespace IK;
+using namespace ArmPilot;
 
 class JointStatePublisher : public rclcpp::Node
 {
@@ -28,7 +28,7 @@ public:
     
     RCLCPP_INFO(this->get_logger(), "IK Joint State Publisher Node has started.");
 
-    std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_ik");
+    std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_pilot");
     
     std::string default_asset_file = package_share_directory + "/assets/g1/g1_29dof_with_hand_rev_1_0.urdf";
     std::string default_asset_root = package_share_directory + "/assets/g1/";
@@ -39,12 +39,13 @@ public:
     RobotConfig config;
     config.asset_file = this->get_parameter("asset_file").as_string();
     config.asset_root = this->get_parameter("asset_root").as_string();
+    config.NUM_DOF = 29;
 
     RCLCPP_INFO(this->get_logger(), "Initiaizing IK Classes");
 
     // arm_ik = new G1_29_ArmIK_NoWrists(false, false, &config);
     // arm_ik = std::make_unique<G1_29_ArmIK>();   
-    arm_ik = std::make_unique<G1_29_ArmIK>(false, false, &config);
+    arm_ik = std::make_unique<G1DualArm>(&config);
 
 
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
@@ -62,7 +63,7 @@ public:
 
     // Create IK solver with collision detection
     // G1_29_ArmIK_NoWrists* arm_ik;
-    std::unique_ptr<G1_29_ArmIK> arm_ik;
+    std::unique_ptr<G1DualArm> arm_ik;
 
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;
@@ -90,7 +91,7 @@ private:
     //     true  // enable collision checking
     // );
 
-    auto result = arm_ik->solve_ik(
+    auto result = arm_ik->ik->solve_ik(
         left_target, right_target,
         nullptr, nullptr  // current q, dq
     );

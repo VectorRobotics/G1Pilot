@@ -19,6 +19,7 @@ int main(){
         std::cerr << "Exception during IK solver initialization: " << e.what() << std::endl;
         return -1;
     }
+    std::cout << "Init passed." << std::endl;
 
     try{
         Eigen::Matrix4d left_target = Eigen::Matrix4d::Identity();
