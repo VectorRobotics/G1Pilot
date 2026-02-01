@@ -92,15 +92,16 @@ ros2 run g1_pilot ik_joint_state_publisher
 
 To use IK, do the following in the package
 ```cpp
-#include <arm_ik/robot_arm_ik_g1_23dof.h>
+#include <g1_pilot/g1_pilot.h>
 
 // Create robot configuration
 RobotConfig config;
 config.asset_file = "../assets/g1/g1_29dof_with_hand_rev_1_0.urdf";
 config.asset_root = "../assets/g1/";
+config.NUM_DOF = 29;
 
-// Create IK solver with collision detection
-G1_29_ArmIK_NoWrists arm_ik(false, false, &config);
+// Create handle
+G1DualArm arm_handle(&config);
 
 // Define external forces (6D wrenches)
 Eigen::VectorXd ext_force_left = Eigen::VectorXd::Zero(6);
@@ -108,7 +109,7 @@ Eigen::VectorXd ext_force_right = Eigen::VectorXd::Zero(6);
 ext_force_left(2) = 5.0;  // 5N downward force
 
 // Solve IK with collision checking
-auto result = arm_ik.solve_ik(
+auto result = arm_handle.ik->solve_ik(
     left_target, right_target,
     nullptr, nullptr,  // current q, dq
     &ext_force_left, &ext_force_right,
@@ -139,11 +140,4 @@ Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
     Eigen::Vector3d t(tx, ty, tz);
     return create_se3(q, t);
 }
-```
-
-
-
-```bash
-ln -s /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.74.0
-ln -s /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.74.0
 ```
