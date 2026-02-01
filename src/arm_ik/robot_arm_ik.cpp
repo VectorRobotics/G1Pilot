@@ -1,10 +1,13 @@
-#ifndef PINOCCHIO_WITH_CASADI
-    #define PINOCCHIO_WITH_CASADI
-#endif
-
-#include <pinocchio/autodiff/casadi.hpp>
 #include "arm_ik/robot_arm_ik.h"
 
+#include <pinocchio/autodiff/casadi.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+
+#include <memory>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <cmath>
 
@@ -12,135 +15,87 @@
 // G1_29_ArmIK Implementation
 // ============================================================================
 
-namespace IK {
-G1_29_ArmIK::G1_29_ArmIK(bool unit_test, bool visualization, 
-                         const RobotConfig* robot_config)
-    : unit_test_(unit_test), 
-      visualization_(visualization) 
-      {
-    
-    if (robot_config == nullptr) {
-        robot_config_ = {
-            "../assets/g1/g1_29dof_with_hand_rev_1_0.urdf",
-            "../assets/g1/"
-        };
-    } else {
-        robot_config_ = *robot_config;
-    }
+namespace ArmPilot {
 
-    urdf_path_ = robot_config_.asset_file;
-    model_dir_ = robot_config_.asset_root;
-    
+G1_29_ArmIK::G1_29_ArmIK(
+    pinocchio::Model& model,
+    pinocchio::GeometryModel& geom_model
+) : model_(model), geom_model_(geom_model)
+{
     std::cout << std::fixed << std::setprecision(5);
-        
-    // Initialize joints to lock
-    initialize_joints_to_lock();
     
-    std::cout << "[G1_29_ArmIK] >>> Loading URDF from " << urdf_path_ << std::endl;
-
-    // Build robot model from URDF
-    pinocchio::urdf::buildModel(urdf_path_, robot_model_);
-    robot_data_ = pinocchio::Data(robot_model_);
+    L_hand_id_ = model_.getFrameId("L_ee");
+    R_hand_id_ = model_.getFrameId("R_ee");
+    oMcamera = model_.getFrameId("d435_link", pinocchio::BODY);
+    oMLidar = model_.getFrameId("mid360_link", pinocchio::BODY);
     
-    // Build reduced robot by locking specified joints
-    std::vector<pinocchio::JointIndex> joints_to_lock;
-    for (const auto& joint_name : mixed_joints_to_lock_ids_) {
-        if (robot_model_.existJointName(joint_name)) {
-            joints_to_lock.push_back(robot_model_.getJointId(joint_name));
-        }
-    }
-    
-    Eigen::VectorXd reference_config = Eigen::VectorXd::Zero(robot_model_.nq);
-    pinocchio::buildReducedModel(robot_model_, joints_to_lock, 
-                                    reference_config, reduced_model_);
-    reduced_data_ = pinocchio::Data(reduced_model_);
-    
-    // Add end-effector frames
-    add_end_effector_frames();
-
-    // Extracting camera frames
-    oMcamera = reduced_model_.getFrameId("d435_link", pinocchio::BODY);
-    oMLidar = reduced_model_.getFrameId("mid360_link", pinocchio::BODY);
-    
-    // Setup CasADi optimization
     setup_optimization();
+    initialize_collision_model();
+
+    data_ = pinocchio::Data(model_);
+    geom_data_ = pinocchio::GeometryData(geom_model_);
+    init_data_ = Eigen::VectorXd::Zero(model_.nq);
     
     // Initialize filter and data
     Eigen::VectorXd weights(4);
     weights << 0.4, 0.3, 0.2, 0.1;
     smooth_filter_ = std::make_unique<WeightedMovingFilter>(weights, 14);
-    init_data_ = Eigen::VectorXd::Zero(reduced_model_.nq);
+
+    nq_ = model_.nq;
+    nv_ = model_.nv;
+
 }
 
-G1_29_ArmIK::~G1_29_ArmIK() {}
-
-void G1_29_ArmIK::initialize_joints_to_lock() {
-    mixed_joints_to_lock_ids_ = {
-        "left_hip_pitch_joint",
-        "left_hip_roll_joint", 
-        "left_hip_yaw_joint",
-        "left_knee_joint", 
-        "left_ankle_pitch_joint", 
-        "left_ankle_roll_joint",
-        "right_hip_pitch_joint", 
-        "right_hip_roll_joint", 
-        "right_hip_yaw_joint",
-        "right_knee_joint", 
-        "right_ankle_pitch_joint", 
-        "right_ankle_roll_joint",
-        "waist_yaw_joint", 
-        "waist_roll_joint", 
-        "waist_pitch_joint",
-
-        "left_hand_thumb_0_joint", 
-        "left_hand_thumb_1_joint", 
-        "left_hand_thumb_2_joint",
-        "left_hand_middle_0_joint", 
-        "left_hand_middle_1_joint",
-        "left_hand_index_0_joint", 
-        "left_hand_index_1_joint",
-        "right_hand_thumb_0_joint", 
-        "right_hand_thumb_1_joint", 
-        "right_hand_thumb_2_joint",
-        "right_hand_index_0_joint", 
-        "right_hand_index_1_joint",
-        "right_hand_middle_0_joint", 
-        "right_hand_middle_1_joint"
-    };
-}
-
-void G1_29_ArmIK::add_end_effector_frames() {
-    // Add left end-effector frame
-    left_wrist_id_ = reduced_model_.getJointId("left_wrist_yaw_joint");
-    pinocchio::SE3 left_placement(Eigen::Matrix3d::Identity(), Eigen::Vector3d(0.05, 0, 0));
-    reduced_model_.addFrame(pinocchio::Frame("L_ee", left_wrist_id_, left_placement, 
-                                            pinocchio::OP_FRAME));
+void G1_29_ArmIK::initialize_collision_model() {
     
-    // Add right end-effector frame
-    right_wrist_id_ = reduced_model_.getJointId("right_wrist_yaw_joint");
-    pinocchio::SE3 right_placement(Eigen::Matrix3d::Identity(), Eigen::Vector3d(0.05, 0, 0));
-    reduced_model_.addFrame(pinocchio::Frame("R_ee", right_wrist_id_, right_placement, 
-                                             pinocchio::OP_FRAME));
+    // Add all collision pairs
+    geom_model_.addAllCollisionPairs();
+    
+    // Filter out adjacent link collisions
+    filter_adjacent_collision_pairs();
+    
+    std::cout << "num collision pairs - initial: " 
+              << geom_model_.collisionPairs.size() << std::endl;
+    std::cout << "Number of geometry objects: " 
+              << geom_model_.geometryObjects.size() << std::endl;
+}
 
-    // Get frame IDs for end effectors
-    L_hand_id_ = reduced_model_.getFrameId("L_ee");
-    R_hand_id_ = reduced_model_.getFrameId("R_ee");
+void G1_29_ArmIK::filter_adjacent_collision_pairs() {
+    // Get kinematic adjacency from the model
+    std::set<std::pair<int, int>> adjacent_pairs;
+    for (int i = 1; i < model_.njoints; ++i) {
+        adjacent_pairs.insert({model_.parents[i], i});
+        adjacent_pairs.insert({i, model_.parents[i]});
+    }
+    
+    // Filter out neighboring links
+    std::vector<pinocchio::CollisionPair> filtered_pairs;
+    for (const auto& cp : geom_model_.collisionPairs) {
+        int link1 = geom_model_.geometryObjects[cp.first].parentJoint;
+        int link2 = geom_model_.geometryObjects[cp.second].parentJoint;
+        
+        if (adjacent_pairs.find({link1, link2}) == adjacent_pairs.end()) {
+            filtered_pairs.push_back(cp);
+        }
+    }
+    
+    geom_model_.collisionPairs = filtered_pairs;
 }
 
 void G1_29_ArmIK::setup_optimization() {
     #ifdef USE_CASADI
     // Create optimization variables and parameters
-    var_q_ = opti_.variable(reduced_model_.nq, 1);
-    var_q_last_ = opti_.parameter(reduced_model_.nq, 1);
+    var_q_ = opti_.variable(model_.nq, 1);
+    var_q_last_ = opti_.parameter(model_.nq, 1);
     param_tf_l_ = opti_.parameter(4, 4);
     param_tf_r_ = opti_.parameter(4, 4);
     
     // Set joint limits as constraints
-    casadi::DM lower_limits = eigen_to_casadi(reduced_model_.lowerPositionLimit);
-    casadi::DM upper_limits = eigen_to_casadi(reduced_model_.upperPositionLimit);
+    casadi::DM lower_limits = eigen_to_casadi(model_.lowerPositionLimit);
+    casadi::DM upper_limits = eigen_to_casadi(model_.upperPositionLimit);
     opti_.subject_to(opti_.bounded(lower_limits, var_q_, upper_limits));
 
-    pinocchio::ModelTpl<casadi::SX> cmodel(reduced_model_.cast<casadi::SX>());
+    pinocchio::ModelTpl<casadi::SX> cmodel(model_.cast<casadi::SX>());
     pinocchio::DataTpl<casadi::SX> cdata(cmodel);
 
     auto L_hand_id = cmodel.getFrameId("L_ee");
@@ -234,37 +189,15 @@ void G1_29_ArmIK::setup_optimization() {
     #endif // USE_CASADI
 }
 
-std::pair<Eigen::Matrix4d, Eigen::Matrix4d> G1_29_ArmIK::scale_arms(
-    const Eigen::Matrix4d& human_left_pose,
-    const Eigen::Matrix4d& human_right_pose,
-    double human_arm_length,
-    double robot_arm_length) {
-    
-    double scale_factor = robot_arm_length / human_arm_length;
-    Eigen::Matrix4d robot_left_pose = human_left_pose;
-    Eigen::Matrix4d robot_right_pose = human_right_pose;
-    
-    robot_left_pose.block<3, 1>(0, 3) *= scale_factor;
-    robot_right_pose.block<3, 1>(0, 3) *= scale_factor;
-    
-    return {robot_left_pose, robot_right_pose};
-}
-
 JointState G1_29_ArmIK::solve_ik(
     const Eigen::Matrix4d& left_wrist,
     const Eigen::Matrix4d& right_wrist,
     const Eigen::VectorXd* current_lr_arm_motor_q,
-    const Eigen::VectorXd* current_lr_arm_motor_dq) {
-
-    
-    for (int j = 0; j < reduced_model_.njoints; ++j) {
-        std::cout << "[G1_29_ArmIK] >>> Joint " << j << ": " 
-                  << reduced_model_.names[j] << ": " 
-                  << reduced_model_.joints[j].shortname() << std::endl;
-    }
-
-    std::cout << "[G1_29_ArmIK] >>> Model has nq=" << reduced_model_.nq << "and nv=" << reduced_model_.nv << std::endl;
-    
+    const Eigen::VectorXd* current_lr_arm_motor_dq,
+    const Eigen::VectorXd* EE_efrc_L,
+    const Eigen::VectorXd* EE_efrc_R
+) 
+{
     // Update initial guess
     if (current_lr_arm_motor_q != nullptr) {
         init_data_ = *current_lr_arm_motor_q;
@@ -289,16 +222,16 @@ JointState G1_29_ArmIK::solve_ik(
         var_q_last_ = init_data_;
 
 
-        Eigen::VectorXd v_itr(reduced_model_.nv);
-        pinocchio::Data::Matrix6x J_left(6,reduced_model_.nv);
-        pinocchio::Data::Matrix6x J_right(6,reduced_model_.nv);
-        pinocchio::Data::MatrixXs J(12,reduced_model_.nv);
+        Eigen::VectorXd v_itr(model_.nv);
+        pinocchio::Data::Matrix6x J_left(6,model_.nv);
+        pinocchio::Data::Matrix6x J_right(6,model_.nv);
+        pinocchio::Data::MatrixXs J(12,model_.nv);
         J_left.setZero();
         J_right.setZero();
 
         // Frames for camera and lidar
-        // reduced_data_.oMf[oMcamera];
-        // reduced_data_.oMf[oMLidar];
+        // data_.oMf[oMcamera];
+        // data_.oMf[oMLidar];
 
     #endif // USE_CASADI
 
@@ -321,9 +254,9 @@ JointState G1_29_ArmIK::solve_ik(
             // Using interation method
             for (int i=0;;i++)
             {
-                pinocchio::forwardKinematics(reduced_model_,reduced_data_,var_q_);
-                const pinocchio::SE3 left_dMi = param_tf_l_.actInv(reduced_data_.oMi[left_wrist_id_]);
-                const pinocchio::SE3 right_dMi = param_tf_r_.actInv(reduced_data_.oMi[right_wrist_id_]);
+                pinocchio::forwardKinematics(model_,data_,var_q_);
+                const pinocchio::SE3 left_dMi = param_tf_l_.actInv(data_.oMi[left_wrist_id_]);
+                const pinocchio::SE3 right_dMi = param_tf_r_.actInv(data_.oMi[right_wrist_id_]);
                 err.head<6>() = pinocchio::log6(left_dMi).toVector();
                 err.tail<6>() = pinocchio::log6(right_dMi).toVector();
 
@@ -333,15 +266,15 @@ JointState G1_29_ArmIK::solve_ik(
                 if (i >= IT_MAX) {
                     throw std::runtime_error("Maximum iterations reached without convergence.");
                 }
-                pinocchio::computeJointJacobian(reduced_model_,reduced_data_,var_q_,left_wrist_id_,J_left);
-                pinocchio::computeJointJacobian(reduced_model_,reduced_data_,var_q_,right_wrist_id_,J_right);
+                pinocchio::computeJointJacobian(model_,data_,var_q_,left_wrist_id_,J_left);
+                pinocchio::computeJointJacobian(model_,data_,var_q_,right_wrist_id_,J_right);
                 J.topRows<6>() = J_left;
                 J.bottomRows<6>() = J_right;
                 pinocchio::Data::MatrixXs JJt;
                 JJt.noalias() = J * J.transpose();
                 JJt.diagonal().array() += damp;
                 v_itr.noalias() = - J.transpose() * JJt.ldlt().solve(err);
-                var_q_ = pinocchio::integrate(reduced_model_,var_q_,v_itr * DT);
+                var_q_ = pinocchio::integrate(model_,var_q_,v_itr * DT);
             }
 
             var_q_last_ = var_q_;
@@ -350,7 +283,7 @@ JointState G1_29_ArmIK::solve_ik(
             std::vector<double> sol_q_vec(var_q_.data(), var_q_.data() + var_q_.size());
         #endif // USE_CASADI
 
-        Eigen::VectorXd sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), reduced_model_.nq);
+        Eigen::VectorXd sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
         
         // Apply smoothing filter
         smooth_filter_->add_data(sol_q);
@@ -368,18 +301,43 @@ JointState G1_29_ArmIK::solve_ik(
         
         // Compute feedforward torques using RNEA
         Eigen::VectorXd sol_tauff = pinocchio::rnea(
-            reduced_model_, reduced_data_, sol_q, v,
-            Eigen::VectorXd::Zero(reduced_model_.nv)
+            model_, data_, sol_q, v,
+            Eigen::VectorXd::Zero(model_.nv)
         );
+
+        // Add external forces if provided
+        if (EE_efrc_L != nullptr && EE_efrc_R != nullptr) {
+            // Compute Jacobians for both end effectors
+            pinocchio::Data::Matrix6x J_L(6, nv_);
+            pinocchio::Data::Matrix6x J_R(6, nv_);
+            
+            pinocchio::computeFrameJacobian(model_, data_, sol_q, 
+                                           L_hand_id_, pinocchio::LOCAL_WORLD_ALIGNED, J_L);
+            pinocchio::computeFrameJacobian(model_, data_, sol_q, 
+                                           R_hand_id_, pinocchio::LOCAL_WORLD_ALIGNED, J_R);
+            
+            // Compute torques from external forces
+            Eigen::VectorXd tau_ext_L = J_L.transpose() * (*EE_efrc_L);
+            Eigen::VectorXd tau_ext_R = J_R.transpose() * (*EE_efrc_R);
+            
+            // Combine external torques (first 4 from left, last 4 from right)
+            Eigen::VectorXd tau_ext = Eigen::VectorXd::Zero(nv_);
+            if (nv_ >= 8) {
+                tau_ext.head(4) = tau_ext_L.head(4);
+                tau_ext.tail(4) = tau_ext_R.tail(4);
+            }
+            
+            sol_tauff += tau_ext;
+        }
 
         JointState result;
 
         std::cout << "IK Solved for: ";
-        for (int joint_id = 1; joint_id <= reduced_model_.nv; ++joint_id) {
-            result.name.push_back(reduced_model_.names[joint_id]);
-            result.position.push_back(sol_q[reduced_model_.idx_qs[joint_id]]);
-            result.velocity.push_back(v[reduced_model_.idx_vs[joint_id]]);
-            result.effort.push_back(sol_tauff[reduced_model_.idx_vs[joint_id]]);
+        for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
+            result.name.push_back(model_.names[joint_id]);
+            result.position.push_back(sol_q[model_.idx_qs[joint_id]]);
+            result.velocity.push_back(v[model_.idx_vs[joint_id]]);
+            result.effort.push_back(sol_tauff[model_.idx_vs[joint_id]]);
         }
         
         return result;
@@ -397,7 +355,7 @@ JointState G1_29_ArmIK::solve_ik(
         #endif // USE_CASADI
 
         Eigen::VectorXd sol_q = Eigen::Map<Eigen::VectorXd>(
-            sol_q_vec.data(), reduced_model_.nq);
+            sol_q_vec.data(), model_.nq);
         
         smooth_filter_->add_data(sol_q);
         sol_q = smooth_filter_->filtered_data();
@@ -412,8 +370,8 @@ JointState G1_29_ArmIK::solve_ik(
         init_data_ = sol_q;
         
         Eigen::VectorXd sol_tauff = pinocchio::rnea(
-            reduced_model_, reduced_data_, sol_q, v,
-            Eigen::VectorXd::Zero(reduced_model_.nv)
+            model_, data_, sol_q, v,
+            Eigen::VectorXd::Zero(model_.nv)
         );
         
         std::cerr << "sol_q: " << sol_q.transpose() << std::endl;
@@ -422,14 +380,14 @@ JointState G1_29_ArmIK::solve_ik(
 
         JointState result;
 
-        for (int joint_id = 0; joint_id < reduced_model_.njoints; ++joint_id) {
-            result.name.push_back(reduced_model_.names[joint_id]);
-            result.position.push_back(sol_q[reduced_model_.idx_qs[joint_id]]);
-            result.velocity.push_back(v[reduced_model_.idx_vs[joint_id]]);
-            result.effort.push_back(sol_tauff[reduced_model_.idx_vs[joint_id]]);
+        for (int joint_id = 0; joint_id < model_.njoints; ++joint_id) {
+            result.name.push_back(model_.names[joint_id]);
+            result.position.push_back(sol_q[model_.idx_qs[joint_id]]);
+            result.velocity.push_back(v[model_.idx_vs[joint_id]]);
+            result.effort.push_back(sol_tauff[model_.idx_vs[joint_id]]);
         }
         return result;
     }
 }
 
-} // namespace IK
+} // ArmPilot namespace

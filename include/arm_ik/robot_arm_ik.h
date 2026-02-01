@@ -1,30 +1,23 @@
 #ifndef ROBOT_ARM_IK_H
 #define ROBOT_ARM_IK_H
 
-#ifdef USE_CASADI
-    #include "casadi_eigen_utils.h"
-#endif // USE_CASADI
+#include "utils.h"
 
-#include "pinocchio_eigen_utils.h"
+#include "base/base.h"
+#include "weighted_moving_filter.h"
+
+#include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/geometry.hpp>
 
 #include <Eigen/Dense>
 #include <vector>
 #include <string>
-#include <memory>
-#include <fstream>
-#include <iostream>
-#include <iomanip>
 
-#include "weighted_moving_filter.h"
 
-namespace IK {
+namespace ArmPilot {
 /**
  * @brief Base configuration structure for robot models
  */
-struct RobotConfig {
-    std::string asset_file;
-    std::string asset_root;
-};
 
 /**
  * @brief Return Type for IK.
@@ -36,19 +29,15 @@ struct JointState {
     std::vector<double> effort;
 };
 
-
-
 /**
  * @brief G1_29_ArmIK - Inverse kinematics solver for G1 robot with 29 DOF
  */
 class G1_29_ArmIK {
 public:
     G1_29_ArmIK(
-        bool unit_test = false, 
-        bool visualization = false,
-        const RobotConfig* robot_config = nullptr
+        pinocchio::Model& model,
+        pinocchio::GeometryModel& geom_model
     );
-    virtual ~G1_29_ArmIK();
 
     /**
      * @brief Solve inverse kinematics for both arms
@@ -62,7 +51,9 @@ public:
         const Eigen::Matrix4d& left_wrist,
         const Eigen::Matrix4d& right_wrist,
         const Eigen::VectorXd* current_lr_arm_motor_q = nullptr,
-        const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr
+        const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr,
+        const Eigen::VectorXd* EE_efrc_L = nullptr,
+        const Eigen::VectorXd* EE_efrc_R = nullptr
     );
 
     /**
@@ -82,19 +73,13 @@ public:
 
 protected:
     void setup_optimization();
-    void initialize_joints_to_lock();
-    void add_end_effector_frames();
+    void initialize_collision_model();
+    void filter_adjacent_collision_pairs();
 
-    bool unit_test_;
-    bool visualization_;
-    RobotConfig robot_config_;
-    std::string urdf_path_;
-    std::string model_dir_;
-
-    pinocchio::Model robot_model_;
-    pinocchio::Data robot_data_;
-    pinocchio::Model reduced_model_;
-    pinocchio::Data reduced_data_;
+    pinocchio::Model model_;
+    pinocchio::Data data_;
+    pinocchio::GeometryModel geom_model_;
+    pinocchio::GeometryData geom_data_;
 
     #ifdef USE_CASADI
 
@@ -119,10 +104,11 @@ protected:
 
     #endif // USE_CASADI
 
-    pinocchio::JointIndex left_wrist_id_;
-    pinocchio::JointIndex right_wrist_id_;
     pinocchio::FrameIndex L_hand_id_;
     pinocchio::FrameIndex R_hand_id_;
+
+    int nq_;
+    int nv_;
 
     pinocchio::FrameIndex oMcamera;
     pinocchio::FrameIndex oMLidar;
@@ -130,8 +116,7 @@ protected:
     Eigen::VectorXd init_data_;
     std::unique_ptr<WeightedMovingFilter> smooth_filter_;
 
-    std::vector<std::string> mixed_joints_to_lock_ids_;
 };
 
-} // namespace IK
+} // ArmPilot namespace
 #endif // ROBOT_ARM_IK_H
