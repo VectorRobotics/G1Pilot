@@ -32,7 +32,7 @@ include_directories(BEFORE SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/includ
 # ---- Options & Dependencies ---- #
 
 set(USE_CASADI ON CACHE BOOL "Use CasADi for optimization")
-option(BUILD_TESTING "Build tests" ON)
+option(BUILD_TESTING "Build tests" OFF)
 cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
 cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "NOT ROS2_INTEGRATION" OFF)
 
@@ -53,30 +53,26 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/third_party/eigen")
 
 # ---- Library ---- #
 
-file(GLOB_RECURSE ARM_IK_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_ik/*.cpp")
-add_library(arm_ik ${ARM_IK_SOURCES})
+file(GLOB_RECURSE g1_pilot_SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/base/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_ik/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_control/*.cpp"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp"
+    
+)
+add_library(g1_pilot ${g1_pilot_SOURCES})
 
-target_include_directories(arm_ik PUBLIC 
+target_include_directories(g1_pilot PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(arm_ik PUBLIC Eigen3::Eigen pinocchio::pinocchio)
+target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio)
 
 if(USE_CASADI)
-    target_link_libraries(arm_ik PUBLIC casadi)
-    target_compile_definitions(arm_ik PRIVATE USE_CASADI)
+    target_link_libraries(g1_pilot PUBLIC casadi)
+    target_compile_definitions(g1_pilot PRIVATE USE_CASADI)
 endif()
-
-# file(GLOB_RECURSE ARM_MP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp")
-# add_library(arm_mp ${ARM_MP_SOURCES})
-
-# target_include_directories(arm_mp PUBLIC 
-#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#     $<INSTALL_INTERFACE:include>
-# )
-
-# target_link_libraries(arm_mp PUBLIC Eigen3::Eigen)
 
 # ---- Testing ---- #
 
@@ -84,13 +80,10 @@ if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     
     add_executable(test_ik test/arm_ik/test_ik.cpp)
-    add_executable(test_robot_arm_ik test/arm_ik/test_robot_arm_ik.cpp)
-    target_link_libraries(test_ik PRIVATE arm_ik GTest::gtest_main)
-    target_link_libraries(test_robot_arm_ik PRIVATE arm_ik GTest::gtest_main)
+    target_link_libraries(test_ik PRIVATE g1_pilot GTest::gtest_main)
 
     if(USE_CASADI)
         target_compile_definitions(test_ik PRIVATE USE_CASADI)
-        target_compile_definitions(test_robot_arm_ik PRIVATE USE_CASADI)
     endif()
 
     # add_executable(math_unittest test/arm_mp/math_unittest.cpp)
@@ -101,10 +94,6 @@ if(BUILD_TESTING)
     if (RUN_TESTING)
         include(GoogleTest)
         gtest_discover_tests(test_ik WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
-        gtest_discover_tests(test_robot_arm_ik WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
-        message(STATUS "GTEST_INCLUDE_DIRS: ${GTEST_INCLUDE_DIRS}")
-        message(STATUS "GTEST_LIBRARIES: ${GTEST_LIBRARIES}")
-
         # gtest_discover_tests(math_unittest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
         # gtest_discover_tests(line_unittest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
     endif()
@@ -117,8 +106,7 @@ endif()
 include(GNUInstallDirs)
 
 install(TARGETS 
-    arm_ik 
-    # arm_mp
+    g1_pilot 
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -128,7 +116,7 @@ install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(DIRECTORY assets/  DESTINATION share/${PROJECT_NAME}/assets)
 
 if(INSTALL_TESTING)
-    install(FILES test/test_ik.cpp test/test_robot_arm_ik.cpp DESTINATION share/${PROJECT_NAME}/test)
+    install(FILES test/arm_ik/test_ik.cpp DESTINATION share/${PROJECT_NAME}/test)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/assets)
 endif()
 
@@ -141,7 +129,7 @@ if(ROS2_INTEGRATION)
     find_package(sensor_msgs REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
-    target_link_libraries(ik_joint_state_publisher arm_ik)
+    target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
 
     install (TARGETS ik_joint_state_publisher

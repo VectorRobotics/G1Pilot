@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>g1_ik</name>
+  <name>g1_pilot</name>
   <version>0.0.0</version>
   <description>A ROS 2 package that computes ik for the g1</description>
   <maintainer email="kushalagarwal444@gmail.com">Kushal Agarwal</maintainer>
