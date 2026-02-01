@@ -1,6 +1,9 @@
-#include <arm_ik/robot_arm_ik.h>
+#include <g1_pilot/g1_pilot.h>
 
-using namespace IK;
+#include <iostream>
+
+
+using namespace ArmPilot;
 int main(){
 
     #ifdef USE_CASADI
@@ -10,7 +13,7 @@ int main(){
     #endif
 
     try{
-        auto ik_solver = G1_29_ArmIK();
+        auto handle = G1DualArm();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception during IK solver initialization: " << e.what() << std::endl;
@@ -21,12 +24,12 @@ int main(){
         Eigen::Matrix4d left_target = Eigen::Matrix4d::Identity();
         Eigen::Matrix4d right_target = Eigen::Matrix4d::Identity();
 
-        auto ik_solver = G1_29_ArmIK();
+        auto handle = G1DualArm();
 
         #include <chrono>
 
         auto start = std::chrono::high_resolution_clock::now();
-        auto result = ik_solver.solve_ik(left_target, right_target);
+        auto result = handle.ik->solve_ik(left_target, right_target);
         auto end = std::chrono::high_resolution_clock::now();
 
         auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
