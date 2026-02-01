@@ -16,7 +16,7 @@ struct RobotConfig {
 
 class G1DualArm;
 class G1_29_ArmIK;
-class ArmController;
+class ImpedanceController;
 class EE_MotionPlanner;
 
 class G1DualArm {
@@ -28,7 +28,7 @@ public:
     );
 
     G1_29_ArmIK* ik;
-    ArmController* controller;
+    ImpedanceController* controller;
     EE_MotionPlanner* motion_planner;
 
 protected:

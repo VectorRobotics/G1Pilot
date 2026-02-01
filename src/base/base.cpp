@@ -71,7 +71,7 @@ G1DualArm::G1DualArm(
         upper_body_wo_palms, 
         geom_upper_body_wo_palms
     );
-    controller = new ArmController(upper_body_wo_palms);
+    controller = new ImpedanceController(upper_body_wo_palms);
     // motion_planner = new EE_MotionPlanner();
 
 }

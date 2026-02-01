@@ -3,6 +3,6 @@
 
 #include "../base/base.h"
 #include "../arm_ik/robot_arm_ik.h"
-#include "../arm_control/arm_control.h"
+#include "../arm_control/impedance_control.h"
 
 #endif

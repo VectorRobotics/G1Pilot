@@ -138,3 +138,10 @@ Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
     return create_se3(q, t);
 }
 ```
+
+
+
+```bash
+ln -s /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.74.0
+ln -s /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.74.0
+```
