@@ -56,4 +56,10 @@ def generate_launch_description():
         arguments=['-d', LaunchConfiguration('rviz_config')],
     ))
 
+    ld.add_action(Node(
+        package='g1_pilot',
+        executable='joint_traj_publisher',
+        name='joint_traj_publisher',
+        output='screen',
+    ))
     return ld

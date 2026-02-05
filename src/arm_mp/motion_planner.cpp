@@ -1,157 +1,182 @@
-#include "arm_mp/motion_planner.h"
+#include "arm_mp/poly_traj_gen.h"
 #include <iostream>
 #include <stdexcept>
-#include <cmath>
-#include <iomanip>
+#include <unsupported/Eigen/MatrixFunctions>
 
+namespace ArmPilot{
 
-namespace MP{
+PolynomialTrajectoryGenerator::PolynomialTrajectoryGenerator(int order) : 
+    order_(order) 
+{
+    last_pose_ = Eigen::MatrixXd::Identity(4, 4);
 
-EE_MotionPlanner::EE_MotionPlanner(int order) : 
-    order_(order) {
+    constraint_coeff_scaling.resize(order_+1,6);
+    constraint_coeff_scaling <<
+        generate_pow_vector_(0.0, order_),
+        generate_pow_vector_(1.0, order_),
+        diff_(order_) * generate_pow_vector_(0.0, order_ - 1),
+        diff_(order_) * generate_pow_vector_(1.0, order_ - 1),
+        diff_(order_, 2) * generate_pow_vector_(0.0, order_ - 2),
+        diff_(order_, 2) * generate_pow_vector_(1.0, order_ - 2);
 
+    if (6>order_+1) {
+        Eigen::MatrixXd ccsccsT = constraint_coeff_scaling*constraint_coeff_scaling.transpose();
+        ccs_right_inv = constraint_coeff_scaling.transpose().llt().solve(ccsccsT);
+    } else {
+        Eigen::MatrixXd ccsTccs = constraint_coeff_scaling.transpose()*constraint_coeff_scaling;
+        ccs_right_inv = ccsTccs.llt().solve(constraint_coeff_scaling.transpose());
+    }
+
+    std::cout<<"Trajecotry Generator Initialized"<<std::endl;
 
 }
-EE_MotionPlanner::~EE_MotionPlanner() {}
+PolynomialTrajectoryGenerator::~PolynomialTrajectoryGenerator() {}
 
-// std::vector<Eigen::Matrix4d> EE_MotionPlanner::planTrajectory(
-//     const Eigen::Matrix4d* start_pose,
-//     const Eigen::Matrix4d* goal_pose,
-//     double duration,
-//     double time_step,
-//     const Eigen::Vector3d* start_vel,
-//     const Eigen::Vector3d* goal_vel,
-//     const Eigen::Vector3d* start_acc,
-//     const Eigen::Vector3d* goal_acc,
-//     const double MAX_LIN_VEL,
-//     const double MAX_ANG_VEL,
-//     const double MAX_LIN_ACC,
-//     const double MAX_ANG_ACC
-// ) {
-//     int steps = ceil(duration/time_step);
+std::vector<Eigen::MatrixXd> PolynomialTrajectoryGenerator::planTrajectory(
+    const Eigen::MatrixXd* goal_pose,
+    const Eigen::MatrixXd* start_pose,
+    double duration,
+    double time_step,
+    const Eigen::VectorXd* start_vel,
+    const Eigen::VectorXd* goal_vel,
+    const Eigen::VectorXd* start_acc,
+    const Eigen::VectorXd* goal_acc,
+    const double MAX_LIN_VEL,
+    const double MAX_ANG_VEL,
+    const double MAX_LIN_ACC,
+    const double MAX_ANG_ACC
+) {
+    int steps = ceil(duration/time_step);
+    int twist_size = 2*(goal_pose->rows()-1);
 
-//     std::vector<Eigen::Matrix4d> path = planPath(
-//                                             start_pose,
-//                                             goal_pose,
-//                                             start_vel,
-//                                             goal_vel,
-//                                             start_acc,
-//                                             goal_acc,
-//                                             steps
-//                                         );
+    if (start_pose!=nullptr) 
+        start_pose_ = *start_pose; 
+    else 
+        start_pose_ = Eigen::MatrixXd::Identity(goal_pose->rows(), goal_pose->cols());
 
+    if (start_vel!=nullptr) 
+        start_vel_unscaled_ = *start_vel*duration; 
+    else 
+        start_vel_unscaled_ = Eigen::VectorXd::Zero(twist_size);
 
+    if (start_acc!=nullptr) 
+        start_acc_unscaled_ = *start_acc*duration*duration; 
+    else 
+        start_acc_unscaled_ = Eigen::VectorXd::Zero(twist_size);
 
-// }
+    if (goal_vel!=nullptr) 
+        goal_vel_unscaled_ = *goal_vel*duration; 
+    else 
+        goal_vel_unscaled_ = Eigen::VectorXd::Zero(twist_size);
 
-// std::vector<Eigen::Matrix4d> EE_MotionPlanner::planPath(
-//     const Eigen::Matrix4d* start_pose,
-//     const Eigen::Matrix4d* goal_pose,
-//     const Eigen::Vector3d* start_vel,
-//     const Eigen::Vector3d* goal_vel,
-//     const Eigen::Vector3d* start_acc,
-//     const Eigen::Vector3d* goal_acc,
-//     int steps
-// ) {
-//     Eigen::Matrix3d start_R = start_pose->block<3,3>(0, 0);
-//     Eigen::Matrix3d goal_R = goal_pose->block<3,3>(0, 0);
-//     Eigen::Vector3d start_p = start_pose->block<3,1>(0, 3);
-//     Eigen::Vector3d goal_p = goal_pose->block<3,1>(0, 3);
+    if (goal_acc!=nullptr) 
+        goal_acc_unscaled_ = *goal_acc*duration*duration; 
+    else 
+        goal_acc_unscaled_ = Eigen::VectorXd::Zero(twist_size);
 
-//     std::vector<Eigen::VectorXd> line = construct_line_(
-//         start_p, goal_p, start_vel, goal_vel, start_acc, goal_acc, steps
-//     )
+    std::vector<Eigen::MatrixXd> path = planPath(
+        goal_pose,
+        &start_pose_,
+        &start_vel_unscaled_,
+        &goal_vel_unscaled_,
+        &start_acc_unscaled_,
+        &goal_acc_unscaled_,
+        steps
+    );
 
+    return path;
 
-//     std::vector<std::pair<Eigen::MatrixXd, Eigen::VectorXd>>
+}
 
-
-// }
-
-std::vector<Eigen::VectorXd> EE_MotionPlanner::construct_line_(
-    Eigen::Vector3d start_p,
-    Eigen::Vector3d goal_p,
-    const Eigen::Vector3d* start_vel,
-    const Eigen::Vector3d* goal_vel,
-    const Eigen::Vector3d* start_acc,
-    const Eigen::Vector3d* goal_acc,
+std::vector<Eigen::MatrixXd> 
+PolynomialTrajectoryGenerator::planPath(
+    const Eigen::MatrixXd* goal_pose,
+    const Eigen::MatrixXd* start_pose,
+    const Eigen::VectorXd* start_vel,
+    const Eigen::VectorXd* goal_vel,
+    const Eigen::VectorXd* start_acc,
+    const Eigen::VectorXd* goal_acc,
     int steps
-){
-    std::vector<std::pair<Eigen::MatrixXd, Eigen::VectorXd>> constraints;
+) {
+    assert(2*(goal_pose->cols()-1)==start_vel->rows());
 
-    constraints.push_back({
-            generate_pow_vector_(0.0, order_),
-            start_p
-    });
-    constraints.push_back({
-            generate_pow_vector_(1.0, order_),
-            goal_p
-    });
+    int twist_size = 2*(goal_pose->rows()-1);
 
-    if (start_vel!=nullptr) {
-        constraints.push_back({
-            diff_(order_) * generate_pow_vector_(0.0, order_ - 1),
-            *start_vel
-        });
+    rel_pose_ = start_pose->lu().solve(*goal_pose).log();
+    
+    goal_p_unscaled_ = vee(rel_pose_);
+
+    std::cout << "goal p done" << std::endl;
+
+    start_p_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
+    
+    if (start_pose!=nullptr) 
+        start_pose_ = *start_pose; 
+    else 
+        start_pose_ = Eigen::MatrixXd::Identity(goal_pose->rows(), goal_pose->cols());
+
+    if (start_vel!=nullptr) 
+        start_vel_unscaled_ = *start_vel; 
+    else 
+        start_vel_unscaled_ = Eigen::VectorXd::Zero(twist_size);
+
+    if (start_acc!=nullptr) 
+        start_acc_unscaled_ = *start_acc; 
+    else 
+        start_acc_unscaled_ = Eigen::VectorXd::Zero(twist_size);
+
+    if (goal_vel!=nullptr) 
+        goal_vel_unscaled_ = *goal_vel; 
+    else 
+        goal_vel_unscaled_ = Eigen::VectorXd::Zero(twist_size);
+
+    if (goal_acc!=nullptr) 
+        goal_acc_unscaled_ = *goal_acc; 
+    else 
+        goal_acc_unscaled_ = Eigen::VectorXd::Zero(twist_size);
+
+    construct_line_(steps);
+
+    std::vector<Eigen::MatrixXd> path;
+
+    for (auto twist: line_){
+        path.push_back(hat(twist).exp());
     }
 
-    if (goal_vel!=nullptr) {
-        constraints.push_back({
-            diff_(order_) * generate_pow_vector_(1.0, order_ - 1),
-            *goal_vel
-        });
-    }
+    last_pose_ = start_pose_;
 
-    if (start_acc!=nullptr) {
-        constraints.push_back({
-            diff_(order_, 2) * generate_pow_vector_(0.0, order_ - 2),
-            *start_acc
-        });
-    }
+    return path;
 
-    if (goal_acc!=nullptr) {
-        constraints.push_back({
-            diff_(order_, 2) * generate_pow_vector_(1.0, order_ - 2),
-            *goal_acc
-        });
-    }
+}
 
+void PolynomialTrajectoryGenerator::construct_line_(int steps)
+{
+    std::cout << "Constructing Line" << std::endl;
     // coeff * A = b 
-    Eigen::MatrixXd A(order_ + 1, constraints.size());
-    Eigen::MatrixXd b(3, constraints.size());
-    Eigen::MatrixXd coeff(3, order_+1);
+    Eigen::MatrixXd b(goal_p_unscaled_.size(), 6);
+    Eigen::MatrixXd coeff(goal_p_unscaled_.size(), order_+1);
 
-    for (size_t i = 0; i < constraints.size(); ++i) {
-        A.col(i) = constraints[i].first;
-        b.col(i) = constraints[i].second;
-    }
+    b << 
+        start_p_unscaled_,
+        goal_p_unscaled_,
+        start_vel_unscaled_,
+        goal_vel_unscaled_,
+        start_acc_unscaled_,
+        goal_acc_unscaled_;
 
-    // std::cout << "A: \n" << A << std::endl;
-    // std::cout << "b: \n" << b << std::endl;
-
-    assert(b.cols() == A.cols());
-
-    if (constraints.size()>order_+1) {
-
-        Eigen::MatrixXd AtA = A * A.transpose();
-        coeff = b * A.transpose().llt().solve(AtA);
-    } else {
-
-        Eigen::MatrixXd AtA = A.transpose() * A;
-        coeff = b * AtA.llt().solve(A.transpose());
-    }
+    coeff = b*ccs_right_inv;
 
     // std::cout << std::fixed << std::setprecision(2);
     // std::cout << "coeff: \n" << coeff << std::endl;
 
     Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(steps, 0, 1);
 
-    std::vector<Eigen::VectorXd> line = evaluate_polynomial(t, coeff);
+    line_ = evaluate_polynomial(t, coeff);
 
-    return line;
 }
 
-Eigen::MatrixXd EE_MotionPlanner::diff_(int pol_order, int diff_order) 
+Eigen::MatrixXd 
+PolynomialTrajectoryGenerator::diff_(int pol_order, int diff_order) 
 {
     if (diff_order==0) return Eigen::MatrixXd::Identity(pol_order+1, pol_order+1);
 
@@ -164,7 +189,7 @@ Eigen::MatrixXd EE_MotionPlanner::diff_(int pol_order, int diff_order)
 }
 
 std::vector<Eigen::VectorXd>
-EE_MotionPlanner::evaluate_polynomial(const Eigen::VectorXd& t,
+PolynomialTrajectoryGenerator::evaluate_polynomial(const Eigen::VectorXd& t,
                     const Eigen::MatrixXd& coeff)
 {
     const int steps = t.size();
@@ -181,7 +206,8 @@ EE_MotionPlanner::evaluate_polynomial(const Eigen::VectorXd& t,
     return result;
 }
 
-Eigen::VectorXd EE_MotionPlanner::generate_pow_vector_(double s, int pow) {
+Eigen::VectorXd 
+PolynomialTrajectoryGenerator::generate_pow_vector_(double s, int pow) {
     Eigen::VectorXd vec(pow + 1);
     for (int i = 0; i <= pow; ++i) {
         vec(i) = std::pow(s, i);
@@ -189,7 +215,8 @@ Eigen::VectorXd EE_MotionPlanner::generate_pow_vector_(double s, int pow) {
     return vec;
 }
 
-Eigen::MatrixXd EE_MotionPlanner::generate_pow_vector_(const Eigen::VectorXd& s, int pow)
+Eigen::MatrixXd 
+PolynomialTrajectoryGenerator::generate_pow_vector_(const Eigen::VectorXd& s, int pow)
 {
     const int n = s.size();
     Eigen::MatrixXd mat(pow + 1, n);
@@ -207,6 +234,36 @@ Eigen::MatrixXd EE_MotionPlanner::generate_pow_vector_(const Eigen::VectorXd& s,
 
     return mat;
 }
+
+Eigen::VectorXd PolynomialTrajectoryGenerator::vee(const Eigen::MatrixXd m){
+    Eigen::MatrixXd symm = 0.5*(m - m.transpose());
+    Eigen::VectorXd v(2*(m.rows()-1));
+    v << m(0,1),
+         m(1,1),
+         m(2,1),
+         symm(2,1),
+         symm(0,2),
+         symm(1,0);
+
+    return v;
+}
+
+Eigen::MatrixXd PolynomialTrajectoryGenerator::hat(const Eigen::VectorXd v){
+    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(4,4);
+    M(0, 1) = -v(5);
+    M(0, 2) =  v(4);
+    M(1, 0) =  v(5);
+    M(1, 2) = -v(3);
+    M(2, 0) = -v(4);
+    M(2, 1) =  v(3);
+    M(0, 3) = v(0);
+    M(1, 3) = v(1);
+    M(2, 3) = v(2);
+
+    return M;
+}
+
+
 
 
 

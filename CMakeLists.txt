@@ -46,7 +46,7 @@ file(GLOB_RECURSE g1_pilot_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/base/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_ik/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_control/*.cpp"
-    # "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp"
     
 )
 add_library(g1_pilot ${g1_pilot_SOURCES})
@@ -69,12 +69,17 @@ if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     
     add_executable(test_ik test/arm_ik/test_ik.cpp)
-    add_executable(test_control test/arm_control/test_control.cpp)
     target_link_libraries(test_ik PRIVATE g1_pilot GTest::gtest_main)
+
+    add_executable(test_control test/arm_control/test_control.cpp)
     target_link_libraries(test_control PRIVATE g1_pilot GTest::gtest_main)
+
+    add_executable(test_mp_ik test/arm_mp/joint_traj.cpp)
+    target_link_libraries(test_mp_ik PRIVATE g1_pilot GTest::gtest_main)
 
     if(USE_CASADI)
         target_compile_definitions(test_ik PRIVATE USE_CASADI)
+        target_compile_definitions(test_mp_ik PRIVATE USE_CASADI)
     endif()
 
     # add_executable(math_unittest test/arm_mp/math_unittest.cpp)
@@ -88,6 +93,7 @@ if(BUILD_TESTING)
         gtest_discover_tests(test_control WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
         # gtest_discover_tests(math_unittest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
         # gtest_discover_tests(line_unittest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+        gtest_discover_tests(test_mp_ik WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
     endif()
 
 
@@ -122,10 +128,15 @@ if(ROS2_DEFAULT)
     find_package(sensor_msgs REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
+    add_executable(joint_traj_publisher src/joint_traj_publisher.cpp)
+
     target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
 
-    install (TARGETS ik_joint_state_publisher
+    target_link_libraries(joint_traj_publisher g1_pilot)
+    ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp sensor_msgs)
+
+    install (TARGETS ik_joint_state_publisher joint_traj_publisher
         DESTINATION lib/${PROJECT_NAME}
     )
 

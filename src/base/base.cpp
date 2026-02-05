@@ -1,12 +1,12 @@
-#include "g1_pilot/g1_pilot.h"
+#include "base/base.h"
 
 #include <iostream>
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/algorithm/model.hpp>
 
-#include "arm_control/arm_control.h"
+#include "arm_control/impedance_control.h"
 #include "arm_ik/robot_arm_ik.h"
-#include "arm_mp/motion_planner.h"
+#include "arm_mp/poly_traj_gen.h"
 
 namespace ArmPilot {
 
@@ -79,7 +79,7 @@ G1DualArm::G1DualArm(
         geom_upper_body_wo_palms
     );
     controller = new ImpedanceController(upper_body_wo_palms);
-    // motion_planner = new EE_MotionPlanner();
+    motion_planner = new PolynomialTrajectoryGenerator( );
 
 }
 
@@ -140,7 +140,7 @@ void G1DualArm::add_end_effector_frames() {
     // Add end-effector frames at elbow joints (without wrists)
     pinocchio::JointIndex left_elbow_id, right_elbow_id;
     
-    if (robot_config_.NUM_DOF==23){
+    if (robot_config_.NUM_DOF==29){
         left_elbow_id = robot_model_.getJointId("left_wrist_yaw_joint");
         right_elbow_id = robot_model_.getJointId("right_wrist_yaw_joint");
     } else{
@@ -149,9 +149,9 @@ void G1DualArm::add_end_effector_frames() {
 
     }
     pinocchio::SE3 left_placement(Eigen::Matrix3d::Identity(), 
-                                   Eigen::Vector3d(0.35, -0.075, 0));
+                                   Eigen::Vector3d(0.01, 0, 0));
     pinocchio::SE3 right_placement(Eigen::Matrix3d::Identity(), 
-                                    Eigen::Vector3d(0.35, 0.075, 0));
+                                    Eigen::Vector3d(0.01, 0, 0));
 
     robot_model_.addFrame(pinocchio::Frame("L_ee", left_elbow_id, 
                                              left_placement, pinocchio::OP_FRAME));

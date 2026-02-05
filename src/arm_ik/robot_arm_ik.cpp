@@ -212,7 +212,6 @@ JointState G1_29_ArmIK::solve_ik(
         opti_.set_value(param_tf_r_, eigen_to_casadi(right_wrist));
         opti_.set_value(var_q_last_, eigen_to_casadi(init_data_));
 
-        std::cout << "[G1_29_ArmIK] >>> Solving IK with CasADi..." << std::endl;
     
     #else // USE_CASADI
 
@@ -238,18 +237,13 @@ JointState G1_29_ArmIK::solve_ik(
     try {
 
         #ifdef USE_CASADI
-            std::cout << "[G1_29_ArmIK] >>> Starting optimization..." << std::endl;
+
             // Solve optimization problem
             casadi::OptiSol sol = opti_.solve();
             
             // Extract solution
             std::vector<double> sol_q_vec = static_cast<std::vector<double>>(sol.value(var_q_));
 
-            std::cout << "[G1_29_ArmIK] >>> IK Solution Found: ";
-            for (auto a: sol_q_vec) {
-                std::cout << a << ", ";
-            }
-            std::cout << std::endl;
         #else // USE_CASADI
             // Using interation method
             for (int i=0;;i++)
@@ -332,7 +326,6 @@ JointState G1_29_ArmIK::solve_ik(
 
         JointState result;
 
-        std::cout << "IK Solved for: ";
         for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
             result.name.push_back(model_.names[joint_id]);
             result.position.push_back(sol_q[model_.idx_qs[joint_id]]);

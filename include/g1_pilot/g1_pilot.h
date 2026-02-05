@@ -4,5 +4,6 @@
 #include "../base/base.h"
 #include "../arm_ik/robot_arm_ik.h"
 #include "../arm_control/impedance_control.h"
+#include "../arm_mp/poly_traj_gen.h"
 
 #endif

@@ -17,7 +17,7 @@ struct RobotConfig {
 class G1DualArm;
 class G1_29_ArmIK;
 class ImpedanceController;
-class EE_MotionPlanner;
+class PolynomialTrajectoryGenerator;
 
 class G1DualArm {
 
@@ -29,7 +29,7 @@ public:
 
     G1_29_ArmIK* ik;
     ImpedanceController* controller;
-    EE_MotionPlanner* motion_planner;
+    PolynomialTrajectoryGenerator* motion_planner;
 
 protected:
     void initialize_wrist_joints_to_lock();

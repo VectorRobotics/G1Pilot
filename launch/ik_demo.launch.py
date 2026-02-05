@@ -56,4 +56,10 @@ def generate_launch_description():
         arguments=['-d', LaunchConfiguration('rviz_config')],
     ))
 
+    ld.add_action(Node(
+        package='g1_pilot',
+        executable='ik_joint_state_publisher',
+        name='ik_joint_state_publisher',
+        output='screen',
+    ))
     return ld
