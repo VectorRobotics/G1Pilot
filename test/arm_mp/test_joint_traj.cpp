@@ -9,7 +9,7 @@ int main(){
     try{
         Eigen::Matrix4d left_target = Eigen::Matrix4d::Identity();
         Eigen::Matrix4d right_target = Eigen::Matrix4d::Identity();
-        right_target.block<3,1>(0,3) = Eigen::Vector3d(0.01,0,0);
+        right_target.block<3,1>(0,3) = Eigen::Vector3d(0.3,-0.149,0.095);
 
         auto handle = G1DualArm();
 

@@ -74,7 +74,7 @@ if(BUILD_TESTING)
     add_executable(test_control test/arm_control/test_control.cpp)
     target_link_libraries(test_control PRIVATE g1_pilot GTest::gtest_main)
 
-    add_executable(test_mp_ik test/arm_mp/joint_traj.cpp)
+    add_executable(test_mp_ik test/arm_mp/test_traj_gen.cpp)
     target_link_libraries(test_mp_ik PRIVATE g1_pilot GTest::gtest_main)
 
     if(USE_CASADI)
@@ -126,6 +126,7 @@ if(ROS2_DEFAULT)
     find_package(ament_index_cpp REQUIRED)
     find_package(rclcpp REQUIRED)
     find_package(sensor_msgs REQUIRED)
+    find_package(nav_msgs REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(joint_traj_publisher src/joint_traj_publisher.cpp)
@@ -134,7 +135,7 @@ if(ROS2_DEFAULT)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
 
     target_link_libraries(joint_traj_publisher g1_pilot)
-    ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp sensor_msgs)
+    ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp nav_msgs sensor_msgs)
 
     install (TARGETS ik_joint_state_publisher joint_traj_publisher
         DESTINATION lib/${PROJECT_NAME}

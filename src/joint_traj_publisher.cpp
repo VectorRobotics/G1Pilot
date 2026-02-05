@@ -8,6 +8,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem> // Requires C++17
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "nav_msgs/msg/path.hpp"
 
 #include <g1_pilot/g1_pilot.h>
 
@@ -22,6 +23,7 @@ public:
   {
     // Create a publisher on the "joint_states" topic
     publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("traj/joint_states", 10);
+    path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("/traj", 10);
 
     // Timer to call the callback at 10Hz
     timer_ = this->create_wall_timer(3s, std::bind(&JointTrajPublisher::timer_callback, this));
@@ -47,8 +49,9 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
 
-    left_target = create_se3(0.7071, 0, 0.7071, 0, 0.5, 0.3, 1.2);
-    right_target = create_se3(0.7071, 0, -0.7071, 0, 0.5, 0.3, 1.2);
+    left_target = create_se3(1,0,0,0, 0.21, 0.149, 0.095);
+    right_target = create_se3(1,0,0,0, 0.21, -0.149, 0.095);
+    right_start = right_target;
     ext_force_left = Eigen::VectorXd::Zero(6);
     ext_force_right = Eigen::VectorXd::Zero(6);
 
@@ -64,6 +67,7 @@ public:
 
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;
+    Eigen::Matrix4d right_start;
     Eigen::VectorXd ext_force_left;
     Eigen::VectorXd ext_force_right;
 
@@ -76,24 +80,26 @@ private:
   {
     auto message = sensor_msgs::msg::JointState();
 
-    
-
-    right_target.block<3,1>(0,3) = Eigen::Vector3d(0.01,0,0);
+    right_target.block<3,1>(0,3) = Eigen::Vector3d(0.3,-0.149,0.195);
 
     traj = arm_->motion_planner->planTrajectory(
-        new Eigen::MatrixXd(right_target)
+        new Eigen::MatrixXd(right_target),
+        new Eigen::MatrixXd(right_start)
     );
+
+    path_publisher_->publish(convertToPath(traj,"pelvis"));
 
     for (auto pose: traj){
         auto result = arm_->ik->solve_ik(left_target, pose);
         auto q = Eigen::VectorXd::Map(result.position.data(), result.position.size());
-        std::cout << "IK solution q: " << q.transpose() << std::endl;
+        // std::cout << "IK solution q: " << q.transpose() << std::endl;
         message.header.stamp = this->get_clock()->now();
         message.name = result.name;
         message.position = result.position;
         message.velocity = result.velocity;
         message.effort = result.effort;
         publisher_->publish(message);
+        rclcpp::sleep_for(std::chrono::milliseconds(100));
     }
     t+=1;
     RCLCPP_INFO(this->get_logger(), "Published Trajectory Joint States at time: %d", t);
@@ -116,6 +122,38 @@ private:
 
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
+
+    nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& poses, std::string frame_id) {
+        nav_msgs::msg::Path path;
+        path.header.frame_id = frame_id;
+        path.header.stamp = this->get_clock()->now();
+
+        for (const auto& T : poses) {
+            geometry_msgs::msg::PoseStamped pose_stamped;
+            pose_stamped.header = path.header;
+
+            // 1. Extract Translation
+            pose_stamped.pose.position.x = T(0, 3);
+            pose_stamped.pose.position.y = T(1, 3);
+            pose_stamped.pose.position.z = T(2, 3);
+
+            // 2. Extract Rotation and convert to Quaternion
+            // Note: .block<3,3>(0,0) extracts the upper-left rotation matrix
+            Eigen::Quaterniond q(T.block<3, 3>(0, 0));
+            q.normalize();
+            
+            pose_stamped.pose.orientation.x = q.x();
+            pose_stamped.pose.orientation.y = q.y();
+            pose_stamped.pose.orientation.z = q.z();
+            pose_stamped.pose.orientation.w = q.w();
+
+            path.poses.push_back(pose_stamped);
+        }
+
+        return path;
+    };
+
 };
 
 int main(int argc, char * argv[])

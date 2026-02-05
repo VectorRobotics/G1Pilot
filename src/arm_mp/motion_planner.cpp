@@ -106,7 +106,11 @@ PolynomialTrajectoryGenerator::planPath(
     
     goal_p_unscaled_ = vee(rel_pose_);
 
-    std::cout << "goal p done" << std::endl;
+    // std::cout << "Constructing Path" << std::endl;
+    // std::cout << "start" << *start_pose << std::endl;
+    // std::cout << "end" << *goal_pose << std::endl;
+    // std::cout << "rel" << rel_pose_ << std::endl;
+    // std::cout << "goal t " << goal_p_unscaled_ <<std::endl; 
 
     start_p_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
     
@@ -140,7 +144,7 @@ PolynomialTrajectoryGenerator::planPath(
     std::vector<Eigen::MatrixXd> path;
 
     for (auto twist: line_){
-        path.push_back(hat(twist).exp());
+        path.push_back(start_pose_*(hat(twist).exp()));
     }
 
     last_pose_ = start_pose_;
@@ -151,7 +155,9 @@ PolynomialTrajectoryGenerator::planPath(
 
 void PolynomialTrajectoryGenerator::construct_line_(int steps)
 {
-    std::cout << "Constructing Line" << std::endl;
+    // std::cout << "Constructing Line" << std::endl;
+    // std::cout << "start" << start_p_unscaled_ << std::endl;
+    // std::cout << "end" << goal_p_unscaled_ << std::endl;
     // coeff * A = b 
     Eigen::MatrixXd b(goal_p_unscaled_.size(), 6);
     Eigen::MatrixXd coeff(goal_p_unscaled_.size(), order_+1);
@@ -238,9 +244,9 @@ PolynomialTrajectoryGenerator::generate_pow_vector_(const Eigen::VectorXd& s, in
 Eigen::VectorXd PolynomialTrajectoryGenerator::vee(const Eigen::MatrixXd m){
     Eigen::MatrixXd symm = 0.5*(m - m.transpose());
     Eigen::VectorXd v(2*(m.rows()-1));
-    v << m(0,1),
-         m(1,1),
-         m(2,1),
+    v << m(0,3),
+         m(1,3),
+         m(2,3),
          symm(2,1),
          symm(0,2),
          symm(1,0);
