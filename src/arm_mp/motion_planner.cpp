@@ -35,18 +35,18 @@ PolynomialTrajectoryGenerator::~PolynomialTrajectoryGenerator() {}
 std::vector<Eigen::MatrixXd> PolynomialTrajectoryGenerator::planTrajectory(
     const Eigen::MatrixXd* goal_pose,
     const Eigen::MatrixXd* start_pose,
-    double duration,
-    double time_step,
     const Eigen::VectorXd* start_vel,
     const Eigen::VectorXd* goal_vel,
     const Eigen::VectorXd* start_acc,
     const Eigen::VectorXd* goal_acc,
+    double time_step,
     const double MAX_LIN_VEL,
     const double MAX_ANG_VEL,
     const double MAX_LIN_ACC,
     const double MAX_ANG_ACC
 ) {
-    int steps = ceil(duration/time_step);
+    int steps = 100;
+    double duration = steps*time_step;
     int twist_size = 2*(goal_pose->rows()-1);
 
     if (start_pose!=nullptr) 

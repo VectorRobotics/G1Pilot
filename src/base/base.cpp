@@ -4,9 +4,9 @@
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/algorithm/model.hpp>
 
-#include "arm_control/impedance_control.h"
-#include "arm_ik/robot_arm_ik.h"
-#include "arm_mp/poly_traj_gen.h"
+#include "arm_control/arm_control.h"
+#include "arm_ik/arm_ik.h"
+#include "arm_mp/arm_mp.h"
 
 namespace ArmPilot {
 
@@ -79,7 +79,7 @@ G1DualArm::G1DualArm(
         geom_upper_body_wo_palms
     );
     controller = new ImpedanceController(upper_body_wo_palms);
-    motion_planner = new PolynomialTrajectoryGenerator( );
+    motion_planner = new VisualServoPlanner();
 
 }
 

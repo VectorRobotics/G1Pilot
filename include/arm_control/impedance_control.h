@@ -1,4 +1,4 @@
-#include "arm_control/arm_control.h"
+#include "arm_control/base_controller.h"
 
 namespace ArmPilot {
 
@@ -9,14 +9,36 @@ public:
         pinocchio::Model& model
     ) : ArmController(model) {};
 
-    Eigen::VectorXd control_left_arm(
+    JointState ImpedanceController::control_both_arms(
+    Eigen::VectorXd current_joint_pos,
+    Eigen::VectorXd current_joint_vel,
+    Eigen::Matrix4d desired_l_ee_pose,
+    Eigen::Matrix4d desired_r_ee_pose,
+    Eigen::VectorXd desired_l_ee_vel = Eigen::VectorXd::Zero(6),
+    Eigen::VectorXd desired_r_ee_vel = Eigen::VectorXd::Zero(6)
+    );
+
+    JointState ImpedanceController::control_both_arms(
+    Eigen::VectorXd current_joint_pos,
+    Eigen::Matrix4d desired_l_ee_pose,
+    Eigen::Matrix4d desired_r_ee_pose,
+    ){
+        control_both_arms(
+            current_joint_pos,
+            (current_joint_pos - last_joint_pos_)/dt,
+            desired_l_ee_pose,
+            desired_r_ee_pose
+        )
+    };
+
+    JointState control_left_arm(
     Eigen::VectorXd current_joint_pos,
     Eigen::VectorXd current_joint_vel,
     Eigen::Matrix4d desired_ee_pose,
     Eigen::VectorXd desired_ee_vel = Eigen::VectorXd::Zero(6)
     );
 
-    Eigen::VectorXd control_left_arm(
+    JointState control_left_arm(
     Eigen::VectorXd current_joint_pos,
     Eigen::Matrix4d desired_ee_pose
     ){
@@ -27,14 +49,14 @@ public:
         );
     };
 
-    Eigen::VectorXd control_right_arm(
+    JointState control_right_arm(
     Eigen::VectorXd current_joint_pos,
     Eigen::VectorXd current_joint_vel,
     Eigen::Matrix4d desired_ee_pose,
     Eigen::VectorXd desired_ee_vel = Eigen::VectorXd::Zero(6)
     );
 
-    Eigen::VectorXd control_right_arm(
+    JointState control_right_arm(
     Eigen::VectorXd current_joint_pos,
     Eigen::Matrix4d desired_ee_pose
     ){
@@ -61,6 +83,8 @@ private:
     pinocchio::Motion error_twist_in_ee_frame_;
 
     pinocchio::Motion error_vel_in_ee_frame_;
+
+    Eigen::VectorXd torques_dual_arm_;
 
 }; // ImpedanceController class
 } // ArmControl namespace

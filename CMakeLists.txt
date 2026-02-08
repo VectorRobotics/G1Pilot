@@ -23,7 +23,7 @@ list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
 
 
 # ---- Options & Dependencies ---- #
-set(COAL_DISABLE_HPP_FCL_WARNINGS TRUE)
+
 option(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" ON)
 if(BUILD_WITH_CASADI_SUPPORT)
     set(USE_CASADI ON)
@@ -34,7 +34,7 @@ endif()
 
 find_package(pinocchio REQUIRED)
 
-option(BUILD_TESTING "Build tests" OFF)
+option(BUILD_TESTING "Build tests" ON)
 cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
 cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "NOT ROS2_DEFAULT" OFF)
 
@@ -50,6 +50,8 @@ file(GLOB_RECURSE g1_pilot_SOURCES
     
 )
 add_library(g1_pilot ${g1_pilot_SOURCES})
+
+target_compile_definitions(g1_pilot PUBLIC COAL_DISABLE_HPP_FCL_WARNINGS)
 
 target_include_directories(g1_pilot PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -20,16 +20,6 @@ namespace ArmPilot {
  */
 
 /**
- * @brief Return Type for IK.
- */
-struct JointState {
-    std::vector<std::string> name;
-    std::vector<double> position;
-    std::vector<double> velocity;
-    std::vector<double> effort;
-};
-
-/**
  * @brief G1_29_ArmIK - Inverse kinematics solver for G1 robot with 29 DOF
  */
 class G1_29_ArmIK {
