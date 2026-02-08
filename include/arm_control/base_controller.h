@@ -18,8 +18,8 @@ public:
     Eigen::MatrixXd get_current_left_ee_pose(){return current_left_ee_pose_.toHomogeneousMatrix();};
     Eigen::MatrixXd get_current_right_ee_pose(){return current_right_ee_pose_.toHomogeneousMatrix();};
 
-    Eigen::MatrixXd get_current_left_ee_error(){return l_error_magnitude;};
-    Eigen::MatrixXd get_current_right_ee_error(){return r_error_magnitude;};
+    double get_current_left_ee_error(){return l_error_magnitude;};
+    double get_current_right_ee_error(){return r_error_magnitude;};
 
     JointState get_grav_ff(Eigen::VectorXd current_joint_pos);
 

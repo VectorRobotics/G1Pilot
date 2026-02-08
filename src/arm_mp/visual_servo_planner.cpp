@@ -117,8 +117,8 @@ void VisualServoPlanner::construct_line_(int steps)
     // std::cout << "end" << goal_p_unscaled_ << std::endl;
 
     double dist_to_int = std::sqrt(
-        goal_p_unscaled_.linear().squaredNorm() + 
-        goal_p_unscaled_.angular().squaredNorm()*0.09
+        goal_p_unscaled_.head<3>().squaredNorm() + 
+        goal_p_unscaled_.tail<3>().squaredNorm()*0.09
     );
 
     if (dist_to_int < 0.06){
@@ -139,7 +139,7 @@ void VisualServoPlanner::construct_line_(int steps)
             ccs_right_inv = ccsTccs.llt().solve(constraint_coeff_scaling.transpose());
         }
 
-        PolynomialTrajectoryGenerator::contruct_line_(steps);
+        PolynomialTrajectoryGenerator::construct_line_(steps);
         return;
     }
 
