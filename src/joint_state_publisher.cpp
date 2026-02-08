@@ -50,8 +50,8 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
 
-    left_target = create_se3(0.7071, 0, 0.7071, 0, 0.5, 0.3, 1.2);
-    right_target = create_se3(0.7071, 0, -0.7071, 0, 0.5, 0.3, 1.2);
+    left_target = create_se3(.0, -1.0, 0.0, 0, 0.2, 0.2, 0.1);
+    right_target = create_se3(.0, -1.0, 0.0, 0, 0.2, -0.2, 0.1);
     ext_force_left = Eigen::VectorXd::Zero(6);
     ext_force_right = Eigen::VectorXd::Zero(6);
 

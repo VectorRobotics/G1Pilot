@@ -1,4 +1,4 @@
-#include "arm_control/arm_control.h"
+#include "arm_control/base_controller.h"
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
@@ -36,12 +36,30 @@ void ArmController::update()
     current_left_ee_vel_in_ee_frame_ = pinocchio::getFrameVelocity(model_, data_,left_ee_id_);
     current_right_ee_vel_in_ee_frame_ = pinocchio::getFrameVelocity(model_, data_,right_ee_id_);
 
-    control_torques = Eigen::VectorXd::Zero(model_.nv);
+    l_control_torques = Eigen::VectorXd::Zero(model_.nv);
+    r_control_torques = Eigen::VectorXd::Zero(model_.nv);
+    torques = Eigen::VectorXd::Zero(model_.nv);
 
-    pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos_);
-    grav_torques = data_.g;
+    get_grav_ff(current_joint_pos_);
 
     last_joint_pos_ = current_joint_pos_;
+}
+
+JointState ArmController::get_grav_ff(Eigen::VectorXd current_joint_pos){
+        pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos_);
+        grav_torques = data_.g;
+
+        JointState result;
+
+        for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
+            result.name.push_back(model_.names[joint_id]);
+            result.position.push_back(0);
+            result.velocity.push_back(0);
+            result.effort.push_back(grav_torques[model_.idx_vs[joint_id]]);
+        }
+
+        return result;
+
 }
 
 } // ArmControl namespace

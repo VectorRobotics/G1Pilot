@@ -19,22 +19,21 @@ class PolynomialTrajectoryGenerator {
          * @param time_step Time step for the trajectory points
          * @return Vector of poses representing the trajectory
          */
-        std::vector<Eigen::MatrixXd> planTrajectory(
+        virtual std::vector<Eigen::MatrixXd> planTrajectory(
             const Eigen::MatrixXd* goal_pose,
             const Eigen::MatrixXd* start_pose = nullptr,
-            double duration = 1,
-            double time_step = 0.05,
             const Eigen::VectorXd* start_vel = nullptr,
             const Eigen::VectorXd* goal_vel = nullptr,
             const Eigen::VectorXd* start_acc = nullptr,
             const Eigen::VectorXd* goal_acc = nullptr,
+            double time_step = 0.05,
             const double MAX_LIN_VEL = 0.05,
             const double MAX_ANG_VEL = 4.0,
             const double MAX_LIN_ACC = 0.05,
             const double MAX_ANG_ACC = 4.0
         );
 
-        std::vector<Eigen::MatrixXd> planPath(
+        virtual std::vector<Eigen::MatrixXd> planPath(
             const Eigen::MatrixXd* goal_pose,
             const Eigen::MatrixXd* start_pose = nullptr,
             const Eigen::VectorXd* start_vel = nullptr,
@@ -45,7 +44,7 @@ class PolynomialTrajectoryGenerator {
         );
 
     protected:
-        void construct_line_(int steps);
+        virtual void construct_line_(int steps);
 
         Eigen::MatrixXd generate_pow_vector_(const Eigen::VectorXd& s, int pow);
         Eigen::VectorXd generate_pow_vector_(double s, int pow);

@@ -54,6 +54,8 @@ public:
     right_start = right_target;
     ext_force_left = Eigen::VectorXd::Zero(6);
     ext_force_right = Eigen::VectorXd::Zero(6);
+    tiny_side_vel = Eigen::VectorXd::Zero(6);
+    tiny_side_vel(1) =-0.2; // Only for right arm
 
     t = 0;
 
@@ -73,6 +75,8 @@ public:
 
     std::vector<Eigen::MatrixXd> traj;
 
+    Eigen::VectorXd tiny_side_vel;
+
     int t;
 
 private:
@@ -80,11 +84,12 @@ private:
   {
     auto message = sensor_msgs::msg::JointState();
 
-    right_target.block<3,1>(0,3) = Eigen::Vector3d(0.3,-0.149,0.195);
+    right_target.block<3,1>(0,3) = right_start.block<3,1>(0,3) + Eigen::Vector3d(0.09,-0.05,0.1);
 
     traj = arm_->motion_planner->planTrajectory(
         new Eigen::MatrixXd(right_target),
-        new Eigen::MatrixXd(right_start)
+        new Eigen::MatrixXd(right_start),
+        &tiny_side_vel
     );
 
     path_publisher_->publish(convertToPath(traj,"pelvis"));

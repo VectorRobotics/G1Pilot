@@ -14,10 +14,18 @@ struct RobotConfig {
     int NUM_DOF = 29;
 };
 
+struct JointState {
+    std::vector<std::string> name;
+    std::vector<double> position;
+    std::vector<double> velocity;
+    std::vector<double> effort;
+};
+
 class G1DualArm;
 class G1_29_ArmIK;
 class ImpedanceController;
 class PolynomialTrajectoryGenerator;
+class VisualServoPlanner;
 
 class G1DualArm {
 
@@ -29,7 +37,7 @@ public:
 
     G1_29_ArmIK* ik;
     ImpedanceController* controller;
-    PolynomialTrajectoryGenerator* motion_planner;
+    VisualServoPlanner* motion_planner;
 
 protected:
     void initialize_wrist_joints_to_lock();

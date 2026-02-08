@@ -2,8 +2,8 @@
 #define G1_PILOT_H
 
 #include "../base/base.h"
-#include "../arm_ik/robot_arm_ik.h"
-#include "../arm_control/impedance_control.h"
-#include "../arm_mp/poly_traj_gen.h"
+#include "../arm_ik/arm_ik.h"
+#include "../arm_control/arm_control.h"
+#include "../arm_mp/arm_mp.h"
 
 #endif
