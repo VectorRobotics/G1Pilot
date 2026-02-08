@@ -22,10 +22,26 @@ python ik_mujoco_test.py
 ### Mujoco Python Binding Issue
 https://github.com/google-deepmind/mujoco/issues/1292
 
-### Import "unitree_sdk2py.core.channel" could not be resolved 
+### Could not locate cyclonedds
 
-```zsh
-uv pip install . # don't install in editable mode
+If `pip3 install -e .` fails with `Could not locate cyclonedds`, follow the
+official instructions from `unitree_sdk2_python`:
+
+```sh
+cd ~
+git clone https://github.com/eclipse-cyclonedds/cyclonedds -b releases/0.10.x
+cd cyclonedds && mkdir build install && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=../install
+cmake --build . --target install
 ```
-https://github.com/unitreerobotics/unitree_mujoco/issues/110
+
+Then:
+
+```sh
+cd ~/unitree_sdk2_python
+export CYCLONEDDS_HOME="~/cyclonedds/install"
+pip3 install -e .
+```
+
+For details, see: https://pypi.org/project/cyclonedds/#installing-with-pre-built-binaries
 

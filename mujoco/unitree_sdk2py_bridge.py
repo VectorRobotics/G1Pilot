@@ -15,7 +15,7 @@ from unitree_sdk2py.utils.thread import RecurrentThread
 from sensor_msgs.msg import JointState
 
 import config
-if config.ROBOT=="g1":
+if config.ROBOT.startswith("g1"):
     from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowCmd_
     from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowState_
     from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowState_ as LowState_default
