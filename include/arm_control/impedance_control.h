@@ -9,7 +9,7 @@ public:
         pinocchio::Model& model
     ) : ArmController(model) {};
 
-    JointState ImpedanceController::control_both_arms(
+    JointState control_both_arms(
     Eigen::VectorXd current_joint_pos,
     Eigen::VectorXd current_joint_vel,
     Eigen::Matrix4d desired_l_ee_pose,
@@ -18,17 +18,17 @@ public:
     Eigen::VectorXd desired_r_ee_vel = Eigen::VectorXd::Zero(6)
     );
 
-    JointState ImpedanceController::control_both_arms(
+    JointState control_both_arms(
     Eigen::VectorXd current_joint_pos,
     Eigen::Matrix4d desired_l_ee_pose,
-    Eigen::Matrix4d desired_r_ee_pose,
+    Eigen::Matrix4d desired_r_ee_pose
     ){
         control_both_arms(
             current_joint_pos,
             (current_joint_pos - last_joint_pos_)/dt,
             desired_l_ee_pose,
             desired_r_ee_pose
-        )
+        );
     };
 
     JointState control_left_arm(

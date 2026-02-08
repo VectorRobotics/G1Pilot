@@ -47,7 +47,9 @@ int main(){
 
         auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         std::cout << "control time: " << elapsed_us << " us" << std::endl;
-        std::cout << "Control solution tau: " << result.transpose() << std::endl;
+        std::cout << "Control solution tau: ";
+        for (auto c: result.effort) std::cout<<c<<", ";
+        std::cout<<std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Exception during computing control: " << e.what() << std::endl;
