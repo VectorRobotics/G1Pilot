@@ -1,7 +1,7 @@
 # G1Pilot
   ![Alt text](docs/ik.gif)
 
-`g1_pilot` is a ROS2 package and also contains a C++ library for controls, inverse kinematics and collision detection (motion planing coming soon) for the Unitree G1 HUmanoid robot.
+`g1_pilot` is a ROS2 package and also contains a C++ library for controls, inverse kinematics, collision detection, and motion planning for the upper body of the Unitree G1 HUmanoid robot.
 
 ## Key features
 1. `arm_pilot` C++ Library
@@ -58,7 +58,7 @@ Follow these instructions.
    ```bash
    git clone https://github.com/VectorRobotics/G1Pilot.git
    ```
-2. Install dependenceis and set environment variables
+2. Install dependencies and set environment variables
    ```bash
    cd G1Pilot
    chmod +x download_dependencies.sh
@@ -68,7 +68,7 @@ Follow these instructions.
    ```bash
    mkdir build install && cd build
    ```
-4. Configure, make and install
+4. Configure, make, and install
    ```bash
    cmake ..
    make -j4
@@ -78,15 +78,17 @@ Follow these instructions.
 # How to use
 
 ## Use with ROS2
-Run the launch file
-```bash
-ros2 launch g1_pilot display.launch.py
-```
+The package provides 3 nodes and 4 launch files.
 
-If you just want to run the node
-```bash
-ros2 run g1_pilot ik_joint_state_publisher
-```
+### Nodes
+1. `ik_joint_state_publisher` currently runs a demo of IK moving both the arms sinusoidally in different directions.
+2. `joint_traj_publisher` currently runs a demo of motion planning with the right arm commanded to move front and up.
+3. `visual_servoing` complete visual servoing given a topic where pose of the target is published. The x axis is expected to be inside the plane at which contact is supposed to be made. (Yet to be tested)
+
+### Launch files
+1. `display.launch.py` shows the robot in rviz with robot_state_publisher and joint_state_publisher ready.
+2. `demo_ik.launch.py` demos ik
+3. `joint_traj_demo.launch.py` demos motion planning
 
 ## Use as C++ library
 
