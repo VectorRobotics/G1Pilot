@@ -10,7 +10,7 @@ add_compile_options(-w -Wall -Wextra -Wpedantic)
 
 # ---- Integration & Path Logic ---- #
 
-if(DEFINED ENV{COLCON_PREFIX_PATH})
+if(DEFINED ENV{AMENT_PREFIX_PATH} OR DEFINED ENV{COLCON_PREFIX_PATH} OR DEFINED ENV{ROS_DISTRO})
     set(ROS2_DEFAULT ON)
 else()
     set(ROS2_DEFAULT OFF)

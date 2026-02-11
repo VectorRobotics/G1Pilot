@@ -9,3 +9,6 @@ compile_commands.json
 *.so
 __pycache__/
 *.pyc
+build
+.vscode
+**/*cache*
