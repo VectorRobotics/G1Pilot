@@ -51,11 +51,13 @@ JointState ArmController::get_grav_ff(Eigen::VectorXd current_joint_pos){
 
         JointState result;
 
-        for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
+        for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
             result.name.push_back(model_.names[joint_id]);
             result.position.push_back(0);
             result.velocity.push_back(0);
-            result.effort.push_back(grav_torques[model_.idx_vs[joint_id]]);
+            result.effort.push_back(
+                grav_torques[ model_.joints[joint_id].idx_v()]
+            );
         }
 
         return result;

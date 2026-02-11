@@ -1,3 +1,14 @@
+build/
+install/
+log/
+.vscode/
+.cache/
+compile_commands.json
+*.a
+*.o
+*.so
+__pycache__/
+*.pyc
 build
 .vscode
 **/*cache*
