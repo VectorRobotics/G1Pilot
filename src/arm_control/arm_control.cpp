@@ -46,7 +46,7 @@ void ArmController::update()
 }
 
 JointState ArmController::get_grav_ff(Eigen::VectorXd current_joint_pos){
-        pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos_);
+        pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos);
         grav_torques = data_.g;
 
         JointState result;

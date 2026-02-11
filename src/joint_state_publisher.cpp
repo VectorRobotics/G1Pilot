@@ -97,9 +97,8 @@ private:
     );
 
     Eigen::VectorXd result_position_copy = Eigen::Map<Eigen::VectorXd>(result.position.data(), result.position.size());
-    std::cout << result_position_copy;
     JointState result2 = arm_ik->controller->get_grav_ff(result_position_copy);
-    std::cout << result2.effort;
+
     message.name = result.name;
     message.position = result.position;
     message.velocity = result.velocity;
