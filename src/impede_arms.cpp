@@ -16,6 +16,7 @@ using namespace std::chrono_literals;
 using namespace ArmPilot;
 
 class ImpedeArms : public rclcpp::Node
+
 {
 public:
   ImpedeArms() : Node("ik_joint_state_publisher_cpp")
