@@ -15,16 +15,17 @@
 using namespace std::chrono_literals;
 using namespace ArmPilot;
 
-class JointStatePublisher : public rclcpp::Node
+class ImpedeArms : public rclcpp::Node
 {
 public:
-  JointStatePublisher() : Node("ik_joint_state_publisher_cpp")
+  ImpedeArms() : Node("ik_joint_state_publisher_cpp")
   {
     // Create a publisher on the "joint_states" topic
-    publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("ik/joint_states", 10);
-
-    // Timer to call the callback at 10Hz
-    timer_ = this->create_wall_timer(100ms, std::bind(&JointStatePublisher::timer_callback, this));
+    publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("controller/joint_states", 10);
+    subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
+        "feedback", 10, 
+        std::bind(&ImpedeArms::handle_new_state_, this, std::placeholders::_1)
+    );
     
     RCLCPP_INFO(this->get_logger(), "IK Joint State Publisher Node has started.");
 
@@ -43,71 +44,55 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "Initiaizing IK Classes");
 
-    // arm_ik = new G1_29_ArmIK_NoWrists(false, false, &config);
-    // arm_ik = std::make_unique<G1_29_ArmIK>();   
-    arm_ik = std::make_unique<G1DualArm>(&config);
+    arm_handle_ = std::make_unique<G1DualArm>(&config);
 
 
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
-
-    left_target = create_se3(.0, -1.0, 0.0, 0, 0.2, 0.2, 0.1);
-    right_target = create_se3(.0, -1.0, 0.0, 0, 0.2, -0.2, 0.1);
-    ext_force_left = Eigen::VectorXd::Zero(6);
-    ext_force_right = Eigen::VectorXd::Zero(6);
 
     t = 0;
 
 
   }
 
-
-    // Create IK solver with collision detection
-    // G1_29_ArmIK_NoWrists* arm_ik;
-    std::unique_ptr<G1DualArm> arm_ik;
-
+    std::unique_ptr<G1DualArm> arm_handle_;
+    Eigen::VectorXd current_joint_angles_;
+    Eigen::VectorXd current_joint_vels_;
+    JointState result;
+    sensor_msgs::msg::JointState reply;
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;
-    Eigen::VectorXd ext_force_left;
-    Eigen::VectorXd ext_force_right;
 
     int t;
 
 private:
-  void timer_callback()
+  void handle_new_state_(sensor_msgs::msg::JointState::UniquePtr msg)
   {
-    auto message = sensor_msgs::msg::JointState();
+    left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+    right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
 
-    message.header.stamp = this->get_clock()->now();
+    current_joint_angles_ = Eigen::Map<Eigen::VectorXd>(msg->position.data(),msg->position.size());
+    current_joint_vels_ = Eigen::Map<Eigen::VectorXd>(msg->velocity.data(),msg->velocity.size());
 
-    double x = 0.2 + 0.15 * sin(0.1 * t);
-    left_target = create_se3(1.0, 0.0, 0.0, 0, x, 0.2, 0.1);
-    right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.0-x, 0.1);
-    RCLCPP_INFO(this->get_logger(), "Starting IK Joint States at time: %d", t);
-
-    // auto result = arm_ik->solve_ik(
-    //     left_target, right_target,
-    //     nullptr, nullptr,  // current q, dq
-    //     &ext_force_left, &ext_force_right,
-    //     true  // enable collision checking
-    // );
-
-    auto result = arm_ik->ik->solve_ik(
-        left_target, right_target,
-        nullptr, nullptr  // current q, dq
+    result = arm_handle_->controller->control_both_arms(
+        current_joint_angles_, 
+        current_joint_vels,
+        left_target, 
+        right_target
     );
 
-    Eigen::VectorXd result_position_copy = Eigen::Map<Eigen::VectorXd>(result.position.data(), result.position.size());
-    JointState result2 = arm_ik->controller->get_grav_ff(result_position_copy);
+    reply = sensor_msgs::msg::JointState();
 
-    message.name = result.name;
-    message.position = result.position;
-    message.velocity = result.velocity;
-    message.effort = result2.effort;
+    reply.header.stamp = this->get_clock()->now();
+
+    reply.name = result.name;
+    reply.position = result.position;
+    reply.velocity = result.velocity;
+    reply.effort = result.effort;
 
     t+=1;
-    RCLCPP_INFO(this->get_logger(), "Published IK Joint States at time: %d with x=%f", t, x);
+    RCLCPP_INFO(this->get_logger(), "Published IK Joint States at time: %d", t);
 
-    publisher_->publish(message);
+    publisher_->publish(reply);
   }
 
     Eigen::Matrix4d create_se3(const Eigen::Quaterniond& q, const Eigen::Vector3d& t) {
@@ -125,14 +110,14 @@ private:
         return create_se3(q, t);
     }
 
-    rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
+    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr subscriber_;
 };
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<JointStatePublisher>());
+  rclcpp::spin(std::make_shared<ImpedeArms>());
   rclcpp::shutdown();
   return 0;
 }

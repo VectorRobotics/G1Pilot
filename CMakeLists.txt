@@ -131,15 +131,27 @@ if(ROS2_DEFAULT)
     find_package(nav_msgs REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
+    add_executable(impede_arms src/impede_arms.cpp)
     add_executable(joint_traj_publisher src/joint_traj_publisher.cpp)
+    add_executable(visual_servo src/visual_servo.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
 
+    target_link_libraries(impede_arms g1_pilot)
+    ament_target_dependencies(impede_arms ament_index_cpp rclcpp sensor_msgs)
+
     target_link_libraries(joint_traj_publisher g1_pilot)
     ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp nav_msgs sensor_msgs)
 
-    install (TARGETS ik_joint_state_publisher joint_traj_publisher
+    target_link_libraries(visual_servo g1_pilot)
+    ament_target_dependencies(visual_servo ament_index_cpp rclcpp nav_msgs sensor_msgs)
+
+    install (TARGETS 
+        ik_joint_state_publisher 
+        impede_arms
+        joint_traj_publisher
+        visual_servo
         DESTINATION lib/${PROJECT_NAME}
     )
 

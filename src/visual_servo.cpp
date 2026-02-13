@@ -1,14 +1,16 @@
 #include <g1_pilot/g1_pilot.h>
 
-#include "rclcpp/rclcpp.h"
+#include "rclcpp/rclcpp.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "nav_msgs/msg/Path.hpp"
+#include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 
 #include <algorithm>
+#include <chrono>
 
 using namespace ArmPilot;
+using namespace std::chrono_literals;
 
 class VisualServo : public rclcpp::Node
 {
@@ -40,15 +42,21 @@ public:
         joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("servo/joint_states",10);
 
         /* Subscribers */
-        goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/goal_pose",10,handle_new_goal_pose_);
-        feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>("/feedback",10,handle_new_feedback_);
+        goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "/goal_pose",10,
+            std::bind(&VisualServo::handle_new_goal_pose_, this, std::placeholders::_1)
+        );
+        feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+            "/feedback",10,
+            std::bind(&VisualServo::handle_new_feedback_, this, std::placeholders::_1)
+        );
         // left_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/feedback/dex3/left/odom",10,
         //     [this](nav_msgs::msg::Odometry::UniquePtr msg){this->handle_odom_(msg, &(this->left_ee_pose_))});
         // right_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/feedback/dex3/right/odom",10,
         //     [this](nav_msgs::msg::Odometry::UniquePtr msg){this->handle_odom_(msg, &(this->right_ee_pose_))});
 
         /* Timer loops */
-        control_loop_ = this->create_wall_timer(100ms, controller_);
+        control_loop_ = this->create_wall_timer(100ms, std::bind(&VisualServo::controller_, this));
 
         /* Initializing variables */
         goal_ = Eigen::MatrixXd::Identity(4,4);
@@ -75,8 +83,8 @@ private:
     std::unique_ptr<G1DualArm> arm_handle_;
 
     // Variables for state tracking
-    std::vector<double> current_configuration_;
-    std::vector<double> current_configuration_vel_;
+    Eigen::VectorXd current_configuration_;
+    Eigen::VectorXd current_configuration_vel_;
     Eigen::MatrixXd left_ee_pose_;
     Eigen::MatrixXd right_ee_pose_;
 
@@ -88,8 +96,6 @@ private:
     Eigen::MatrixXd goal_;
     std::vector<Eigen::MatrixXd> left_trajectory_;
     std::vector<Eigen::MatrixXd> right_trajectory_;
-    std::vector<Eigen::MatrixXd> left_traj_stack_;
-    std::vector<Eigen::MatrixXd> right_traj_stack_;
     double left_error_;
     double right_error_;
     JointState cmd_;
@@ -98,44 +104,44 @@ private:
 
     void controller_(){
 
-        if (left_traj_stack_.empty() && right_traj_stack_.empty()){
+        if (left_trajectory_.empty() && right_trajectory_.empty()){
             cmd_ = arm_handle_->controller->get_grav_ff(
                 current_configuration_
             );
         }
-        else if (~left_traj_stack_.empty() && right_traj_stack_.empty()){
-            cmd_ = arm_handle_->controller->control_left_arms(
+        else if (~left_trajectory_.empty() && right_trajectory_.empty()){
+            cmd_ = arm_handle_->controller->control_left_arm(
                 current_configuration_, 
                 current_configuration_vel_,
-                left_traj_stack_.back()
+                left_trajectory_.back()
             );
         } 
-        else if (left_traj_stack_.empty() && ~right_traj_stack_.empty()){
-            cmd_ = arm_handle_->controller->control_right_arms(
+        else if (left_trajectory_.empty() && ~right_trajectory_.empty()){
+            cmd_ = arm_handle_->controller->control_right_arm(
                 current_configuration_, 
                 current_configuration_vel_,
-                right_traj_stack_.back()
+                right_trajectory_.back()
             );
         } 
         else {
-            cmd_ = arm_handle_->controller->control_left_arms(
+            cmd_ = arm_handle_->controller->control_both_arms(
                 current_configuration_, 
                 current_configuration_vel_,
-                left_traj_stack_.back(),
-                right_traj_stack_.back()
+                left_trajectory_.back(),
+                right_trajectory_.back()
             );
         }
 
-        if (~left_traj_stack_.empty()){
+        if (~left_trajectory_.empty()){
             left_error_ = arm_handle_->controller->get_current_left_ee_error();
             if (left_error_<0.02) // 2 cm 
-                left_traj_stack_.pop_back();
+                left_trajectory_.pop_back();
         }
 
-        if (~right_traj_stack_.empty()){
+        if (~right_trajectory_.empty()){
             right_error_ = arm_handle_->controller->get_current_right_ee_error();
             if (right_error_<0.02) // 2 cm 
-                right_traj_stack_.pop_back();
+                right_trajectory_.pop_back();
         }
 
         left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
@@ -168,28 +174,32 @@ private:
             msg->pose.position.z
         );
 
-        if (goal(1,3)<=0){
+        if (goal_(1,3)<=0){
             right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &right_ee_pose_,
                 &right_tiny_side_vel_
-            )
-            right_traj_stack_ = std::reverse(right_trajectory_.begin(), right_trajectory_.end());
+            );
+            std::reverse(right_trajectory_.begin(), right_trajectory_.end());
         } else {
             left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &left_ee_pose_,
                 &left_tiny_side_vel_
-            )
-            left_traj_stack_ = std::reverse(left_trajectory_.begin(), left_trajectory_.end());
+            );
+            std::reverse(left_trajectory_.begin(), left_trajectory_.end());
         }
     }
 
     void handle_new_feedback_(sensor_msgs::msg::JointState::UniquePtr msg){
         std::vector<std::string>::iterator it;
         std::size_t index;
+
+        current_configuration_ = Eigen::VectorXd(joints_.size());
+        current_configuration_vel_ = Eigen::VectorXd(joints_.size());
+
         for (int i = 0; i< joints_.size(); i++){
-            it = std::find(msg->name.begin(), msg->name.end(), joint_[i])
+            it = std::find(msg->name.begin(), msg->name.end(), joints_[i]);
             if (it!=msg->name.end()){
                 index = static_cast<std::size_t>(std::distance(msg->name.begin(), it));
                 current_configuration_[i] = msg->position[index];
@@ -223,10 +233,10 @@ private:
 
 };
 
-int main(int arg, char* argv[])
+int main(int argc, char* argv[])
 {
     rclcpp::init(argc, argv);
-    arclcpp::spin(std::make_shared<VisualServo>());
+    rclcpp::spin(std::make_shared<VisualServo>());
     rclcpp::shutdown();
     return 0;
 }
