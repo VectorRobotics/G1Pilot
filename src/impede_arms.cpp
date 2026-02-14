@@ -75,7 +75,7 @@ private:
 
     result = arm_handle_->controller->control_both_arms(
         current_joint_angles_, 
-        current_joint_vels,
+        current_joint_vels_,
         left_target, 
         right_target
     );

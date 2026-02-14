@@ -12,6 +12,7 @@ add_compile_options(-w -Wall -Wextra -Wpedantic)
 
 if(DEFINED ENV{AMENT_PREFIX_PATH} OR DEFINED ENV{COLCON_PREFIX_PATH} OR DEFINED ENV{ROS_DISTRO})
     set(ROS2_DEFAULT ON)
+    message(STATUS "Building with ROS2")
 else()
     set(ROS2_DEFAULT OFF)
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
