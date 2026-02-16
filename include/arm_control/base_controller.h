@@ -23,7 +23,10 @@ public:
 
     JointState get_grav_ff(Eigen::VectorXd current_joint_pos);
 
-    std::vector<std::string> get_joint_names(){return model_.names;};
+    std::vector<std::string> get_joint_names(){
+        // Only return movable joint names (skip universe at 0, exclude fixed joints)
+        return std::vector<std::string>(model_.names.begin() + 1, model_.names.begin() + 1 + model_.nv);
+    };
 
 protected:
     void update();

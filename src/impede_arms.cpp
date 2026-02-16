@@ -51,7 +51,12 @@ public:
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
 
     t = 0;
+    // Build controller→feedback index mapping on first message
 
+    auto ctrl_names = arm_handle_->controller->get_joint_names();
+	for (size_t i = 1; i < ctrl_names.size(); ++i) {
+		joint_index_map[ctrl_names[i]]=i;
+	}
 
   }
 
@@ -63,28 +68,38 @@ public:
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;
 
+	std::map<std::string, int> joint_index_map;
     int t;
 
 private:
   void handle_new_state_(sensor_msgs::msg::JointState::UniquePtr msg)
   {
+
+    // Extract controller joints from full feedback
+    int n = msg->name.size();
+	int idx = 0;
+    current_joint_angles_ = Eigen::VectorXd::Zero(n);
+    current_joint_vels_ = Eigen::VectorXd::Zero(n);
+    for (int i = 0; i < n; ++i) {
+		if (joint_index_map.count(msg->name[i])>0){
+			idx = joint_index_map.at(msg->name[i]);
+			current_joint_angles_(idx) = msg->position[i];
+			current_joint_vels_(idx) = msg->velocity[i];
+		}
+    }
+
     left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
     right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
 
-    current_joint_angles_ = Eigen::Map<Eigen::VectorXd>(msg->position.data(),msg->position.size());
-    current_joint_vels_ = Eigen::Map<Eigen::VectorXd>(msg->velocity.data(),msg->velocity.size());
-
     result = arm_handle_->controller->control_both_arms(
-        current_joint_angles_, 
+        current_joint_angles_,
         current_joint_vels_,
-        left_target, 
+        left_target,
         right_target
     );
 
     reply = sensor_msgs::msg::JointState();
-
     reply.header.stamp = this->get_clock()->now();
-
     reply.name = result.name;
     reply.position = result.position;
     reply.velocity = result.velocity;
