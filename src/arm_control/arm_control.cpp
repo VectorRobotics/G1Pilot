@@ -30,12 +30,14 @@ std::map<std::string, int> ArmController::get_joint_idx_map(){
 void ArmController::update()
 {
     pinocchio::forwardKinematics(
-        model_, 
-        data_, 
-        current_joint_pos_, 
+        model_,
+        data_,
+        current_joint_pos_,
         current_joint_vel_
     );
-    
+    pinocchio::computeJointJacobians(model_, data_);
+    pinocchio::updateFramePlacements(model_, data_);
+
     J_body_left_ee_ = pinocchio::getFrameJacobian(model_, data_, left_ee_id_, pinocchio::LOCAL);
     J_body_right_ee_ = pinocchio::getFrameJacobian(model_, data_, right_ee_id_, pinocchio::LOCAL);
 

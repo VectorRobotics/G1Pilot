@@ -17,27 +17,27 @@ JointState ImpedanceController::control_both_arms(
     current_joint_pos_ = Eigen::VectorXd(current_joint_pos);
     current_joint_vel_ = Eigen::VectorXd(current_joint_vel);
 
-    // update();
-    auto result = get_grav_ff(current_joint_pos_);
+    update();
+    // auto result = get_grav_ff(current_joint_pos_);
 
-    // // desired_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
-    // // desired_ee_vel_ = pinocchio::Motion(desired_l_ee_vel);
-    // // compute_left_arm_control_torques();
+    desired_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
+    desired_ee_vel_ = pinocchio::Motion(desired_l_ee_vel);
+    compute_left_arm_control_torques();
 
-    // // desired_ee_pose_ = pinocchio::SE3(desired_r_ee_pose);
-    // // desired_ee_vel_ = pinocchio::Motion(desired_r_ee_vel);
-    // // compute_right_arm_control_torques();
+    desired_ee_pose_ = pinocchio::SE3(desired_r_ee_pose);
+    desired_ee_vel_ = pinocchio::Motion(desired_r_ee_vel);
+    compute_right_arm_control_torques();
 
-    // torques = grav_torques;// + l_control_torques + r_control_torques;
+    torques = grav_torques + l_control_torques + r_control_torques;
 
-    // JointState result;
+    JointState result;
 
-    // for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
-    //     result.name.push_back(model_.names[joint_id]);
-    //     result.position.push_back(current_joint_pos[model_.joints[joint_id].idx_v()]);
-    //     result.velocity.push_back(current_joint_vel[model_.joints[joint_id].idx_v()]);
-    //     result.effort.push_back(torques[model_.joints[joint_id].idx_v()]);
-    // }
+    for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
+        result.name.push_back(model_.names[joint_id]);
+        result.position.push_back(current_joint_pos[model_.joints[joint_id].idx_v()]);
+        result.velocity.push_back(current_joint_vel[model_.joints[joint_id].idx_v()]);
+        result.effort.push_back(torques[model_.joints[joint_id].idx_v()]);
+    }
 
     return result;
 }

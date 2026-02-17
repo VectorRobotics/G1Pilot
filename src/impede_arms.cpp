@@ -78,7 +78,11 @@ private:
 		}
 
 		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
+		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.6, -0.4, 0.2);
+
+		// Default pos:
+		// left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		// right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
 
 		result_ = arm_handle_->controller->control_both_arms(
 			current_joint_angles_,
