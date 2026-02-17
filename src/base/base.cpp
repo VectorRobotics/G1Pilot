@@ -3,6 +3,8 @@
 #include <iostream>
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/algorithm/model.hpp>
+#include <pinocchio/algorithm/rnea.hpp>
+
 
 #include "arm_control/arm_control.h"
 #include "arm_ik/arm_ik.h"
@@ -14,7 +16,6 @@ G1DualArm::G1DualArm(
     const RobotConfig* robot_config
 )
 {
-    std::cout << "Init Started" <<std::endl;
     robot_config_ = RobotConfig();
     if (robot_config != nullptr) {
         robot_config_ = *robot_config;
@@ -22,7 +23,6 @@ G1DualArm::G1DualArm(
 
     // (1) Basic Model
     pinocchio::urdf::buildModel(robot_config_.asset_file, robot_model_);
-    std::cout << "Frame model made" <<std::endl;
     pinocchio::urdf::buildGeom(
         robot_model_, 
         robot_config_.asset_file, 
@@ -30,11 +30,9 @@ G1DualArm::G1DualArm(
         geom_robot_model_, 
         robot_config_.asset_root
     );
-    std::cout << "Geom model made" <<std::endl;
     add_end_effector_frames();
+    robot_data_ = pinocchio::Data(robot_model_);
     reference_config = Eigen::VectorXd::Zero(robot_model_.nq);
-    std::cout << "Full model made" <<std::endl;
-
 
     // (2) Locked Legs
     initialize_leg_joints_to_lock();
@@ -157,6 +155,62 @@ void G1DualArm::add_end_effector_frames() {
                                              left_placement, pinocchio::OP_FRAME));
     robot_model_.addFrame(pinocchio::Frame("R_ee", right_elbow_id, 
                                               right_placement, pinocchio::OP_FRAME));
+}
+
+JointState G1DualArm::grav_ff(JointState current_state){
+
+    std::tie(q,v,e) = jointstate_to_vectors(current_state, robot_model_);
+
+    pinocchio::computeGeneralizedGravity(robot_model_, robot_data_, q);
+    grav_torques = robot_data_.g;
+    
+    return vectors_to_jointstate(q,v,grav_torques, robot_model_);
+}
+
+std::tuple<
+    Eigen::VectorXd,
+    Eigen::VectorXd,
+    Eigen::VectorXd
+>
+jointstate_to_vectors(JointState input, const pinocchio::Model& model){
+    Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd e = Eigen::VectorXd::Zero(model.nv);
+
+    for (int i = 0; i < input.name.size(); i++){
+        auto joint_id = model.getJointId(input.name[i]);
+        if (joint_id >= 0 && joint_id < model.njoints){
+            auto i_q = model.joints[joint_id].idx_q();
+            auto i_v = model.joints[joint_id].idx_v();
+
+            q(i_q) = input.position[i];
+            v(i_v) = input.velocity[i];
+            e(i_v) = input.effort[i];
+        }
+    }
+    return {q,v,e};
+}
+
+JointState vectors_to_jointstate(
+    Eigen::VectorXd q, Eigen::VectorXd v, Eigen::VectorXd e,
+    const pinocchio::Model& model
+){
+    JointState result;
+
+    int i_q = 0;
+    int i_v = 0;
+
+    for (int joint_id = 1; joint_id < model.njoints; ++joint_id) {
+        i_q = model.joints[joint_id].idx_q();
+        i_v = model.joints[joint_id].idx_v();
+
+        result.name.push_back(model.names[joint_id]);
+        result.position.push_back(q[i_q]);
+        result.velocity.push_back(v[i_v]);
+        result.effort.push_back(e[i_v]);
+    }
+
+    return result;
 }
 
 } // ArmPilot namespace

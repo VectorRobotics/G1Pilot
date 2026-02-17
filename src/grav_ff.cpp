@@ -14,19 +14,19 @@
 using namespace std::chrono_literals;
 using namespace ArmPilot;
 
-class ImpedeArms : public rclcpp::Node
+class GravFF : public rclcpp::Node
 
 {
 public:
-	ImpedeArms() : Node("impedence_controller")
+	GravFF() : Node("gravity_feedforward")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("controller/joint_states", 10);
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort/joint_states", 10);
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
 			"feedback", 10,
-			std::bind(&ImpedeArms::handle_new_state_, this, std::placeholders::_1));
+			std::bind(&GravFF::handle_new_state_, this, std::placeholders::_1));
 
-		RCLCPP_INFO(this->get_logger(), "Pilot Impedence Controller Node has started.");
+		RCLCPP_INFO(this->get_logger(), "Pilot Gravity Feedforward Node has started.");
 
 		// Intialize arm_handle
 		std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_pilot");
@@ -48,35 +48,20 @@ public:
 
 		RCLCPP_INFO(this->get_logger(), "Initialized");
 
-		// Initialize joint names
-		joint_index_map_ = arm_handle_->controller->get_joint_idx_map();
-
-		// Initialize data storage variables
-		current_joint_angles_ = Eigen::VectorXd::Zero(joint_index_map_.size());
-		current_joint_vels_ = Eigen::VectorXd::Zero(joint_index_map_.size());
-
-		// Build controller→feedback index mapping on first message
 		t = 0;
 	}
-
-	Eigen::Matrix4d left_target;
-	Eigen::Matrix4d right_target;
 
 private:
 	void handle_new_state_(sensor_msgs::msg::JointState::UniquePtr msg)
 	{
 
-		// Extract controller joints from full feedback
-		for (int i = 0; i < (int)msg->name.size(); ++i)
-		{
-			if (joint_index_map_.count(msg->name[i]) > 0)
-			{
-				int idx = joint_index_map_.at(msg->name[i]);
-				current_joint_angles_(idx) = msg->position[i];
-			}
-		}
+		message_.name = msg->name;
+		message_.position = msg->position;
+		message_.velocity = msg->velocity;
+		message_.effort = msg->effort;
+		
+		result_ = arm_handle_->grav_ff(message_);
 
-		result_ = arm_handle_->controller->get_grav_ff(current_joint_angles_);
 		reply_ = sensor_msgs::msg::JointState();
 		reply_.header.stamp = this->get_clock()->now();
 		reply_.name = result_.name;
@@ -95,13 +80,9 @@ private:
 
 	std::unique_ptr<G1DualArm> arm_handle_;
 
-	std::vector<std::string> joint_names_;
-	Eigen::VectorXd current_joint_angles_;
-	Eigen::VectorXd current_joint_vels_;
+	JointState message_;
 	JointState result_;
 	sensor_msgs::msg::JointState reply_;
-
-	std::map<std::string, int> joint_index_map_;
 
 	int t;
 };
@@ -109,7 +90,7 @@ private:
 int main(int argc, char *argv[])
 {
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<ImpedeArms>());
+	rclcpp::spin(std::make_shared<GravFF>());
 	rclcpp::shutdown();
 	return 0;
 }
