@@ -24,6 +24,7 @@ public:
     JointState get_grav_ff(Eigen::VectorXd current_joint_pos);
 
     std::map<std::string, int> get_joint_idx_map();
+    void compute_fk(Eigen::VectorXd current_joint_pos);
 
 protected:
     void update();

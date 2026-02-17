@@ -56,6 +56,14 @@ void ArmController::update()
     last_joint_pos_ = current_joint_pos_;
 }
 
+void ArmController::compute_fk(Eigen::VectorXd current_joint_pos){
+    current_joint_pos_ = current_joint_pos;
+    pinocchio::forwardKinematics(model_, data_, current_joint_pos_);
+    pinocchio::updateFramePlacements(model_, data_);
+    current_left_ee_pose_ = data_.oMf[left_ee_id_];
+    current_right_ee_pose_ = data_.oMf[right_ee_id_];
+}
+
 JointState ArmController::get_grav_ff(Eigen::VectorXd current_joint_pos){
         pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos);
         grav_torques = data_.g;

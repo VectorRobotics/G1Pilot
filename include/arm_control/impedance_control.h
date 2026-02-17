@@ -72,8 +72,12 @@ private:
     void compute_left_arm_control_torques();
     void compute_right_arm_control_torques();
 
-    const double Kp = 10.0;
+    const double Kp = 35.0;
     const double Kd = 0.2;
+
+    // without motion planner
+    // const double Kp = 10.0;
+    // const double Kd = 0.2;
 
     pinocchio::SE3 desired_ee_pose_;
     pinocchio::Motion desired_ee_vel_;

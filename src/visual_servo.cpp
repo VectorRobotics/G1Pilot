@@ -8,7 +8,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <sstream>
 
 using namespace ArmPilot;
 using namespace std::chrono_literals;
@@ -56,7 +55,7 @@ public:
         );
 
         /* Timer loop */
-        control_loop_ = this->create_wall_timer(100ms, std::bind(&VisualServo::controller_, this));
+        control_loop_ = this->create_wall_timer(10ms, std::bind(&VisualServo::controller_, this));
 
         /* Initializing variables */
         joint_index_map_ = arm_handle_->controller->get_joint_idx_map();
@@ -131,28 +130,25 @@ private:
         active_goal_handle_ = goal_handle;
         const auto & target = goal_handle->get_goal()->target_pose;
 
-        // Build goal SE3 from PoseStamped
-        Eigen::Quaterniond q(
+        // Build full 4x4 goal pose from position + quaternion
+        Eigen::Vector3d goal_pos(
+            target.pose.position.x,
+            target.pose.position.y,
+            target.pose.position.z
+        );
+        Eigen::Quaterniond goal_quat(
             target.pose.orientation.w,
             target.pose.orientation.x,
             target.pose.orientation.y,
             target.pose.orientation.z
         );
+        goal_quat.normalize();
+
         Eigen::MatrixXd goal = Eigen::MatrixXd::Identity(4, 4);
-        goal.block<3,3>(0,0) = q.normalized().toRotationMatrix();
-        goal.block<3,1>(0,3) = Eigen::Vector3d(
-            target.pose.position.x,
-            target.pose.position.y,
-            target.pose.position.z
-        );
+        goal.block<3,3>(0,0) = goal_quat.toRotationMatrix();
+        goal.block<3,1>(0,3) = goal_pos;
 
-        RCLCPP_INFO(this->get_logger(), "Goal pose:\n%s",
-            (std::ostringstream() << goal).str().c_str());
-
-        // Freeze current EE pose and plan trajectory
-        if (goal(1,3) <= 0) {
-            RCLCPP_INFO(this->get_logger(), "Right EE pose:\n%s",
-                (std::ostringstream() << right_ee_pose_).str().c_str());
+        if (goal_pos.y() <= 0) {
             Eigen::MatrixXd start = right_ee_pose_;
             right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal, &start, &right_tiny_side_vel_
@@ -160,8 +156,6 @@ private:
             std::reverse(right_trajectory_.begin(), right_trajectory_.end());
             RCLCPP_INFO(this->get_logger(), "Right arm: planned %zu waypoints", right_trajectory_.size());
         } else {
-            RCLCPP_INFO(this->get_logger(), "Left EE pose:\n%s",
-                (std::ostringstream() << left_ee_pose_).str().c_str());
             Eigen::MatrixXd start = left_ee_pose_;
             left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal, &start, &left_tiny_side_vel_
@@ -215,6 +209,8 @@ private:
         }
 
         // Update FK-derived EE poses
+        arm_handle_->controller->compute_fk(current_configuration_);
+
         left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
         right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
 
@@ -264,8 +260,8 @@ private:
 
     void handle_new_feedback_(sensor_msgs::msg::JointState::UniquePtr msg)
     {
-        current_configuration_ = Eigen::VectorXd(joint_index_map_.size());
-        current_configuration_vel_ = Eigen::VectorXd(joint_index_map_.size());
+        current_configuration_ = Eigen::VectorXd::Zero(joint_index_map_.size());
+        current_configuration_vel_ = Eigen::VectorXd::Zero(joint_index_map_.size());
 
         int idx = 0;
         for (size_t i = 0; i < msg->name.size(); ++i) {
