@@ -60,7 +60,7 @@ public:
 
         /* Initializing variables */
         goal_ = Eigen::MatrixXd::Identity(4,4);
-        joints_ = arm_handle_->controller->get_joint_names();
+        joint_idx_map_ = arm_handle_->controller->get_joint_idx_map();
 
     }
 
@@ -99,7 +99,7 @@ private:
     double left_error_;
     double right_error_;
     JointState cmd_;
-    std::vector<std::string> joints_;
+    std::map<std::string, int> joint_idx_map_;
 
 
     void controller_(){
@@ -200,13 +200,13 @@ private:
         std::vector<std::string>::iterator it;
         std::size_t index;
 
-        current_configuration_ = Eigen::VectorXd(joints_.size());
-        current_configuration_vel_ = Eigen::VectorXd(joints_.size());
+        current_configuration_ = Eigen::VectorXd(joint_idx_map_.size());
+        current_configuration_vel_ = Eigen::VectorXd(joint_idx_map_.size());
 
-        for (int i = 0; i< joints_.size(); i++){
-            it = std::find(msg->name.begin(), msg->name.end(), joints_[i]);
-            if (it!=msg->name.end()){
-                index = static_cast<std::size_t>(std::distance(msg->name.begin(), it));
+        int idx = 0;
+        for (int i = 0; i< msg->name.size(); i++){
+            if (joint_idx_map_.count(msg->name[i])>0){
+                idx = joint_idx_map_.at(msg->name[i]);
                 current_configuration_[i] = msg->position[index];
                 current_configuration_vel_[i] = msg->velocity[index];
             }
