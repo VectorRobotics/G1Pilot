@@ -51,20 +51,20 @@ file(GLOB_RECURSE g1_pilot_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp"
     
 )
-add_library(g1_pilot ${g1_pilot_SOURCES})
+add_library(g1_pilot_lib ${g1_pilot_SOURCES})
 
-target_compile_definitions(g1_pilot PUBLIC COAL_DISABLE_HPP_FCL_WARNINGS)
+target_compile_definitions(g1_pilot_lib PUBLIC COAL_DISABLE_HPP_FCL_WARNINGS)
 
-target_include_directories(g1_pilot PUBLIC 
+target_include_directories(g1_pilot_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio)
+target_link_libraries(g1_pilot_lib PUBLIC Eigen3::Eigen pinocchio::pinocchio)
 
 if(USE_CASADI)
-    target_link_libraries(g1_pilot PUBLIC casadi)
-    target_compile_definitions(g1_pilot PRIVATE USE_CASADI)
+    target_link_libraries(g1_pilot_lib PUBLIC casadi)
+    target_compile_definitions(g1_pilot_lib PRIVATE USE_CASADI)
 endif()
 
 # ---- Testing ---- #
@@ -73,13 +73,13 @@ if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     
     add_executable(test_ik test/arm_ik/test_ik.cpp)
-    target_link_libraries(test_ik PRIVATE g1_pilot GTest::gtest_main)
+    target_link_libraries(test_ik PRIVATE g1_pilot_lib GTest::gtest_main)
 
     add_executable(test_control test/arm_control/test_control.cpp)
-    target_link_libraries(test_control PRIVATE g1_pilot GTest::gtest_main)
+    target_link_libraries(test_control PRIVATE g1_pilot_lib GTest::gtest_main)
 
     add_executable(test_mp_ik test/arm_mp/test_traj_gen.cpp)
-    target_link_libraries(test_mp_ik PRIVATE g1_pilot GTest::gtest_main)
+    target_link_libraries(test_mp_ik PRIVATE g1_pilot_lib GTest::gtest_main)
 
     if(USE_CASADI)
         target_compile_definitions(test_ik PRIVATE USE_CASADI)
@@ -107,8 +107,8 @@ endif()
 
 include(GNUInstallDirs)
 
-install(TARGETS 
-    g1_pilot 
+install(TARGETS
+    g1_pilot_lib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -129,8 +129,16 @@ if(ROS2_DEFAULT)
     find_package(ament_cmake REQUIRED)
     find_package(ament_index_cpp REQUIRED)
     find_package(rclcpp REQUIRED)
+    find_package(rclcpp_action REQUIRED)
     find_package(sensor_msgs REQUIRED)
     find_package(nav_msgs REQUIRED)
+    find_package(geometry_msgs REQUIRED)
+    find_package(rosidl_default_generators REQUIRED)
+
+    rosidl_generate_interfaces(${PROJECT_NAME}
+        "action/MoveArm.action"
+        DEPENDENCIES geometry_msgs
+    )
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(impede_arms src/impede_arms.cpp)
@@ -138,19 +146,21 @@ if(ROS2_DEFAULT)
     add_executable(visual_servo src/visual_servo.cpp)
     add_executable(grav_ff src/grav_ff.cpp)
 
-    target_link_libraries(ik_joint_state_publisher g1_pilot)
+    target_link_libraries(ik_joint_state_publisher g1_pilot_lib)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
 
-    target_link_libraries(impede_arms g1_pilot)
+    target_link_libraries(impede_arms g1_pilot_lib)
     ament_target_dependencies(impede_arms ament_index_cpp rclcpp sensor_msgs)
 
-    target_link_libraries(joint_traj_publisher g1_pilot)
+    target_link_libraries(joint_traj_publisher g1_pilot_lib)
     ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp nav_msgs sensor_msgs)
 
-    target_link_libraries(visual_servo g1_pilot)
-    ament_target_dependencies(visual_servo ament_index_cpp rclcpp nav_msgs sensor_msgs)
+    target_link_libraries(visual_servo g1_pilot_lib)
+    ament_target_dependencies(visual_servo ament_index_cpp rclcpp rclcpp_action nav_msgs sensor_msgs geometry_msgs)
+    rosidl_get_typesupport_target(action_typesupport ${PROJECT_NAME} rosidl_typesupport_cpp)
+    target_link_libraries(visual_servo ${action_typesupport})
 
-    target_link_libraries(grav_ff g1_pilot)
+    target_link_libraries(grav_ff g1_pilot_lib)
     ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
 
     install (TARGETS 

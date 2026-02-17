@@ -2,6 +2,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <unsupported/Eigen/MatrixFunctions>
+#include <pinocchio/spatial/se3.hpp>
+#include <pinocchio/spatial/explog.hpp>
 
 namespace ArmPilot{
 
@@ -102,9 +104,13 @@ PolynomialTrajectoryGenerator::planPath(
 
     int twist_size = 2*(goal_pose->rows()-1);
 
-    rel_pose_ = start_pose->lu().solve(*goal_pose).log();
-    
-    goal_p_unscaled_ = vee(rel_pose_);
+    // Compute start^{-1} * goal using SE(3) structure (avoids LU numerical noise)
+    Eigen::Matrix3d R_s = start_pose->block<3,3>(0,0);
+    Eigen::Vector3d t_s = start_pose->block<3,1>(0,3);
+    Eigen::Matrix3d R_g = goal_pose->block<3,3>(0,0);
+    Eigen::Vector3d t_g = goal_pose->block<3,1>(0,3);
+    pinocchio::SE3 rel_se3(R_s.transpose() * R_g, R_s.transpose() * (t_g - t_s));
+    goal_p_unscaled_ = pinocchio::log6(rel_se3).toVector();
 
     // std::cout << "Constructing Path" << std::endl;
     // std::cout << "start" << *start_pose << std::endl;
