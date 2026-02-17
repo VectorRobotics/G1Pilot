@@ -2,7 +2,7 @@
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
-
+#include <iostream>
 namespace ArmPilot {
 
 ArmController::ArmController(
@@ -18,6 +18,15 @@ ArmController::ArmController(
 
 }
 
+std::map<std::string, int> ArmController::get_joint_idx_map(){
+        std::map<std::string, int> mapping;
+        for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
+            mapping[model_.names[joint_id]] = model_.joints[joint_id].idx_v();
+        }
+        return mapping;
+    };
+
+
 void ArmController::update()
 {
     pinocchio::forwardKinematics(
@@ -30,8 +39,8 @@ void ArmController::update()
     J_body_left_ee_ = pinocchio::getFrameJacobian(model_, data_, left_ee_id_, pinocchio::LOCAL);
     J_body_right_ee_ = pinocchio::getFrameJacobian(model_, data_, right_ee_id_, pinocchio::LOCAL);
 
-    current_left_ee_pose_ = data_.oMi[left_ee_id_];
-    current_right_ee_pose_ = data_.oMi[right_ee_id_];
+    current_left_ee_pose_ = data_.oMf[left_ee_id_];
+    current_right_ee_pose_ = data_.oMf[right_ee_id_];
 
     current_left_ee_vel_in_ee_frame_ = pinocchio::getFrameVelocity(model_, data_,left_ee_id_);
     current_right_ee_vel_in_ee_frame_ = pinocchio::getFrameVelocity(model_, data_,right_ee_id_);
@@ -53,7 +62,7 @@ JointState ArmController::get_grav_ff(Eigen::VectorXd current_joint_pos){
 
         for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
             result.name.push_back(model_.names[joint_id]);
-            result.position.push_back(0);
+            result.position.push_back(current_joint_pos[model_.joints[joint_id].idx_v()]);
             result.velocity.push_back(0);
             result.effort.push_back(
                 grav_torques[ model_.joints[joint_id].idx_v()]

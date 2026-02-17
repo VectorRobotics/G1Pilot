@@ -39,8 +39,7 @@ def generate_launch_description():
         executable='joint_state_publisher',
         condition=UnlessCondition(LaunchConfiguration('jsp_gui')),
         parameters=[{
-            'source_list': ['ik/joint_states',
-                            'traj/joint_states'],
+            'source_list': ['controller/joint_states'],
         }]
     ))
     ld.add_action(Node(
@@ -56,4 +55,10 @@ def generate_launch_description():
         arguments=['-d', LaunchConfiguration('rviz_config')],
     ))
 
+    ld.add_action(Node(
+        package='g1_pilot',
+        executable='grav_ff',
+        name='grav_ff',
+        output='screen',
+    ))
     return ld

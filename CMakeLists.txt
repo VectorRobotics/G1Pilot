@@ -15,6 +15,7 @@ if(DEFINED ENV{AMENT_PREFIX_PATH} OR DEFINED ENV{COLCON_PREFIX_PATH} OR DEFINED 
     message(STATUS "Building with ROS2")
 else()
     set(ROS2_DEFAULT OFF)
+    message(WARNING "NOT building with ROS2")
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install" CACHE PATH "Local install prefix" FORCE)
     endif()
@@ -135,6 +136,7 @@ if(ROS2_DEFAULT)
     add_executable(impede_arms src/impede_arms.cpp)
     add_executable(joint_traj_publisher src/joint_traj_publisher.cpp)
     add_executable(visual_servo src/visual_servo.cpp)
+    add_executable(grav_ff src/grav_ff.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
@@ -148,11 +150,15 @@ if(ROS2_DEFAULT)
     target_link_libraries(visual_servo g1_pilot)
     ament_target_dependencies(visual_servo ament_index_cpp rclcpp nav_msgs sensor_msgs)
 
+    target_link_libraries(grav_ff g1_pilot)
+    ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
+
     install (TARGETS 
         ik_joint_state_publisher 
         impede_arms
         joint_traj_publisher
         visual_servo
+        grav_ff
         DESTINATION lib/${PROJECT_NAME}
     )
 

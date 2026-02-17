@@ -52,9 +52,10 @@ public:
 		joint_index_map_ = arm_handle_->controller->get_joint_idx_map();
 
 		// Initialize data storage variables
-		current_joint_angles_ = Eigen::VectorXd(joint_index_map_.size());
-		current_joint_vels_ = Eigen::VectorXd(joint_index_map_.size());
+		current_joint_angles_ = Eigen::VectorXd::Zero(joint_index_map_.size());
+		current_joint_vels_ = Eigen::VectorXd::Zero(joint_index_map_.size());
 
+		// Build controller→feedback index mapping on first message
 		t = 0;
 	}
 
@@ -66,27 +67,16 @@ private:
 	{
 
 		// Extract controller joints from full feedback
-		int idx = 0;
-		for (int i = 0; i < msg->name.size(); ++i)
+		for (int i = 0; i < (int)msg->name.size(); ++i)
 		{
 			if (joint_index_map_.count(msg->name[i]) > 0)
 			{
-				idx = joint_index_map_.at(msg->name[i]);
+				int idx = joint_index_map_.at(msg->name[i]);
 				current_joint_angles_(idx) = msg->position[i];
-				current_joint_vels_(idx) = msg->velocity[i];
 			}
 		}
 
-		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
-
-		result_ = arm_handle_->controller->control_both_arms(
-			current_joint_angles_,
-			current_joint_vels_,
-			left_target,
-			right_target);
-
-		// result_ = arm_handle_->controller->get_grav_ff(current_joint_angles_);
+		result_ = arm_handle_->controller->get_grav_ff(current_joint_angles_);
 		reply_ = sensor_msgs::msg::JointState();
 		reply_.header.stamp = this->get_clock()->now();
 		reply_.name = result_.name;
@@ -97,23 +87,6 @@ private:
 		t += 1;
 
 		publisher_->publish(reply_);
-	}
-
-	Eigen::Matrix4d create_se3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
-	{
-		Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-		transform.block<3, 3>(0, 0) = q.normalized().toRotationMatrix();
-		transform.block<3, 1>(0, 3) = t;
-		return transform;
-	}
-
-	// Helper function to create SE3 from quaternion components and translation
-	Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
-							   double tx, double ty, double tz)
-	{
-		Eigen::Quaterniond q(qw, qx, qy, qz);
-		Eigen::Vector3d t(tx, ty, tz);
-		return create_se3(q, t);
 	}
 	
 	// Private Variables
