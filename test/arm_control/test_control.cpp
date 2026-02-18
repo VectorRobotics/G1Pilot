@@ -37,19 +37,19 @@ int main(){
         Eigen::Matrix4d right_target = create_se3(0.0, 1.0, 0.0, 0, 0.2, -0.2, 0.1);
         Eigen::VectorXd current_config = Eigen::VectorXd::Constant(14, 0.1);
 
-        auto handle = G1DualArm();
+        // auto handle = G1DualArm();
 
-        #include <chrono>
+        // #include <chrono>
 
-        auto start = std::chrono::high_resolution_clock::now();
-        auto result = handle.controller->control_left_arm(current_config, right_target);
-        auto end = std::chrono::high_resolution_clock::now();
+        // auto start = std::chrono::high_resolution_clock::now();
+        // auto result = handle.controller->control_left_arm(current_config, right_target);
+        // auto end = std::chrono::high_resolution_clock::now();
 
-        auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        std::cout << "control time: " << elapsed_us << " us" << std::endl;
-        std::cout << "Control solution tau: ";
-        for (auto c: result.effort) std::cout<<c<<", ";
-        std::cout<<std::endl;
+        // auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        // std::cout << "control time: " << elapsed_us << " us" << std::endl;
+        // std::cout << "Control solution tau: ";
+        // for (auto c: result.effort) std::cout<<c<<", ";
+        // std::cout<<std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Exception during computing control: " << e.what() << std::endl;

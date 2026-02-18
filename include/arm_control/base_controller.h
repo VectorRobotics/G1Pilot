@@ -21,10 +21,6 @@ public:
     double get_current_left_ee_error(){return l_error_magnitude;};
     double get_current_right_ee_error(){return r_error_magnitude;};
 
-    JointState get_grav_ff(Eigen::VectorXd current_joint_pos);
-
-    std::map<std::string, int> get_joint_idx_map();
-
 protected:
     void update();
 
@@ -37,6 +33,7 @@ protected:
     Eigen::VectorXd current_joint_pos_;
     Eigen::VectorXd last_joint_pos_;
     Eigen::VectorXd current_joint_vel_;
+    Eigen::VectorXd current_joint_eff_;
 
     pinocchio::SE3 current_left_ee_pose_;
     pinocchio::SE3 current_right_ee_pose_;

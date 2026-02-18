@@ -11,6 +11,8 @@
 
 #include <g1_pilot/g1_pilot.h>
 
+#include "helper_funcs.h"
+
 using namespace std::chrono_literals;
 using namespace ArmPilot;
 
@@ -21,7 +23,7 @@ public:
 	ImpedeArms() : Node("impedence_controller")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("controller/joint_states", 10);
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort/joint_states", 10);
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
 			"feedback", 10,
 			std::bind(&ImpedeArms::handle_new_state_, this, std::placeholders::_1));
@@ -48,13 +50,6 @@ public:
 
 		RCLCPP_INFO(this->get_logger(), "Initialized");
 
-		// Initialize joint names
-		joint_index_map_ = arm_handle_->controller->get_joint_idx_map();
-
-		// Initialize data storage variables
-		current_joint_angles_ = Eigen::VectorXd(joint_index_map_.size());
-		current_joint_vels_ = Eigen::VectorXd(joint_index_map_.size());
-
 		t = 0;
 	}
 
@@ -65,32 +60,24 @@ private:
 	void handle_new_state_(sensor_msgs::msg::JointState::UniquePtr msg)
 	{
 
-		// Extract controller joints from full feedback
-		int idx = 0;
-		for (int i = 0; i < msg->name.size(); ++i)
-		{
-			if (joint_index_map_.count(msg->name[i]) > 0)
-			{
-				idx = joint_index_map_.at(msg->name[i]);
-				current_joint_angles_(idx) = msg->position[i];
-				current_joint_vels_(idx) = msg->velocity[i];
-			}
-		}
+		message_.name = msg->name;
+		message_.position = msg->position;
+		message_.velocity = msg->velocity;
+		message_.effort = msg->effort;
 
-		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.6, -0.4, 0.2);
+		// left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		// right_target = create_se3(1.0, 0.0, 0.0, 0, 0.6, -0.4, 0.2);
 
 		// Default pos:
-		// left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		// right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
+		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
 
 		result_ = arm_handle_->controller->control_both_arms(
-			current_joint_angles_,
-			current_joint_vels_,
+			message_,
 			left_target,
-			right_target);
+			right_target
+		);
 
-		// result_ = arm_handle_->controller->get_grav_ff(current_joint_angles_);
 		reply_ = sensor_msgs::msg::JointState();
 		reply_.header.stamp = this->get_clock()->now();
 		reply_.name = result_.name;
@@ -102,23 +89,6 @@ private:
 
 		publisher_->publish(reply_);
 	}
-
-	Eigen::Matrix4d create_se3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
-	{
-		Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-		transform.block<3, 3>(0, 0) = q.normalized().toRotationMatrix();
-		transform.block<3, 1>(0, 3) = t;
-		return transform;
-	}
-
-	// Helper function to create SE3 from quaternion components and translation
-	Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
-							   double tx, double ty, double tz)
-	{
-		Eigen::Quaterniond q(qw, qx, qy, qz);
-		Eigen::Vector3d t(tx, ty, tz);
-		return create_se3(q, t);
-	}
 	
 	// Private Variables
 	rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
@@ -126,13 +96,9 @@ private:
 
 	std::unique_ptr<G1DualArm> arm_handle_;
 
-	std::vector<std::string> joint_names_;
-	Eigen::VectorXd current_joint_angles_;
-	Eigen::VectorXd current_joint_vels_;
+	JointState message_;
 	JointState result_;
 	sensor_msgs::msg::JointState reply_;
-
-	std::map<std::string, int> joint_index_map_;
 
 	int t;
 };

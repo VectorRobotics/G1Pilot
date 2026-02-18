@@ -60,7 +60,6 @@ public:
 
         /* Initializing variables */
         goal_ = Eigen::MatrixXd::Identity(4,4);
-        joint_idx_map_ = arm_handle_->controller->get_joint_idx_map();
 
     }
 
@@ -85,6 +84,7 @@ private:
     // Variables for state tracking
     Eigen::VectorXd current_configuration_;
     Eigen::VectorXd current_configuration_vel_;
+    Eigen::VectorXd current_configuration_eff_;
     Eigen::MatrixXd left_ee_pose_;
     Eigen::MatrixXd right_ee_pose_;
 
@@ -99,7 +99,7 @@ private:
     double left_error_;
     double right_error_;
     JointState cmd_;
-    std::map<std::string, int> joint_idx_map_;
+    JointState current_state_;
 
 
     void controller_(){
@@ -110,28 +110,25 @@ private:
         }
 
         if (left_trajectory_.empty() && right_trajectory_.empty()){
-            cmd_ = arm_handle_->controller->get_grav_ff(
-                current_configuration_
+            cmd_ = arm_handle_->grav_ff(
+                current_state_
             );
         }
         else if (!left_trajectory_.empty() && right_trajectory_.empty()){
             cmd_ = arm_handle_->controller->control_left_arm(
-                current_configuration_, 
-                current_configuration_vel_,
+                current_state_, 
                 left_trajectory_.back()
             );
         } 
         else if (left_trajectory_.empty() && !right_trajectory_.empty()){
             cmd_ = arm_handle_->controller->control_right_arm(
-                current_configuration_, 
-                current_configuration_vel_,
+                current_state_, 
                 right_trajectory_.back()
             );
         } 
         else {
             cmd_ = arm_handle_->controller->control_both_arms(
-                current_configuration_, 
-                current_configuration_vel_,
+                current_state_, 
                 left_trajectory_.back(),
                 right_trajectory_.back()
             );
@@ -152,15 +149,15 @@ private:
         left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
         right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
 
-        auto message = sensor_msgs::msg::JointState();
-        message.header.stamp = this->get_clock()->now();
+        auto reply = sensor_msgs::msg::JointState();
+        reply.header.stamp = this->get_clock()->now();
 
-        message.name = cmd_.name;
-        message.position = cmd_.position;
-        message.velocity = cmd_.velocity;
-        message.effort = cmd_.effort;
+        reply.name = cmd_.name;
+        reply.position = cmd_.position;
+        reply.velocity = cmd_.velocity;
+        reply.effort = cmd_.effort;
 
-        joint_states_pub_->publish(message);
+        joint_states_pub_->publish(reply);
 
     }
 
@@ -197,20 +194,12 @@ private:
     }
 
     void handle_new_feedback_(sensor_msgs::msg::JointState::UniquePtr msg){
-        std::vector<std::string>::iterator it;
-        std::size_t index;
 
-        current_configuration_ = Eigen::VectorXd(joint_idx_map_.size());
-        current_configuration_vel_ = Eigen::VectorXd(joint_idx_map_.size());
+        current_state_.name = msg->name;
+        current_state_.position = msg->position;
+        current_state_.velocity = msg->velocity;
+        current_state_.effort = msg->effort;
 
-        int idx = 0;
-        for (int i = 0; i< msg->name.size(); i++){
-            if (joint_idx_map_.count(msg->name[i])>0){
-                idx = joint_idx_map_.at(msg->name[i]);
-                current_configuration_[i] = msg->position[index];
-                current_configuration_vel_[i] = msg->velocity[index];
-            }
-        }
     }
 
     // void handle_odom_(

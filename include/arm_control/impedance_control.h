@@ -10,70 +10,32 @@ public:
     ) : ArmController(model) {};
 
     JointState control_both_arms(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::VectorXd current_joint_vel,
+    JointState current_state,
     Eigen::Matrix4d desired_l_ee_pose,
     Eigen::Matrix4d desired_r_ee_pose,
     Eigen::VectorXd desired_l_ee_vel = Eigen::VectorXd::Zero(6),
     Eigen::VectorXd desired_r_ee_vel = Eigen::VectorXd::Zero(6)
     );
 
-    JointState control_both_arms(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::Matrix4d desired_l_ee_pose,
-    Eigen::Matrix4d desired_r_ee_pose
-    ){
-        control_both_arms(
-            current_joint_pos,
-            (current_joint_pos - last_joint_pos_)/dt,
-            desired_l_ee_pose,
-            desired_r_ee_pose
-        );
-    };
-
     JointState control_left_arm(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::VectorXd current_joint_vel,
-    Eigen::Matrix4d desired_ee_pose,
-    Eigen::VectorXd desired_ee_vel = Eigen::VectorXd::Zero(6)
-    );
-
-    JointState control_left_arm(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::Matrix4d desired_ee_pose
-    ){
-        return control_left_arm(
-            current_joint_pos,
-            (current_joint_pos - last_joint_pos_)/dt,
-            desired_ee_pose
-        );
-    };
-
-    JointState control_right_arm(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::VectorXd current_joint_vel,
+    JointState current_state,
     Eigen::Matrix4d desired_ee_pose,
     Eigen::VectorXd desired_ee_vel = Eigen::VectorXd::Zero(6)
     );
 
     JointState control_right_arm(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::Matrix4d desired_ee_pose
-    ){
-        return control_right_arm(
-            current_joint_pos,
-            (current_joint_pos - last_joint_pos_)/dt,
-            desired_ee_pose
-        );
-    };
+    JointState current_state,
+    Eigen::Matrix4d desired_ee_pose,
+    Eigen::VectorXd desired_ee_vel = Eigen::VectorXd::Zero(6)
+    );
 
 private:
 
     void compute_left_arm_control_torques();
     void compute_right_arm_control_torques();
 
-    const double Kp = 10.0;
-    const double Kd = 0.2;
+    const double Kp = 3.0;
+    const double Kd = 0.1;
 
     pinocchio::SE3 desired_ee_pose_;
     pinocchio::Motion desired_ee_vel_;

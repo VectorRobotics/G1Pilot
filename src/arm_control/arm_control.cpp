@@ -14,18 +14,9 @@ ArmController::ArmController(
     left_ee_id_ = model_.getFrameId("L_ee");
     right_ee_id_ = model_.getFrameId("R_ee");
 
-    last_joint_pos_ = Eigen::VectorXd::Zero(model_.nv);
+    last_joint_pos_ = Eigen::VectorXd::Zero(model_.nq);
 
 }
-
-std::map<std::string, int> ArmController::get_joint_idx_map(){
-        std::map<std::string, int> mapping;
-        for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
-            mapping[model_.names[joint_id]] = model_.joints[joint_id].idx_v();
-        }
-        return mapping;
-    };
-
 
 void ArmController::update()
 {
@@ -51,28 +42,10 @@ void ArmController::update()
     r_control_torques = Eigen::VectorXd::Zero(model_.nv);
     torques = Eigen::VectorXd::Zero(model_.nv);
 
-    get_grav_ff(current_joint_pos_);
+    pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos_);
+    grav_torques = 1.052*data_.g;
 
     last_joint_pos_ = current_joint_pos_;
-}
-
-JointState ArmController::get_grav_ff(Eigen::VectorXd current_joint_pos){
-        pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos);
-        grav_torques = data_.g;
-
-        JointState result;
-
-        for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
-            result.name.push_back(model_.names[joint_id]);
-            result.position.push_back(current_joint_pos[model_.joints[joint_id].idx_v()]);
-            result.velocity.push_back(0);
-            result.effort.push_back(
-                grav_torques[ model_.joints[joint_id].idx_v()]
-            );
-        }
-
-        return result;
-
 }
 
 } // ArmControl namespace

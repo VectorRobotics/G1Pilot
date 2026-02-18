@@ -324,14 +324,9 @@ JointState G1_29_ArmIK::solve_ik(
             sol_tauff += tau_ext;
         }
 
-        JointState result;
-
-        for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
-            result.name.push_back(model_.names[joint_id]);
-            result.position.push_back(sol_q[model_.idx_qs[joint_id]]);
-            result.velocity.push_back(v[model_.idx_vs[joint_id]]);
-            result.effort.push_back(sol_tauff[model_.idx_vs[joint_id]]);
-        }
+        JointState result = vectors_to_jointstate(
+            sol_q, v, sol_tauff, model_
+        );
         
         return result;
         
@@ -371,14 +366,10 @@ JointState G1_29_ArmIK::solve_ik(
         std::cerr << "left_pose:\n" << left_wrist << std::endl;
         std::cerr << "right_pose:\n" << right_wrist << std::endl;
 
-        JointState result;
-
-        for (int joint_id = 0; joint_id < model_.njoints; ++joint_id) {
-            result.name.push_back(model_.names[joint_id]);
-            result.position.push_back(sol_q[model_.idx_qs[joint_id]]);
-            result.velocity.push_back(v[model_.idx_vs[joint_id]]);
-            result.effort.push_back(sol_tauff[model_.idx_vs[joint_id]]);
-        }
+        JointState result = vectors_to_jointstate(
+            sol_q, v, sol_tauff, model_
+        );
+        
         return result;
     }
 }

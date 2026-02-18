@@ -11,6 +11,8 @@
 
 #include <g1_pilot/g1_pilot.h>
 
+#include "helper_funcs.h"
+
 
 using namespace std::chrono_literals;
 using namespace ArmPilot;
@@ -43,9 +45,7 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "Initiaizing IK Classes");
 
-    // arm_ik = new G1_29_ArmIK_NoWrists(false, false, &config);
-    // arm_ik = std::make_unique<G1_29_ArmIK>();   
-    arm_ik = std::make_unique<G1DualArm>(&config);
+    arm_handle_ = std::make_unique<G1DualArm>(&config);
 
 
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
@@ -57,13 +57,10 @@ public:
 
     t = 0;
 
-
   }
 
-
     // Create IK solver with collision detection
-    // G1_29_ArmIK_NoWrists* arm_ik;
-    std::unique_ptr<G1DualArm> arm_ik;
+    std::unique_ptr<G1DualArm> arm_handle_;
 
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;
@@ -84,46 +81,28 @@ private:
     right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.0-x, 0.1);
     RCLCPP_INFO(this->get_logger(), "Starting IK Joint States at time: %d", t);
 
-    // auto result = arm_ik->solve_ik(
+    // auto result = arm_handle_->solve_ik(
     //     left_target, right_target,
     //     nullptr, nullptr,  // current q, dq
     //     &ext_force_left, &ext_force_right,
     //     true  // enable collision checking
     // );
 
-    auto result = arm_ik->ik->solve_ik(
+    auto result = arm_handle_->ik->solve_ik(
         left_target, right_target,
         nullptr, nullptr  // current q, dq
     );
 
-    Eigen::VectorXd result_position_copy = Eigen::Map<Eigen::VectorXd>(result.position.data(), result.position.size());
-    JointState result2 = arm_ik->controller->get_grav_ff(result_position_copy);
-
     message.name = result.name;
     message.position = result.position;
     message.velocity = result.velocity;
-    message.effort = result2.effort;
+    message.effort = result.effort;
 
     t+=1;
     RCLCPP_INFO(this->get_logger(), "Published IK Joint States at time: %d with x=%f", t, x);
 
     publisher_->publish(message);
   }
-
-    Eigen::Matrix4d create_se3(const Eigen::Quaterniond& q, const Eigen::Vector3d& t) {
-        Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-        transform.block<3, 3>(0, 0) = q.normalized().toRotationMatrix();
-        transform.block<3, 1>(0, 3) = t;
-        return transform;
-    }
-
-    // Helper function to create SE3 from quaternion components and translation
-    Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz, 
-                            double tx, double ty, double tz) {
-        Eigen::Quaterniond q(qw, qx, qy, qz);
-        Eigen::Vector3d t(tx, ty, tz);
-        return create_se3(q, t);
-    }
 
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;

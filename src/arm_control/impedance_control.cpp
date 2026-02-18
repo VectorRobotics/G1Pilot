@@ -1,24 +1,25 @@
 #include "arm_control/impedance_control.h"
 
-#include <pinocchio//algorithm/utils/motion.hpp>
+#include <pinocchio/algorithm/utils/motion.hpp>
 #include <iostream>
 
 namespace ArmPilot {
     
 JointState ImpedanceController::control_both_arms(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::VectorXd current_joint_vel,
+    JointState current_state,
     Eigen::Matrix4d desired_l_ee_pose,
     Eigen::Matrix4d desired_r_ee_pose,
     Eigen::VectorXd desired_l_ee_vel,
     Eigen::VectorXd desired_r_ee_vel
 )
 {
-    current_joint_pos_ = Eigen::VectorXd(current_joint_pos);
-    current_joint_vel_ = Eigen::VectorXd(current_joint_vel);
-
+    std::tie(
+        current_joint_pos_,
+        current_joint_vel_,
+        current_joint_eff_
+    ) = jointstate_to_vectors(current_state, model_);
+    
     update();
-    // auto result = get_grav_ff(current_joint_pos_);
 
     desired_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_l_ee_vel);
@@ -30,74 +31,72 @@ JointState ImpedanceController::control_both_arms(
 
     torques = grav_torques + l_control_torques + r_control_torques;
 
-    JointState result;
-
-    for (int joint_id = 1; joint_id < model_.njoints; ++joint_id) {
-        result.name.push_back(model_.names[joint_id]);
-        result.position.push_back(current_joint_pos[model_.joints[joint_id].idx_v()]);
-        result.velocity.push_back(current_joint_vel[model_.joints[joint_id].idx_v()]);
-        result.effort.push_back(torques[model_.joints[joint_id].idx_v()]);
-    }
+    JointState result = vectors_to_jointstate(
+        current_joint_pos_,
+        current_joint_vel_,
+        torques,
+        model_
+    );
 
     return result;
 }
 
 JointState ImpedanceController::control_left_arm(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::VectorXd current_joint_vel,
+    JointState current_state,
     Eigen::Matrix4d desired_ee_pose,
     Eigen::VectorXd desired_ee_vel
 )
 {
-    current_joint_pos_ = Eigen::VectorXd(current_joint_pos);
-    current_joint_vel_ = Eigen::VectorXd(current_joint_vel);
-
-    desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
-    desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
+    std::tie(
+        current_joint_pos_,
+        current_joint_vel_,
+        current_joint_eff_
+    ) = jointstate_to_vectors(current_state, model_);
 
     update();
+    
+    desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
+    desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
     compute_left_arm_control_torques();
 
     torques = grav_torques + l_control_torques;
 
-    JointState result;
-
-    for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
-        result.name.push_back(model_.names[joint_id]);
-        result.position.push_back(0);
-        result.velocity.push_back(0);
-        result.effort.push_back(torques[model_.idx_vs[joint_id]]);
-    }
+    JointState result = vectors_to_jointstate(
+        current_joint_pos_,
+        current_joint_vel_,
+        torques,
+        model_
+    );
 
     return result;
 }
 
 JointState ImpedanceController::control_right_arm(
-    Eigen::VectorXd current_joint_pos,
-    Eigen::VectorXd current_joint_vel,
+    JointState current_state,
     Eigen::Matrix4d desired_ee_pose,
     Eigen::VectorXd desired_ee_vel
 )
 {
-    current_joint_pos_ = Eigen::VectorXd(current_joint_pos);
-    current_joint_vel_ = Eigen::VectorXd(current_joint_vel);
-
-    desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
-    desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
+    std::tie(
+        current_joint_pos_,
+        current_joint_vel_,
+        current_joint_eff_
+    ) = jointstate_to_vectors(current_state, model_);
 
     update();
+    
+    desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
+    desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
     compute_right_arm_control_torques();
 
     torques = grav_torques + r_control_torques;
 
-    JointState result;
-
-    for (int joint_id = 1; joint_id <= model_.nv; ++joint_id) {
-        result.name.push_back(model_.names[joint_id]);
-        result.position.push_back(0);
-        result.velocity.push_back(0);
-        result.effort.push_back(torques[model_.idx_vs[joint_id]]);
-    }
+    JointState result = vectors_to_jointstate(
+        current_joint_pos_,
+        current_joint_vel_,
+        torques,
+        model_
+    );
 
     return result;
 

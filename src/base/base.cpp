@@ -106,9 +106,9 @@ void G1DualArm::initialize_leg_joints_to_lock() {
         "right_knee_joint", 
         "right_ankle_pitch_joint", 
         "right_ankle_roll_joint",
-        "waist_yaw_joint", 
-        "waist_roll_joint", 
-        "waist_pitch_joint"
+        // "waist_yaw_joint", 
+        // "waist_roll_joint", 
+        // "waist_pitch_joint"
     };
 
     
@@ -162,7 +162,7 @@ JointState G1DualArm::grav_ff(JointState current_state){
     std::tie(q,v,e) = jointstate_to_vectors(current_state, robot_model_);
 
     pinocchio::computeGeneralizedGravity(robot_model_, robot_data_, q);
-    grav_torques = robot_data_.g;
+    grav_torques = 1.052*robot_data_.g;
     
     return vectors_to_jointstate(q,v,grav_torques, robot_model_);
 }
