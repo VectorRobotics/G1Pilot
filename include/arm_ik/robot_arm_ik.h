@@ -2,8 +2,7 @@
 #define ROBOT_ARM_IK_H
 
 #include "utils.h"
-
-#include "base/base.h"
+#include "../base/interfaces.h"
 #include "weighted_moving_filter.h"
 
 #include <pinocchio/multibody/data.hpp>
@@ -15,28 +14,14 @@
 
 
 namespace ArmPilot {
-/**
- * @brief Base configuration structure for robot models
- */
 
-/**
- * @brief G1_29_ArmIK - Inverse kinematics solver for G1 robot with 29 DOF
- */
-class G1_29_ArmIK {
+class HumanoidIK {
 public:
-    G1_29_ArmIK(
+    HumanoidIK(
         pinocchio::Model& model,
         pinocchio::GeometryModel& geom_model
     );
 
-    /**
-     * @brief Solve inverse kinematics for both arms
-     * @param left_wrist Target pose for left wrist (4x4 homogeneous transformation)
-     * @param right_wrist Target pose for right wrist (4x4 homogeneous transformation)
-     * @param current_lr_arm_motor_q Current joint positions (optional)
-     * @param current_lr_arm_motor_dq Current joint velocities (optional)
-     * @return Pair of (joint_positions, joint_torques)
-     */
     virtual JointState solve_ik(
         const Eigen::Matrix4d& left_wrist,
         const Eigen::Matrix4d& right_wrist,
@@ -46,24 +31,8 @@ public:
         const Eigen::VectorXd* EE_efrc_R = nullptr
     );
 
-    /**
-     * @brief Scale arm poses based on arm length ratio
-     * @param human_left_pose Human left arm pose
-     * @param human_right_pose Human right arm pose
-     * @param human_arm_length Human arm length (default: 0.60m)
-     * @param robot_arm_length Robot arm length (default: 0.75m)
-     * @return Pair of scaled (left_pose, right_pose)
-     */
-    std::pair<Eigen::Matrix4d, Eigen::Matrix4d> scale_arms(
-        const Eigen::Matrix4d& human_left_pose,
-        const Eigen::Matrix4d& human_right_pose,
-        double human_arm_length = 0.60,
-        double robot_arm_length = 0.75
-    );
-
 protected:
     void setup_optimization();
-    void initialize_collision_model();
     void filter_adjacent_collision_pairs();
 
     pinocchio::Model model_;
@@ -105,6 +74,15 @@ protected:
 
     Eigen::VectorXd init_data_;
     std::unique_ptr<WeightedMovingFilter> smooth_filter_;
+
+    Eigen::VectorXd sol_q;
+    Eigen::VectorXd sol_v;
+    Eigen::VectorXd sol_t;
+    Eigen::VectorXd sol_t_ext_L;
+    Eigen::VectorXd sol_t_ext_R;
+
+    pinocchio::Data::Matrix6x J_L;
+    pinocchio::Data::Matrix6x J_R;
 
 };
 

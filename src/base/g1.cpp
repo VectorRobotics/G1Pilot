@@ -1,4 +1,4 @@
-#include "base/base.h"
+#include "base/g1.h"
 
 #include <iostream>
 #include <pinocchio/parsers/urdf.hpp>
@@ -20,95 +20,62 @@ G1DualArm::G1DualArm(
     if (robot_config != nullptr) {
         robot_config_ = *robot_config;
     }
+    categorize_joints();
 
-    // (1) Basic Model
-    pinocchio::urdf::buildModel(robot_config_.asset_file, robot_model_);
+    pinocchio::urdf::buildModel(robot_config_.asset_file, model_g1_29);
     pinocchio::urdf::buildGeom(
-        robot_model_, 
+        model_g1_29, 
         robot_config_.asset_file, 
         pinocchio::COLLISION, 
-        geom_robot_model_, 
+        geom_g1_29, 
         robot_config_.asset_root
     );
     add_end_effector_frames();
-    reference_config = Eigen::VectorXd::Zero(robot_model_.nq);
 
-    // (2) Waist lock
-    initialize_waist_joints_to_lock();
-    for (const auto& joint_name : mixed_joints_to_lock_ids_) {
-        if (robot_model_.existJointName(joint_name)) {
-            leg_joints.push_back(robot_model_.getJointId(joint_name));
-        }
-    }
-    pinocchio::buildReducedModel(
-        robot_model_, 
-        geom_robot_model_,
-        leg_joints, 
-        reference_config, 
-        robot_waistless_, 
-        geom_waistless_
-    );
-    reference_config = Eigen::VectorXd::Zero(robot_waistless_.nq);
-    robot_data_ = pinocchio::Data(robot_waistless_);
-
-    // (2) Locked Legs
-    initialize_leg_joints_to_lock();
-    for (const auto& joint_name : mixed_joints_to_lock_ids_) {
-        if (robot_model_.existJointName(joint_name)) {
-            leg_joints.push_back(robot_model_.getJointId(joint_name));
-        }
-    }
-    pinocchio::buildReducedModel(
-        robot_waistless_, 
-        geom_waistless_,
-        leg_joints, 
-        reference_config, 
-        upper_body_, 
-        geom_upper_body_
-    );
-    reference_config = Eigen::VectorXd::Zero(upper_body_.nq);
-    std::cout << "Upper body made" <<std::endl;
-
-
-    // (3) Locked Palms
-    initialize_palm_joints_to_lock();
-    for (const auto& joint_name : mixed_joints_to_lock_ids_) {
-        if (upper_body_.existJointName(joint_name)) {
-            palm_joints.push_back(upper_body_.getJointId(joint_name));
-        }
-    }
-    pinocchio::buildReducedModel(
-        upper_body_, 
-        geom_upper_body_,
-        palm_joints, 
-        reference_config, 
-        upper_body_wo_palms,
-        geom_upper_body_wo_palms
+    reduce_model(
+        waist_joints,
+        model_g1_29,
+        geom_g1_29,
+        model_g1_26,
+        geom_g1_26
     );
 
-    std::cout<< "Models made"<<std::endl;
-    
+    reduce_model(
+        leg_joints,
+        model_g1_26,
+        geom_g1_26,
+        model_g1_14,
+        geom_g1_14
+    );
+
+    reduce_model(
+        hand_joints,
+        model_g1_14,
+        geom_g1_14,
+        model_g1_14_wo_hands,
+        geom_g1_14_wo_hands
+    );
+
+    data_g1_26 = pinocchio::Data(model_g1_26);
+
     // Initialize Tools with appropriate models
-    ik = new G1_29_ArmIK(
-        upper_body_wo_palms, 
-        geom_upper_body_wo_palms
+    ik = new HumanoidIK(
+        model_g1_14_wo_hands, 
+        geom_g1_14_wo_hands
     );
-    controller = new ImpedanceController(upper_body_wo_palms);
+    controller = new ImpedanceController(model_g1_14_wo_hands);
     motion_planner = new VisualServoPlanner();
 
 }
 
-void G1DualArm::initialize_waist_joints_to_lock() {
-    mixed_joints_to_lock_ids_ = {
+void G1DualArm::categorize_joints() {
+    waist_joints = {
         "waist_yaw_joint", 
         "waist_roll_joint", 
         "waist_pitch_joint"
     };
-}
 
-
-void G1DualArm::initialize_wrist_joints_to_lock() {
-    mixed_joints_to_lock_ids_ = {
+    wrist_joints = {
         "left_wrist_pitch_joint",
         "left_wrist_roll_joint",
         "left_wrist_yaw_joint",
@@ -116,10 +83,8 @@ void G1DualArm::initialize_wrist_joints_to_lock() {
         "right_wrist_roll_joint",
         "right_wrist_yaw_joint"
     };
-}
 
-void G1DualArm::initialize_leg_joints_to_lock() {
-    mixed_joints_to_lock_ids_ = {
+    leg_joints = {
         "left_hip_pitch_joint",
         "left_hip_roll_joint", 
         "left_hip_yaw_joint",
@@ -135,11 +100,7 @@ void G1DualArm::initialize_leg_joints_to_lock() {
 
     };
 
-    
-}
-
-void G1DualArm::initialize_palm_joints_to_lock() {
-    mixed_joints_to_lock_ids_ = {
+    hand_joints = {
         "left_hand_thumb_0_joint", 
         "left_hand_thumb_1_joint", 
         "left_hand_thumb_2_joint",
@@ -163,32 +124,60 @@ void G1DualArm::add_end_effector_frames() {
     pinocchio::JointIndex left_elbow_id, right_elbow_id;
     
     if (robot_config_.NUM_DOF==29){
-        left_elbow_id = robot_model_.getJointId("left_wrist_yaw_joint");
-        right_elbow_id = robot_model_.getJointId("right_wrist_yaw_joint");
+        left_elbow_id = model_g1_29.getJointId("left_wrist_yaw_joint");
+        right_elbow_id = model_g1_29.getJointId("right_wrist_yaw_joint");
     } else{
-        left_elbow_id = robot_model_.getJointId("left_elbow_joint");
-        right_elbow_id = robot_model_.getJointId("right_elbow_joint");
+        left_elbow_id = model_g1_29.getJointId("left_elbow_joint");
+        right_elbow_id = model_g1_29.getJointId("right_elbow_joint");
 
     }
     pinocchio::SE3 left_placement(Eigen::Matrix3d::Identity(), 
-                                   Eigen::Vector3d(0.01, 0, 0));
+                                   Eigen::Vector3d(0, 0, 0));
     pinocchio::SE3 right_placement(Eigen::Matrix3d::Identity(), 
-                                    Eigen::Vector3d(0.01, 0, 0));
+                                    Eigen::Vector3d(0, 0, 0));
 
-    robot_model_.addFrame(pinocchio::Frame("L_ee", left_elbow_id, 
+    model_g1_29.addFrame(pinocchio::Frame("L_ee", left_elbow_id, 
                                              left_placement, pinocchio::OP_FRAME));
-    robot_model_.addFrame(pinocchio::Frame("R_ee", right_elbow_id, 
+    model_g1_29.addFrame(pinocchio::Frame("R_ee", right_elbow_id, 
                                               right_placement, pinocchio::OP_FRAME));
 }
 
 JointState G1DualArm::grav_ff(JointState current_state){
 
-    std::tie(q,v,e) = jointstate_to_vectors(current_state, robot_waistless_);
+    std::tie(q,v,e) = jointstate_to_vectors(current_state, model_g1_26);
 
-    pinocchio::computeGeneralizedGravity(robot_waistless_, robot_data_, q);
-    grav_torques = 1.052*robot_data_.g;
+    pinocchio::computeGeneralizedGravity(model_g1_26, data_g1_26, q);
+    grav_torques = 1.052*data_g1_26.g;
     
-    return vectors_to_jointstate(q,v,grav_torques, robot_waistless_);
+    return vectors_to_jointstate(q,v,grav_torques, model_g1_26);
+}
+
+void G1DualArm::reduce_model(
+    std::vector<std::string> joint_names,
+    pinocchio::Model &model_in,
+    pinocchio::GeometryModel &gmodel_in,
+    pinocchio::Model &model_out,
+    pinocchio::GeometryModel &gmodel_out
+){
+    Eigen::VectorXd reference_config = Eigen::VectorXd::Zero(model_in.nq);
+    std::vector<pinocchio::JointIndex> joints_idx;
+
+    for (const auto& joint_name : joint_names) {
+        if (model_in.existJointName(joint_name)) {
+            joints_idx.push_back(
+                model_in.getJointId(joint_name)
+            );
+        }
+    }
+
+    pinocchio::buildReducedModel(
+        model_in, 
+        gmodel_in,
+        joints_idx, 
+        reference_config, 
+        model_out,
+        gmodel_out
+    );
 }
 
 std::tuple<

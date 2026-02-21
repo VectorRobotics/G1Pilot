@@ -1,4 +1,7 @@
-#include "arm_control/base_controller.h"
+#ifndef IMPD_CTRL_H
+#define IMPD_CTRL_H
+
+#include "base_controller.h"
 
 namespace ArmPilot {
 
@@ -55,3 +58,5 @@ private:
 
 }; // ImpedanceController class
 } // ArmControl namespace
+
+#endif

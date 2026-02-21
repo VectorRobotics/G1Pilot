@@ -39,7 +39,7 @@ Follow these instructions.
    ```bash
    cd G1Pilot
    chmod +x download_dependencies.sh
-   ./download_dependencies.sh
+   source download_dependencies.sh
    ```
 4. Build and install
    ```bash
@@ -62,7 +62,7 @@ Follow these instructions.
    ```bash
    cd G1Pilot
    chmod +x download_dependencies.sh
-   ./download_dependenceis.sh
+   sourcce download_dependenceis.sh
    ```
 3. Make build and install directories
    ```bash

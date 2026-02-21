@@ -1,10 +1,8 @@
 #ifndef BASE_CONTROLLER_H
 #define BASE_CONTROLLER_H
 
-#include "base/base.h"
-
 #include <pinocchio/multibody/data.hpp>
-#include <Eigen/Dense>
+#include "../base/interfaces.h"
 
 namespace ArmPilot {
 

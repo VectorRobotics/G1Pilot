@@ -12,26 +12,30 @@
 #include <cmath>
 
 // ============================================================================
-// G1_29_ArmIK Implementation
+// HumanoidIK Implementation
 // ============================================================================
 
 namespace ArmPilot {
 
-G1_29_ArmIK::G1_29_ArmIK(
+HumanoidIK::HumanoidIK(
     pinocchio::Model& model,
     pinocchio::GeometryModel& geom_model
 ) : model_(model), geom_model_(geom_model)
 {
-    std::cout << std::fixed << std::setprecision(5);
-    
+    // Get required joint IDs    
     L_hand_id_ = model_.getFrameId("L_ee");
     R_hand_id_ = model_.getFrameId("R_ee");
-    oMcamera = model_.getFrameId("d435_link", pinocchio::BODY);
-    oMLidar = model_.getFrameId("mid360_link", pinocchio::BODY);
-    
-    setup_optimization();
-    initialize_collision_model();
+    // oMcamera = model_.getFrameId("d435_link", pinocchio::BODY);
+    // oMLidar = model_.getFrameId("mid360_link", pinocchio::BODY);
 
+    // Setup Collision
+    geom_model_.addAllCollisionPairs();    
+    filter_adjacent_collision_pairs();
+
+    // Setup IK problem
+    setup_optimization();
+
+    // Initialize data structures
     data_ = pinocchio::Data(model_);
     geom_data_ = pinocchio::GeometryData(geom_model_);
     init_data_ = Eigen::VectorXd::Zero(model_.nq);
@@ -46,21 +50,7 @@ G1_29_ArmIK::G1_29_ArmIK(
 
 }
 
-void G1_29_ArmIK::initialize_collision_model() {
-    
-    // Add all collision pairs
-    geom_model_.addAllCollisionPairs();
-    
-    // Filter out adjacent link collisions
-    filter_adjacent_collision_pairs();
-    
-    std::cout << "num collision pairs - initial: " 
-              << geom_model_.collisionPairs.size() << std::endl;
-    std::cout << "Number of geometry objects: " 
-              << geom_model_.geometryObjects.size() << std::endl;
-}
-
-void G1_29_ArmIK::filter_adjacent_collision_pairs() {
+void HumanoidIK::filter_adjacent_collision_pairs() {
     // Get kinematic adjacency from the model
     std::set<std::pair<int, int>> adjacent_pairs;
     for (int i = 1; i < model_.njoints; ++i) {
@@ -82,7 +72,7 @@ void G1_29_ArmIK::filter_adjacent_collision_pairs() {
     geom_model_.collisionPairs = filtered_pairs;
 }
 
-void G1_29_ArmIK::setup_optimization() {
+void HumanoidIK::setup_optimization() {
     #ifdef USE_CASADI
     // Create optimization variables and parameters
     var_q_ = opti_.variable(model_.nq, 1);
@@ -189,7 +179,7 @@ void G1_29_ArmIK::setup_optimization() {
     #endif // USE_CASADI
 }
 
-JointState G1_29_ArmIK::solve_ik(
+JointState HumanoidIK::solve_ik(
     const Eigen::Matrix4d& left_wrist,
     const Eigen::Matrix4d& right_wrist,
     const Eigen::VectorXd* current_lr_arm_motor_q,
@@ -275,58 +265,52 @@ JointState G1_29_ArmIK::solve_ik(
 
             // Extract solution
             std::vector<double> sol_q_vec(var_q_.data(), var_q_.data() + var_q_.size());
+        
         #endif // USE_CASADI
 
-        Eigen::VectorXd sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
+        sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
         
         // Apply smoothing filter
         smooth_filter_->add_data(sol_q);
         sol_q = smooth_filter_->filtered_data();
         
         // Compute velocity
-        Eigen::VectorXd v;
-        if (current_lr_arm_motor_dq != nullptr) {
-            v = (*current_lr_arm_motor_dq) * 0.0;
-        } else {
-            v = (sol_q - init_data_) * 0.0;
-        }
-        
-        init_data_ = sol_q;
+        sol_v = 0.0*sol_q;
         
         // Compute feedforward torques using RNEA
-        Eigen::VectorXd sol_tauff = pinocchio::rnea(
-            model_, data_, sol_q, v,
+        sol_t = pinocchio::rnea(
+            model_, data_, sol_q, sol_v,
             Eigen::VectorXd::Zero(model_.nv)
         );
 
         // Add external forces if provided
         if (EE_efrc_L != nullptr && EE_efrc_R != nullptr) {
             // Compute Jacobians for both end effectors
-            pinocchio::Data::Matrix6x J_L(6, nv_);
-            pinocchio::Data::Matrix6x J_R(6, nv_);
+            J_L = pinocchio::Data::Matrix6x::Zero(6, nv_);
+            J_R = pinocchio::Data::Matrix6x::Zero(6, nv_);
             
-            pinocchio::computeFrameJacobian(model_, data_, sol_q, 
-                                           L_hand_id_, pinocchio::LOCAL_WORLD_ALIGNED, J_L);
-            pinocchio::computeFrameJacobian(model_, data_, sol_q, 
-                                           R_hand_id_, pinocchio::LOCAL_WORLD_ALIGNED, J_R);
+            pinocchio::computeFrameJacobian(
+                model_, data_, sol_q, 
+                L_hand_id_, pinocchio::LOCAL_WORLD_ALIGNED, 
+                J_L
+            );
+            pinocchio::computeFrameJacobian(
+                model_, data_, sol_q, 
+                R_hand_id_, pinocchio::LOCAL_WORLD_ALIGNED, 
+                J_R
+            );
             
             // Compute torques from external forces
-            Eigen::VectorXd tau_ext_L = J_L.transpose() * (*EE_efrc_L);
-            Eigen::VectorXd tau_ext_R = J_R.transpose() * (*EE_efrc_R);
+            sol_t_ext_L = J_L.transpose() * (*EE_efrc_L);
+            sol_t_ext_R = J_R.transpose() * (*EE_efrc_R);
             
-            // Combine external torques (first 4 from left, last 4 from right)
-            Eigen::VectorXd tau_ext = Eigen::VectorXd::Zero(nv_);
-            if (nv_ >= 8) {
-                tau_ext.head(4) = tau_ext_L.head(4);
-                tau_ext.tail(4) = tau_ext_R.tail(4);
-            }
-            
-            sol_tauff += tau_ext;
+            sol_t += sol_t_ext_L + sol_t_ext_R;
         }
 
         JointState result = vectors_to_jointstate(
-            sol_q, v, sol_tauff, model_
+            sol_q, sol_v, sol_t, model_
         );
+        init_data_ = sol_q;
         
         return result;
         
