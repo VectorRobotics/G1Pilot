@@ -23,7 +23,7 @@ public:
 	ImpedeArms() : Node("impedence_controller")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort/joint_states", 10);
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control", 10);
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
 			"feedback", 10,
 			std::bind(&ImpedeArms::handle_new_state_, this, std::placeholders::_1));

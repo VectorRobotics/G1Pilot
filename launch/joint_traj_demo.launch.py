@@ -39,8 +39,8 @@ def generate_launch_description():
         executable='joint_state_publisher',
         condition=UnlessCondition(LaunchConfiguration('jsp_gui')),
         parameters=[{
-            'source_list': ['ik/joint_states',
-                            'traj/joint_states'],
+            'source_list': ['position_control',
+                            'effort_control'],
         }]
     ))
     ld.add_action(Node(

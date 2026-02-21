@@ -21,7 +21,7 @@ public:
 	GravFF() : Node("gravity_feedforward")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort/joint_states", 10);
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control", 10);
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
 			"feedback", 10,
 			std::bind(&GravFF::handle_new_state_, this, std::placeholders::_1));

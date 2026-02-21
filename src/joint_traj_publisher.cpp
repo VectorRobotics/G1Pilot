@@ -22,7 +22,7 @@ public:
 	JointTrajPublisher() : Node("joint_traj_publisher")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("traj/joint_states", 10);
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("position_control", 10);
 		path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("/traj", 10);
 
 		// Timer to call the callback at 10Hz
