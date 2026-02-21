@@ -21,6 +21,10 @@ public:
     double get_current_left_ee_error(){return l_error_magnitude;};
     double get_current_right_ee_error(){return r_error_magnitude;};
 
+    JointState control_no_arms(
+        JointState current_state
+    );
+
 protected:
     void update();
 

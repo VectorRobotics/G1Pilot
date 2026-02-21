@@ -48,4 +48,28 @@ void ArmController::update()
     last_joint_pos_ = current_joint_pos_;
 }
 
+JointState ArmController::control_no_arms(
+    JointState current_state
+)
+{
+    std::tie(
+        current_joint_pos_,
+        current_joint_vel_,
+        current_joint_eff_
+    ) = jointstate_to_vectors(current_state, model_);
+    
+    update();
+
+    torques = 1.0*grav_torques;
+
+    JointState result = vectors_to_jointstate(
+        current_joint_pos_,
+        current_joint_vel_,
+        torques,
+        model_
+    );
+
+    return result;
+}
+
 } // ArmControl namespace

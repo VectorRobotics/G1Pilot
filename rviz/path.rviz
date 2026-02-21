@@ -25,6 +25,9 @@ Visualization Manager:
       Enabled: true
       Topic:
         Value: /traj
+      Pose Style: Axes
+      Length: 0.03
+      Radius: 0.005
   Global Options:
     Fixed Frame: g1_center
   Tools:

@@ -45,7 +45,7 @@ std::vector<Eigen::MatrixXd> PolynomialTrajectoryGenerator::planTrajectory(
     const double MAX_LIN_ACC,
     const double MAX_ANG_ACC
 ) {
-    int steps = 100;
+    int steps = 30;
     double duration = steps*time_step;
     int twist_size = 2*(goal_pose->rows()-1);
 

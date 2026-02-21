@@ -21,6 +21,11 @@ JointState ImpedanceController::control_both_arms(
     
     update();
 
+    Kp.head<3>().setConstant(Kp_linear);
+    Kp.tail<3>().setConstant(Kp_angular);
+    Kd.head<3>().setConstant(Kd_linear);
+    Kd.tail<3>().setConstant(Kd_angular);
+
     desired_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_l_ee_vel);
     compute_left_arm_control_torques();
@@ -54,6 +59,11 @@ JointState ImpedanceController::control_left_arm(
     ) = jointstate_to_vectors(current_state, model_);
 
     update();
+
+    Kp.head<3>().setConstant(Kp_linear);
+    Kp.tail<3>().setConstant(Kp_angular);
+    Kd.head<3>().setConstant(Kd_linear);
+    Kd.tail<3>().setConstant(Kd_angular);
     
     desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
@@ -84,6 +94,11 @@ JointState ImpedanceController::control_right_arm(
     ) = jointstate_to_vectors(current_state, model_);
 
     update();
+
+    Kp.head<3>().setConstant(Kp_linear);
+    Kp.tail<3>().setConstant(Kp_angular);
+    Kd.head<3>().setConstant(Kd_linear);
+    Kd.tail<3>().setConstant(Kd_angular);
     
     desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
@@ -117,14 +132,18 @@ void ImpedanceController::compute_left_arm_control_torques(){
     error_vel_in_ee_frame_ = desired_ee_vel_in_ee_frame_ - current_left_ee_vel_in_ee_frame_;
 
     l_control_torques = J_body_left_ee_.transpose() * (
-        Kp * error_twist_in_ee_frame_ + 
-        Kd * error_vel_in_ee_frame_
-    ).toVector();
+        Kp.asDiagonal() * error_twist_in_ee_frame_.toVector() + 
+        Kd.asDiagonal() * error_vel_in_ee_frame_.toVector()
+    );
 
     l_error_magnitude = std::sqrt(
         error_twist_in_ee_frame_.linear().squaredNorm() + 
-        error_twist_in_ee_frame_.angular().squaredNorm()*0.09
+        error_twist_in_ee_frame_.angular().squaredNorm()*0.05
     );
+
+    std::cout<< "lin: " << error_twist_in_ee_frame_.linear().squaredNorm() <<std::endl;
+    std::cout<< "ang: " << error_twist_in_ee_frame_.angular().squaredNorm() <<std::endl;
+    std::cout<< "mag: " << l_error_magnitude <<std::endl;
 }
 
 void ImpedanceController::compute_right_arm_control_torques(){
@@ -142,14 +161,16 @@ void ImpedanceController::compute_right_arm_control_torques(){
     error_vel_in_ee_frame_ = desired_ee_vel_in_ee_frame_ - current_right_ee_vel_in_ee_frame_;
 
     r_control_torques = J_body_right_ee_.transpose() * (
-        Kp * error_twist_in_ee_frame_ + 
-        Kd * error_vel_in_ee_frame_
-    ).toVector();
+        Kp.asDiagonal() * error_twist_in_ee_frame_.toVector() + 
+        Kd.asDiagonal() * error_vel_in_ee_frame_.toVector()
+    );
 
     r_error_magnitude = std::sqrt(
         error_twist_in_ee_frame_.linear().squaredNorm() + 
-        error_twist_in_ee_frame_.angular().squaredNorm()*0.09
+        error_twist_in_ee_frame_.angular().squaredNorm()*0.05
     );
+    std::cout<< "lin: " << error_twist_in_ee_frame_.linear().squaredNorm() <<std::endl;
+    std::cout<< "ang: " << error_twist_in_ee_frame_.angular().squaredNorm() <<std::endl;
 }
 
 

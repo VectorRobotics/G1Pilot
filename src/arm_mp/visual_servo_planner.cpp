@@ -8,6 +8,7 @@ namespace ArmPilot{
 VisualServoPlanner::VisualServoPlanner(double offset, int order) : 
     PolynomialTrajectoryGenerator(order)
 {
+    last_pose_ = Eigen::MatrixXd::Identity(4, 4);
 
     constraint_coeff_scaling.resize(order_+1,7);
     constraint_coeff_scaling <<
@@ -60,14 +61,6 @@ VisualServoPlanner::planPath(
     
     goal_p_unscaled_ = vee(rel_pose_);
     intermediate_p_unscaled_ = vee(intermediate_pose_);
-
-    // std::cout << "Constructing Path: \n" << std::endl;
-    // std::cout << "start: \n" << *start_pose << std::endl;
-    // std::cout << "end: \n" << *goal_pose << std::endl;
-    // std::cout << "rel: \n" << rel_pose_ << std::endl;
-    // std::cout << "goal t \n" << goal_p_unscaled_ <<std::endl; 
-    // std::cout << "int: \n" << start_pose->lu().solve(*goal_pose*intermediate_pose_offset_) <<std::endl; 
-    // std::cout << "int unscaled: \n" << intermediate_p_unscaled_ <<std::endl; 
 
     start_p_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
     

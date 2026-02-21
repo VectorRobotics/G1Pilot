@@ -39,7 +39,7 @@ G1_29_ArmIK::G1_29_ArmIK(
     // Initialize filter and data
     Eigen::VectorXd weights(4);
     weights << 0.4, 0.3, 0.2, 0.1;
-    smooth_filter_ = std::make_unique<WeightedMovingFilter>(weights, 14);
+    smooth_filter_ = std::make_unique<WeightedMovingFilter>(weights, model_.nv);
 
     nq_ = model_.nq;
     nv_ = model_.nv;

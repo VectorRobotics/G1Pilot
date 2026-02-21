@@ -31,8 +31,25 @@ G1DualArm::G1DualArm(
         robot_config_.asset_root
     );
     add_end_effector_frames();
-    robot_data_ = pinocchio::Data(robot_model_);
     reference_config = Eigen::VectorXd::Zero(robot_model_.nq);
+
+    // (2) Waist lock
+    initialize_waist_joints_to_lock();
+    for (const auto& joint_name : mixed_joints_to_lock_ids_) {
+        if (robot_model_.existJointName(joint_name)) {
+            leg_joints.push_back(robot_model_.getJointId(joint_name));
+        }
+    }
+    pinocchio::buildReducedModel(
+        robot_model_, 
+        geom_robot_model_,
+        leg_joints, 
+        reference_config, 
+        robot_waistless_, 
+        geom_waistless_
+    );
+    reference_config = Eigen::VectorXd::Zero(robot_waistless_.nq);
+    robot_data_ = pinocchio::Data(robot_waistless_);
 
     // (2) Locked Legs
     initialize_leg_joints_to_lock();
@@ -42,8 +59,8 @@ G1DualArm::G1DualArm(
         }
     }
     pinocchio::buildReducedModel(
-        robot_model_, 
-        geom_robot_model_,
+        robot_waistless_, 
+        geom_waistless_,
         leg_joints, 
         reference_config, 
         upper_body_, 
@@ -81,6 +98,15 @@ G1DualArm::G1DualArm(
 
 }
 
+void G1DualArm::initialize_waist_joints_to_lock() {
+    mixed_joints_to_lock_ids_ = {
+        "waist_yaw_joint", 
+        "waist_roll_joint", 
+        "waist_pitch_joint"
+    };
+}
+
+
 void G1DualArm::initialize_wrist_joints_to_lock() {
     mixed_joints_to_lock_ids_ = {
         "left_wrist_pitch_joint",
@@ -106,9 +132,7 @@ void G1DualArm::initialize_leg_joints_to_lock() {
         "right_knee_joint", 
         "right_ankle_pitch_joint", 
         "right_ankle_roll_joint",
-        // "waist_yaw_joint", 
-        // "waist_roll_joint", 
-        // "waist_pitch_joint"
+
     };
 
     
@@ -159,12 +183,12 @@ void G1DualArm::add_end_effector_frames() {
 
 JointState G1DualArm::grav_ff(JointState current_state){
 
-    std::tie(q,v,e) = jointstate_to_vectors(current_state, robot_model_);
+    std::tie(q,v,e) = jointstate_to_vectors(current_state, robot_waistless_);
 
-    pinocchio::computeGeneralizedGravity(robot_model_, robot_data_, q);
+    pinocchio::computeGeneralizedGravity(robot_waistless_, robot_data_, q);
     grav_torques = 1.052*robot_data_.g;
     
-    return vectors_to_jointstate(q,v,grav_torques, robot_model_);
+    return vectors_to_jointstate(q,v,grav_torques, robot_waistless_);
 }
 
 std::tuple<

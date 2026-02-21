@@ -51,6 +51,14 @@ public:
 		RCLCPP_INFO(this->get_logger(), "Initialized");
 
 		t = 0;
+
+
+        arm_handle_->controller->Kp_linear = 120;
+        arm_handle_->controller->Kp_angular = 0.8;
+
+        arm_handle_->controller->Kd_linear = 2;
+        arm_handle_->controller->Kd_angular = 0.0;
+
 	}
 
 	Eigen::Matrix4d left_target;

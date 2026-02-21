@@ -139,10 +139,10 @@ if(ROS2_DEFAULT)
     add_executable(grav_ff src/grav_ff.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
-    ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs)
+    ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs nav_msgs)
 
     target_link_libraries(impede_arms g1_pilot)
-    ament_target_dependencies(impede_arms ament_index_cpp rclcpp sensor_msgs)
+    ament_target_dependencies(impede_arms ament_index_cpp rclcpp sensor_msgs nav_msgs)
 
     target_link_libraries(joint_traj_publisher g1_pilot)
     ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp nav_msgs sensor_msgs)

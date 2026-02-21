@@ -55,6 +55,7 @@ public:
     JointState grav_ff(JointState input);
 
 protected:
+    void initialize_waist_joints_to_lock();
     void initialize_wrist_joints_to_lock();
     void initialize_leg_joints_to_lock();
     void initialize_palm_joints_to_lock();
@@ -63,12 +64,14 @@ protected:
     RobotConfig robot_config_;
 
     pinocchio::Model robot_model_;
+    pinocchio::Model robot_waistless_;
     pinocchio::Model upper_body_;
     pinocchio::Model upper_body_wo_palms;
 
     pinocchio::Data robot_data_;
 
     pinocchio::GeometryModel geom_robot_model_;
+    pinocchio::GeometryModel geom_waistless_;
     pinocchio::GeometryModel geom_upper_body_;
     pinocchio::GeometryModel geom_upper_body_wo_palms;
 

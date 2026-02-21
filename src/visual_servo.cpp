@@ -3,8 +3,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "nav_msgs/msg/path.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "helper_funcs.h"
 
 #include <algorithm>
 #include <chrono>
@@ -17,7 +16,6 @@ class VisualServo : public rclcpp::Node
 public:
     VisualServo() : Node("visual_servoing")
     {
-        /* Creaating a node that can perform visual servoing */
 
         /* Initialize arm handle for arm functionalities */
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_pilot");
@@ -39,27 +37,40 @@ public:
 
 
         /* Publishers */
-        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("servo/joint_states",10);
+        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("effort/joint_states",10);
+        path_pub_ = this->create_publisher<nav_msgs::msg::Path>("traj",10);
+
 
         /* Subscribers */
         goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             "/goal_pose",10,
             std::bind(&VisualServo::handle_new_goal_pose_, this, std::placeholders::_1)
         );
+
         feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
             "/feedback",10,
             std::bind(&VisualServo::handle_new_feedback_, this, std::placeholders::_1)
         );
+
         // left_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/feedback/dex3/left/odom",10,
         //     [this](nav_msgs::msg::Odometry::UniquePtr msg){this->handle_odom_(msg, &(this->left_ee_pose_))});
+
         // right_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/feedback/dex3/right/odom",10,
         //     [this](nav_msgs::msg::Odometry::UniquePtr msg){this->handle_odom_(msg, &(this->right_ee_pose_))});
 
+
         /* Timer loops */
-        control_loop_ = this->create_wall_timer(100ms, std::bind(&VisualServo::controller_, this));
+        control_loop_ = this->create_wall_timer(50ms, std::bind(&VisualServo::controller_, this));
+
 
         /* Initializing variables */
         goal_ = Eigen::MatrixXd::Identity(4,4);
+
+        arm_handle_->controller->Kp_linear = 120;
+        arm_handle_->controller->Kp_angular = 0.8;
+
+        arm_handle_->controller->Kd_linear = 2;
+        arm_handle_->controller->Kd_angular = 0.0;
 
     }
 
@@ -68,6 +79,7 @@ private:
 
     // Publishers
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_pub_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
 
     // Subscribers
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
@@ -81,10 +93,7 @@ private:
     // Arm Handle
     std::unique_ptr<G1DualArm> arm_handle_;
 
-    // Variables for state tracking
-    Eigen::VectorXd current_configuration_;
-    Eigen::VectorXd current_configuration_vel_;
-    Eigen::VectorXd current_configuration_eff_;
+    // Variables for endeffector state
     Eigen::MatrixXd left_ee_pose_;
     Eigen::MatrixXd right_ee_pose_;
 
@@ -101,16 +110,19 @@ private:
     JointState cmd_;
     JointState current_state_;
 
+    std::stringstream left_ee_pose_debug;
+    std::stringstream right_ee_pose_debug;
+
 
     void controller_(){
 
         // Wait until first feedback message initializes the configuration
-        if (current_configuration_.size() == 0){
+        if (current_state_.name.size() == 0){
             return;
         }
 
         if (left_trajectory_.empty() && right_trajectory_.empty()){
-            cmd_ = arm_handle_->grav_ff(
+            cmd_ = arm_handle_->controller->control_no_arms(
                 current_state_
             );
         }
@@ -134,16 +146,18 @@ private:
             );
         }
 
-        if (!left_trajectory_.empty()){
+        if (left_trajectory_.size()>1){
             left_error_ = arm_handle_->controller->get_current_left_ee_error();
-            if (left_error_<0.02) // 2 cm 
+            if (left_error_<0.05){ // 2 cm 
                 left_trajectory_.pop_back();
+            }
         }
 
-        if (!right_trajectory_.empty()){
+        if (right_trajectory_.size()>1){
             right_error_ = arm_handle_->controller->get_current_right_ee_error();
-            if (right_error_<0.02) // 2 cm 
+            if (right_error_<0.05){ // 2 cm 
                 right_trajectory_.pop_back();
+            }
         }
 
         left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
@@ -182,6 +196,7 @@ private:
                 &right_ee_pose_,
                 &right_tiny_side_vel_
             );
+            path_pub_->publish(convertToPath(right_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(right_trajectory_.begin(), right_trajectory_.end());
         } else {
             left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
@@ -189,8 +204,12 @@ private:
                 &left_ee_pose_,
                 &left_tiny_side_vel_
             );
+            path_pub_->publish(convertToPath(left_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(left_trajectory_.begin(), left_trajectory_.end());
         }
+
+        RCLCPP_INFO(this->get_logger(), "New goal processed");
+        
     }
 
     void handle_new_feedback_(sensor_msgs::msg::JointState::UniquePtr msg){

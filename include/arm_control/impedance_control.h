@@ -7,7 +7,7 @@ class ImpedanceController : public ArmController {
 public:
     ImpedanceController(
         pinocchio::Model& model
-    ) : ArmController(model) {};
+    ) : ArmController(model) { };
 
     JointState control_both_arms(
     JointState current_state,
@@ -29,13 +29,15 @@ public:
     Eigen::VectorXd desired_ee_vel = Eigen::VectorXd::Zero(6)
     );
 
+    double Kp_linear = 30;
+    double Kp_angular = 5;
+    double Kd_linear = 0;
+    double Kd_angular = 0;
+
 private:
 
     void compute_left_arm_control_torques();
     void compute_right_arm_control_torques();
-
-    const double Kp = 3.0;
-    const double Kd = 0.1;
 
     pinocchio::SE3 desired_ee_pose_;
     pinocchio::Motion desired_ee_vel_;
@@ -47,6 +49,9 @@ private:
     pinocchio::Motion error_vel_in_ee_frame_;
 
     Eigen::VectorXd torques_dual_arm_;
+
+    Eigen::VectorXd Kp = Eigen::VectorXd::Zero(6);
+    Eigen::VectorXd Kd = Eigen::VectorXd::Zero(6);
 
 }; // ImpedanceController class
 } // ArmControl namespace
