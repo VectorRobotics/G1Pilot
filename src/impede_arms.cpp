@@ -27,6 +27,11 @@ public:
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
 			"feedback", 10,
 			std::bind(&ImpedeArms::handle_new_state_, this, std::placeholders::_1));
+		goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "/goal_pose",10,
+            std::bind(&ImpedeArms::handle_new_goal_pose_, this, std::placeholders::_1)
+        );
+		
 
 		RCLCPP_INFO(this->get_logger(), "Pilot Impedence Controller Node has started.");
 
@@ -52,6 +57,12 @@ public:
 
 		t = 0;
 
+		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		goal_ = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+
+		goal_set_ = false;
+
 
         // with motion planner
         // arm_handle_->controller->Kp_linear = 120;
@@ -61,20 +72,22 @@ public:
         // arm_handle_->controller->Kd_angular = 0.0;
 
 		// without motion planner
-		arm_handle_->controller->Kp_linear = 10;
+		arm_handle_->controller->Kp_linear = 100;
         arm_handle_->controller->Kp_angular = 1;
 
-        arm_handle_->controller->Kd_linear = 1;
+        arm_handle_->controller->Kd_linear = 2;
         arm_handle_->controller->Kd_angular = 0.2;
 
 	}
 
 	Eigen::Matrix4d left_target;
 	Eigen::Matrix4d right_target;
+	Eigen::MatrixXd goal_;
 
 private:
 	void handle_new_state_(sensor_msgs::msg::JointState::UniquePtr msg)
 	{
+		if (!goal_set_) return;
 
 		message_.name = msg->name;
 		message_.position = msg->position;
@@ -86,7 +99,7 @@ private:
 
 		// Default pos:
 		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
+		right_target = goal_;
 
 		result_ = arm_handle_->controller->control_both_arms(
 			message_,
@@ -105,16 +118,41 @@ private:
 
 		publisher_->publish(reply_);
 	}
+
+	void handle_new_goal_pose_(geometry_msgs::msg::PoseStamped::UniquePtr msg){
+
+		goal_set_ = true;
+
+		Eigen::Quaterniond q(
+			msg->pose.orientation.w,
+			msg->pose.orientation.x,
+			msg->pose.orientation.y,
+			msg->pose.orientation.z
+		);
+		
+		goal_.block<3,3>(0,0) = q.normalized().toRotationMatrix();
+		goal_.block<3,1>(0,3) = Eigen::Vector3d(
+			msg->pose.position.x,
+			msg->pose.position.y,
+			msg->pose.position.z
+		);
+
+		RCLCPP_INFO(this->get_logger(), "New goal processed");
+		
+	}
+
 	
 	// Private Variables
 	rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
 	rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr subscriber_;
+	rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
 
 	std::unique_ptr<G1DualArm> arm_handle_;
 
 	JointState message_;
 	JointState result_;
 	sensor_msgs::msg::JointState reply_;
+	bool goal_set_;
 
 	int t;
 };
