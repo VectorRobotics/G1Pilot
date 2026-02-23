@@ -64,7 +64,7 @@ G1DualArm::G1DualArm(
         geom_g1_14_wo_hands
     );
     controller = new ImpedanceController(model_g1_14_wo_hands);
-    motion_planner = new VisualServoPlanner();
+    motion_planner = new PolynomialTrajectoryGenerator();
 
 }
 

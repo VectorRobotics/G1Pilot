@@ -24,7 +24,7 @@ public:
 
     HumanoidIK* ik;
     ImpedanceController* controller;
-    VisualServoPlanner* motion_planner;
+    PolynomialTrajectoryGenerator* motion_planner;
 
     JointState grav_ff(JointState input);
 
