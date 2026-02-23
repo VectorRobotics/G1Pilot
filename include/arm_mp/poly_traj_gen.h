@@ -27,7 +27,7 @@ class PolynomialTrajectoryGenerator {
             const Eigen::VectorXd* start_acc = nullptr,
             const Eigen::VectorXd* goal_acc = nullptr,
             double time_step = 0.05,
-            const double MAX_LIN_VEL = 0.05,
+            const double MAX_LIN_VEL = 0.1,
             const double MAX_ANG_VEL = 4.0,
             const double MAX_LIN_ACC = 0.05,
             const double MAX_ANG_ACC = 4.0

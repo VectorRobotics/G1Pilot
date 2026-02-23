@@ -147,7 +147,8 @@ JointState G1DualArm::grav_ff(JointState current_state){
     std::tie(q,v,e) = jointstate_to_vectors(current_state, model_g1_26);
 
     pinocchio::computeGeneralizedGravity(model_g1_26, data_g1_26, q);
-    grav_torques = 1.052*data_g1_26.g;
+    // grav_torques = 1.052*data_g1_26.g;
+    grav_torques = data_g1_26.g;
     
     return vectors_to_jointstate(q,v,grav_torques, model_g1_26);
 }

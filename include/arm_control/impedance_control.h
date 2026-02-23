@@ -36,6 +36,9 @@ public:
     double Kp_angular = 5;
     double Kd_linear = 0;
     double Kd_angular = 0;
+    double Ki_linear = 0;
+    double Ki_angular = 0;
+    double Ki_max = 5.0; // anti-windup clamp
 
 private:
 
@@ -55,6 +58,9 @@ private:
 
     Eigen::VectorXd Kp = Eigen::VectorXd::Zero(6);
     Eigen::VectorXd Kd = Eigen::VectorXd::Zero(6);
+    Eigen::VectorXd Ki = Eigen::VectorXd::Zero(6);
+
+    Eigen::VectorXd error_integral_in_ee_frame_ = Eigen::VectorXd::Zero(6);
 
 }; // ImpedanceController class
 } // ArmControl namespace

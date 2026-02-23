@@ -83,6 +83,7 @@
     <child link="left_hip_pitch_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-2.5307" upper="2.8798" effort="88" velocity="32"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_hip_roll_link">
     <inertial>
@@ -110,6 +111,7 @@
     <child link="left_hip_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-0.5236" upper="2.9671" effort="139" velocity="20"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_hip_yaw_link">
     <inertial>
@@ -137,6 +139,7 @@
     <child link="left_hip_yaw_link"/>
     <axis xyz="0 0 1"/>
     <limit lower="-2.7576" upper="2.7576" effort="88" velocity="32"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_knee_link">
     <inertial>
@@ -164,6 +167,7 @@
     <child link="left_knee_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-0.087267" upper="2.8798" effort="139" velocity="20"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_ankle_pitch_link">
     <inertial>
@@ -191,6 +195,7 @@
     <child link="left_ankle_pitch_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-0.87267" upper="0.5236" effort="35" velocity="30"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_ankle_roll_link">
     <inertial>
@@ -236,6 +241,7 @@
     <child link="left_ankle_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-0.2618" upper="0.2618" effort="35" velocity="30"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_hip_pitch_link">
     <inertial>
@@ -263,6 +269,7 @@
     <child link="right_hip_pitch_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-2.5307" upper="2.8798" effort="88" velocity="32"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_hip_roll_link">
     <inertial>
@@ -290,6 +297,7 @@
     <child link="right_hip_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-2.9671" upper="0.5236" effort="139" velocity="20"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_hip_yaw_link">
     <inertial>
@@ -317,6 +325,7 @@
     <child link="right_hip_yaw_link"/>
     <axis xyz="0 0 1"/>
     <limit lower="-2.7576" upper="2.7576" effort="88" velocity="32"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_knee_link">
     <inertial>
@@ -344,6 +353,7 @@
     <child link="right_knee_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-0.087267" upper="2.8798" effort="139" velocity="20"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_ankle_pitch_link">
     <inertial>
@@ -371,6 +381,7 @@
     <child link="right_ankle_pitch_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-0.87267" upper="0.5236" effort="35" velocity="30"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_ankle_roll_link">
     <inertial>
@@ -416,6 +427,7 @@
     <child link="right_ankle_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-0.2618" upper="0.2618" effort="35" velocity="30"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
 
   <!-- Torso -->
@@ -439,6 +451,7 @@
     <child link="waist_yaw_link"/>
     <axis xyz="0 0 1"/>
     <limit lower="-2.618" upper="2.618" effort="88" velocity="32"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="waist_roll_link">
     <inertial>
@@ -460,6 +473,7 @@
     <child link="waist_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-0.52" upper="0.52" effort="35" velocity="30"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="torso_link">
     <inertial>
@@ -487,6 +501,7 @@
     <child link="torso_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-0.52" upper="0.52" effort="35" velocity="30"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
 
   <!-- LOGO -->
@@ -602,6 +617,7 @@
     <child link="left_shoulder_pitch_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.0892" upper="2.6704" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_shoulder_roll_link">
     <inertial>
@@ -629,6 +645,7 @@
     <child link="left_shoulder_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-1.5882" upper="2.2515" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_shoulder_yaw_link">
     <inertial>
@@ -656,6 +673,7 @@
     <child link="left_shoulder_yaw_link"/>
     <axis xyz="0 0 1"/>
     <limit lower="-2.618" upper="2.618" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_elbow_link">
     <inertial>
@@ -683,6 +701,7 @@
     <child link="left_elbow_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.0472" upper="2.0944" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <joint name="left_wrist_roll_joint" type="revolute">
     <origin xyz="0.100 0.00188791 -0.010" rpy="0 0 0"/>
@@ -690,6 +709,7 @@
     <parent link="left_elbow_link"/>
     <child link="left_wrist_roll_link"/>
     <limit effort="25" velocity="37" lower="-1.972222054" upper="1.972222054"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_wrist_roll_link">
     <inertial>
@@ -717,6 +737,7 @@
     <parent link="left_wrist_roll_link"/>
     <child link="left_wrist_pitch_link"/>
     <limit effort="5" velocity="22" lower="-1.614429558" upper="1.614429558"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_wrist_pitch_link">
     <inertial>
@@ -744,6 +765,7 @@
     <parent link="left_wrist_pitch_link"/>
     <child link="left_wrist_yaw_link"/>
     <limit effort="5" velocity="22" lower="-1.614429558" upper="1.614429558"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_wrist_yaw_link">
     <inertial>
@@ -796,6 +818,7 @@
     <parent link="left_hand_palm_link"/>
     <child link="left_hand_thumb_0_link"/>
     <limit effort="2.45" velocity="3.14" lower="-1.04719755" upper="1.04719755"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_thumb_0_link">
     <inertial>
@@ -823,6 +846,7 @@
     <parent link="left_hand_thumb_0_link"/>
     <child link="left_hand_thumb_1_link"/>
     <limit effort="1.4" velocity="12" lower="-0.61086523" upper="1.04719755"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_thumb_1_link">
     <inertial>
@@ -850,6 +874,7 @@
     <parent link="left_hand_thumb_1_link"/>
     <child link="left_hand_thumb_2_link"/>
     <limit effort="1.4" velocity="12" lower="0" upper="1.74532925"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_thumb_2_link">
     <inertial>
@@ -877,6 +902,7 @@
     <parent link="left_hand_palm_link"/>
     <child link="left_hand_middle_0_link"/>
     <limit effort="1.4" velocity="12" lower="-1.57079632" upper="0"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_middle_0_link">
     <inertial>
@@ -904,6 +930,7 @@
     <parent link="left_hand_middle_0_link"/>
     <child link="left_hand_middle_1_link"/>
     <limit effort="1.4" velocity="12" lower="-1.74532925" upper="0"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_middle_1_link">
     <inertial>
@@ -931,6 +958,7 @@
     <parent link="left_hand_palm_link"/>
     <child link="left_hand_index_0_link"/>
     <limit effort="1.4" velocity="12" lower="-1.57079632" upper="0"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_index_0_link">
     <inertial>
@@ -958,6 +986,7 @@
     <parent link="left_hand_index_0_link"/>
     <child link="left_hand_index_1_link"/>
     <limit effort="1.4" velocity="12" lower="-1.74532925" upper="0"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="left_hand_index_1_link">
     <inertial>
@@ -1005,6 +1034,7 @@
     <child link="right_shoulder_pitch_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.0892" upper="2.6704" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_shoulder_roll_link">
     <inertial>
@@ -1032,6 +1062,7 @@
     <child link="right_shoulder_roll_link"/>
     <axis xyz="1 0 0"/>
     <limit lower="-2.2515" upper="1.5882" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_shoulder_yaw_link">
     <inertial>
@@ -1059,6 +1090,7 @@
     <child link="right_shoulder_yaw_link"/>
     <axis xyz="0 0 1"/>
     <limit lower="-2.618" upper="2.618" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_elbow_link">
     <inertial>
@@ -1086,6 +1118,7 @@
     <child link="right_elbow_link"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.0472" upper="2.0944" effort="25" velocity="37"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <joint name="right_wrist_roll_joint" type="revolute">
     <origin xyz="0.100 -0.00188791 -0.010" rpy="0 0 0"/>
@@ -1093,6 +1126,7 @@
     <parent link="right_elbow_link"/>
     <child link="right_wrist_roll_link"/>
     <limit effort="25" velocity="37" lower="-1.972222054" upper="1.972222054"/>
+    <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_wrist_roll_link">
     <inertial>
@@ -1120,6 +1154,7 @@
     <parent link="right_wrist_roll_link"/>
     <child link="right_wrist_pitch_link"/>
     <limit effort="5" velocity="22" lower="-1.614429558" upper="1.614429558"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_wrist_pitch_link">
     <inertial>
@@ -1147,6 +1182,7 @@
     <parent link="right_wrist_pitch_link"/>
     <child link="right_wrist_yaw_link"/>
     <limit effort="5" velocity="22" lower="-1.614429558" upper="1.614429558"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_wrist_yaw_link">
     <inertial>
@@ -1199,6 +1235,7 @@
     <parent link="right_hand_palm_link"/>
     <child link="right_hand_thumb_0_link"/>
     <limit effort="2.45" velocity="3.14" lower="-1.04719755" upper="1.04719755"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_thumb_0_link">
     <inertial>
@@ -1226,6 +1263,7 @@
     <parent link="right_hand_thumb_0_link"/>
     <child link="right_hand_thumb_1_link"/>
     <limit effort="1.4" velocity="12" lower="-1.04719755" upper="0.61086523"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_thumb_1_link">
     <inertial>
@@ -1253,6 +1291,7 @@
     <parent link="right_hand_thumb_1_link"/>
     <child link="right_hand_thumb_2_link"/>
     <limit effort="1.4" velocity="12" lower="-1.74532925" upper="0"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_thumb_2_link">
     <inertial>
@@ -1280,6 +1319,7 @@
     <parent link="right_hand_palm_link"/>
     <child link="right_hand_middle_0_link"/>
     <limit effort="1.4" velocity="12" lower="0" upper="1.57079632"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_middle_0_link">
     <inertial>
@@ -1307,6 +1347,7 @@
     <parent link="right_hand_middle_0_link"/>
     <child link="right_hand_middle_1_link"/>
     <limit effort="1.4" velocity="12" lower="0" upper="1.74532925"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_middle_1_link">
     <inertial>
@@ -1334,6 +1375,7 @@
     <parent link="right_hand_palm_link"/>
     <child link="right_hand_index_0_link"/>
     <limit effort="1.4" velocity="12" lower="0" upper="1.57079632"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_index_0_link">
     <inertial>
@@ -1361,6 +1403,7 @@
     <parent link="right_hand_index_0_link"/>
     <child link="right_hand_index_1_link"/>
     <limit effort="1.4" velocity="12" lower="0" upper="1.74532925"/>
+    <dynamics damping="0.05" friction="0.1"/>
   </joint>
   <link name="right_hand_index_1_link">
     <inertial>

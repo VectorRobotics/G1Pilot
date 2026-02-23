@@ -45,18 +45,23 @@ std::vector<Eigen::MatrixXd> PolynomialTrajectoryGenerator::planTrajectory(
     const double MAX_LIN_ACC,
     const double MAX_ANG_ACC
 ) {
-    int steps = 30;
-    double duration = steps*time_step;
     int twist_size = 2*(goal_pose->rows()-1);
 
-    if (start_pose!=nullptr) 
-        start_pose_ = *start_pose; 
-    else 
+    if (start_pose!=nullptr)
+        start_pose_ = *start_pose;
+    else
         start_pose_ = Eigen::MatrixXd::Identity(goal_pose->rows(), goal_pose->cols());
 
-    if (start_vel!=nullptr) 
-        start_vel_unscaled_ = *start_vel*duration; 
-    else 
+    // Compute duration proportional to translational distance
+    Eigen::Vector3d start_pos = start_pose_.block<3,1>(0,3);
+    Eigen::Vector3d goal_pos = goal_pose->block<3,1>(0,3);
+    double lin_dist = (goal_pos - start_pos).norm();
+    double duration = std::max(0.1, lin_dist / MAX_LIN_VEL);
+    int steps = std::max(2, (int)(duration / time_step));
+
+    if (start_vel!=nullptr)
+        start_vel_unscaled_ = *start_vel*duration;
+    else
         start_vel_unscaled_ = Eigen::VectorXd::Zero(twist_size);
 
     if (start_acc!=nullptr) 
@@ -155,14 +160,11 @@ PolynomialTrajectoryGenerator::planPath(
 
 void PolynomialTrajectoryGenerator::construct_line_(int steps)
 {
-    // std::cout << "Constructing Line" << std::endl;
-    // std::cout << "start" << start_p_unscaled_ << std::endl;
-    // std::cout << "end" << goal_p_unscaled_ << std::endl;
-    // coeff * A = b 
+    // coeff * A = b
     Eigen::MatrixXd b(goal_p_unscaled_.size(), 6);
     Eigen::MatrixXd coeff(goal_p_unscaled_.size(), order_+1);
 
-    b << 
+    b <<
         start_p_unscaled_,
         goal_p_unscaled_,
         start_vel_unscaled_,
@@ -171,9 +173,6 @@ void PolynomialTrajectoryGenerator::construct_line_(int steps)
         goal_acc_unscaled_;
 
     coeff = b*ccs_right_inv;
-
-    // std::cout << std::fixed << std::setprecision(2);
-    // std::cout << "coeff: \n" << coeff << std::endl;
 
     Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(steps, 0, 1);
 

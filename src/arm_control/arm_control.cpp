@@ -43,7 +43,8 @@ void ArmController::update()
     torques = Eigen::VectorXd::Zero(model_.nv);
 
     pinocchio::computeGeneralizedGravity(model_, data_, current_joint_pos_);
-    grav_torques = 1.052*data_.g;
+    // grav_torques = 1.052*data_.g;
+    grav_torques = data_.g;
 
     last_joint_pos_ = current_joint_pos_;
 }

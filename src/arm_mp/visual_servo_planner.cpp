@@ -10,17 +10,17 @@ VisualServoPlanner::VisualServoPlanner(double offset, int order) :
 {
     last_pose_ = Eigen::MatrixXd::Identity(4, 4);
 
-    constraint_coeff_scaling.resize(order_+1,7);
+    // Use 6-constraint polynomial (start/goal pose, vel, acc) — no intermediate point
+    constraint_coeff_scaling.resize(order_+1,6);
     constraint_coeff_scaling <<
         generate_pow_vector_(0.0, order_),
         generate_pow_vector_(1.0, order_),
-        generate_pow_vector_(0.7, order_),
         diff_(order_) * generate_pow_vector_(0.0, order_ - 1),
         diff_(order_) * generate_pow_vector_(1.0, order_ - 1),
         diff_(order_, 2) * generate_pow_vector_(0.0, order_ - 2),
         diff_(order_, 2) * generate_pow_vector_(1.0, order_ - 2);
 
-    if (7>order_+1) {
+    if (6>order_+1) {
         Eigen::MatrixXd ccsccsT = constraint_coeff_scaling*constraint_coeff_scaling.transpose();
         ccs_right_inv = constraint_coeff_scaling.transpose().llt().solve(ccsccsT);
     } else {
@@ -28,12 +28,12 @@ VisualServoPlanner::VisualServoPlanner(double offset, int order) :
         ccs_right_inv = ccsTccs.llt().solve(constraint_coeff_scaling.transpose());
     }
 
-    intermediate_pose_offset_ = Eigen::Matrix4d::Identity(4,4);
-    intermediate_pose_offset_ << 
-        1, 0, 0, -offset,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1;
+    // intermediate_pose_offset_ = Eigen::Matrix4d::Identity(4,4);
+    // intermediate_pose_offset_ <<
+    //     1, 0, 0, -offset,
+    //     0, 1, 0, 0,
+    //     0, 0, 1, 0,
+    //     0, 0, 0, 1;
 
     std::cout<<"Trajecotry Generator Initialized"<<std::endl;
 
@@ -57,10 +57,10 @@ VisualServoPlanner::planPath(
     int twist_size = 2*(goal_pose->rows()-1);
 
     rel_pose_ = start_pose->lu().solve(*goal_pose).log();
-    intermediate_pose_ = start_pose->lu().solve(*goal_pose*intermediate_pose_offset_).log();
-    
+    // intermediate_pose_ = start_pose->lu().solve(*goal_pose*intermediate_pose_offset_).log();
+
     goal_p_unscaled_ = vee(rel_pose_);
-    intermediate_p_unscaled_ = vee(intermediate_pose_);
+    // intermediate_p_unscaled_ = vee(intermediate_pose_);
 
     start_p_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
     
@@ -105,60 +105,54 @@ VisualServoPlanner::planPath(
 
 void VisualServoPlanner::construct_line_(int steps)
 {
-    // std::cout << "Constructing Line" << std::endl;
-    // std::cout << "start" << start_p_unscaled_ << std::endl;
-    // std::cout << "end" << goal_p_unscaled_ << std::endl;
+    PolynomialTrajectoryGenerator::construct_line_(steps);
 
-    double dist_to_int = std::sqrt(
-        goal_p_unscaled_.head<3>().squaredNorm() + 
-        goal_p_unscaled_.tail<3>().squaredNorm()*0.09
-    );
-
-    if (dist_to_int < 0.06){
-        constraint_coeff_scaling.resize(order_+1,6);
-        constraint_coeff_scaling <<
-            generate_pow_vector_(0.0, order_),
-            generate_pow_vector_(1.0, order_),
-            diff_(order_) * generate_pow_vector_(0.0, order_ - 1),
-            diff_(order_) * generate_pow_vector_(1.0, order_ - 1),
-            diff_(order_, 2) * generate_pow_vector_(0.0, order_ - 2),
-            diff_(order_, 2) * generate_pow_vector_(1.0, order_ - 2);
-
-        if (6>order_+1) {
-            Eigen::MatrixXd ccsccsT = constraint_coeff_scaling*constraint_coeff_scaling.transpose();
-            ccs_right_inv = constraint_coeff_scaling.transpose().llt().solve(ccsccsT);
-        } else {
-            Eigen::MatrixXd ccsTccs = constraint_coeff_scaling.transpose()*constraint_coeff_scaling;
-            ccs_right_inv = ccsTccs.llt().solve(constraint_coeff_scaling.transpose());
-        }
-
-        PolynomialTrajectoryGenerator::construct_line_(steps);
-        return;
-    }
-
-
-    // coeff * A = b 
-    Eigen::MatrixXd b(goal_p_unscaled_.size(), 7);
-    Eigen::MatrixXd coeff(goal_p_unscaled_.size(), order_+1);
-
-    b << 
-        start_p_unscaled_,
-        goal_p_unscaled_,
-        intermediate_p_unscaled_,
-        start_vel_unscaled_,
-        goal_vel_unscaled_,
-        start_acc_unscaled_,
-        goal_acc_unscaled_;
-
-    coeff = b*ccs_right_inv;
-
-    // std::cout << std::fixed << std::setprecision(2);
-    // std::cout << "coeff: \n" << coeff << std::endl;
-
-    Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(steps, 0, 1);
-
-    line_ = evaluate_polynomial(t, coeff);
-
+    // // --- Old intermediate bump-out logic (disabled) ---
+    // double dist_to_int = std::sqrt(
+    //     goal_p_unscaled_.head<3>().squaredNorm() +
+    //     goal_p_unscaled_.tail<3>().squaredNorm()*0.09
+    // );
+    //
+    // if (dist_to_int < 0.06){
+    //     constraint_coeff_scaling.resize(order_+1,6);
+    //     constraint_coeff_scaling <<
+    //         generate_pow_vector_(0.0, order_),
+    //         generate_pow_vector_(1.0, order_),
+    //         diff_(order_) * generate_pow_vector_(0.0, order_ - 1),
+    //         diff_(order_) * generate_pow_vector_(1.0, order_ - 1),
+    //         diff_(order_, 2) * generate_pow_vector_(0.0, order_ - 2),
+    //         diff_(order_, 2) * generate_pow_vector_(1.0, order_ - 2);
+    //
+    //     if (6>order_+1) {
+    //         Eigen::MatrixXd ccsccsT = constraint_coeff_scaling*constraint_coeff_scaling.transpose();
+    //         ccs_right_inv = constraint_coeff_scaling.transpose().llt().solve(ccsccsT);
+    //     } else {
+    //         Eigen::MatrixXd ccsTccs = constraint_coeff_scaling.transpose()*constraint_coeff_scaling;
+    //         ccs_right_inv = ccsTccs.llt().solve(constraint_coeff_scaling.transpose());
+    //     }
+    //
+    //     PolynomialTrajectoryGenerator::construct_line_(steps);
+    //     return;
+    // }
+    //
+    // // coeff * A = b
+    // Eigen::MatrixXd b(goal_p_unscaled_.size(), 7);
+    // Eigen::MatrixXd coeff(goal_p_unscaled_.size(), order_+1);
+    //
+    // b <<
+    //     start_p_unscaled_,
+    //     goal_p_unscaled_,
+    //     intermediate_p_unscaled_,
+    //     start_vel_unscaled_,
+    //     goal_vel_unscaled_,
+    //     start_acc_unscaled_,
+    //     goal_acc_unscaled_;
+    //
+    // coeff = b*ccs_right_inv;
+    //
+    // Eigen::VectorXd t = Eigen::VectorXd::LinSpaced(steps, 0, 1);
+    //
+    // line_ = evaluate_polynomial(t, coeff);
 }
 
 } // namespace ArmPilot

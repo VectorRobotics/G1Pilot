@@ -67,11 +67,13 @@ public:
         goal_ = Eigen::MatrixXd::Identity(4,4);
 
         arm_handle_->controller->Kp_linear = 120;
-        arm_handle_->controller->Kp_angular = 0.8;
+        arm_handle_->controller->Kp_angular = 20;
+        
+        arm_handle_->controller->Kd_linear = 0.5;
+        arm_handle_->controller->Kd_angular = 1;
 
-        arm_handle_->controller->Kd_linear = 2;
-        arm_handle_->controller->Kd_angular = 0.0;
-
+        // arm_handle_->controller->Ki_linear = 10.0;
+        // arm_handle_->controller->Ki_angular = 0.1;
     }
 
 
@@ -96,11 +98,13 @@ private:
     // Variables for endeffector state
     Eigen::MatrixXd left_ee_pose_;
     Eigen::MatrixXd right_ee_pose_;
+    Eigen::VectorXd left_ee_vel_ = Eigen::VectorXd::Zero(6);
+    Eigen::VectorXd right_ee_vel_ = Eigen::VectorXd::Zero(6);
 
-    // Variables as parameters
-    Eigen::VectorXd left_tiny_side_vel_ = (Eigen::VectorXd(6) << 0, 0.2, 0, 0, 0, 0).finished();
-    Eigen::VectorXd right_tiny_side_vel_ = (Eigen::VectorXd(6) << 0, -0.2, 0, 0, 0, 0).finished();
-
+    // // Variables as parameters
+    // Eigen::VectorXd left_tiny_side_vel_ = (Eigen::VectorXd(6) << 0, 0.2, 0, 0, 0, 0).finished();
+    // Eigen::VectorXd right_tiny_side_vel_ = (Eigen::VectorXd(6) << 0, -0.2, 0, 0, 0, 0).finished();
+    
     // Variables
     Eigen::MatrixXd goal_;
     std::vector<Eigen::MatrixXd> left_trajectory_;
@@ -148,20 +152,22 @@ private:
 
         if (left_trajectory_.size()>1){
             left_error_ = arm_handle_->controller->get_current_left_ee_error();
-            if (left_error_<0.05){ // 2 cm 
+            if (left_error_<0.01){ // 2 cm 
                 left_trajectory_.pop_back();
             }
         }
 
         if (right_trajectory_.size()>1){
             right_error_ = arm_handle_->controller->get_current_right_ee_error();
-            if (right_error_<0.05){ // 2 cm 
+            if (right_error_<0.01){ // 2 cm 
                 right_trajectory_.pop_back();
             }
         }
 
         left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
         right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
+        // left_ee_vel_ = arm_handle_->controller->get_current_left_ee_vel();
+        // right_ee_vel_ = arm_handle_->controller->get_current_right_ee_vel();
 
         auto reply = sensor_msgs::msg::JointState();
         reply.header.stamp = this->get_clock()->now();
@@ -176,6 +182,12 @@ private:
     }
 
     void handle_new_goal_pose_(geometry_msgs::msg::PoseStamped::UniquePtr msg){
+        // Wait until controller has computed EE poses from feedback
+        if (left_ee_pose_.size() == 0 || right_ee_pose_.size() == 0){
+            RCLCPP_WARN(this->get_logger(), "EE poses not yet initialized, ignoring goal");
+            return;
+        }
+
         Eigen::Quaterniond q(
             msg->pose.orientation.w,
             msg->pose.orientation.x,
@@ -194,7 +206,7 @@ private:
             right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &right_ee_pose_,
-                &right_tiny_side_vel_
+                &right_ee_vel_
             );
             path_pub_->publish(convertToPath(right_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(right_trajectory_.begin(), right_trajectory_.end());
@@ -202,7 +214,7 @@ private:
             left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &left_ee_pose_,
-                &left_tiny_side_vel_
+                &left_ee_vel_
             );
             path_pub_->publish(convertToPath(left_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(left_trajectory_.begin(), left_trajectory_.end());

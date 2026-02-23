@@ -25,6 +25,8 @@ JointState ImpedanceController::control_both_arms(
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
     Kd.tail<3>().setConstant(Kd_angular);
+    Ki.head<3>().setConstant(Ki_linear);
+    Ki.tail<3>().setConstant(Ki_angular);
 
     desired_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_l_ee_vel);
@@ -64,6 +66,8 @@ JointState ImpedanceController::control_left_arm(
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
     Kd.tail<3>().setConstant(Kd_angular);
+    Ki.head<3>().setConstant(Ki_linear);
+    Ki.tail<3>().setConstant(Ki_angular);
     
     desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
@@ -99,6 +103,8 @@ JointState ImpedanceController::control_right_arm(
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
     Kd.tail<3>().setConstant(Kd_angular);
+    Ki.head<3>().setConstant(Ki_linear);
+    Ki.tail<3>().setConstant(Ki_angular);
     
     desired_ee_pose_ = pinocchio::SE3(desired_ee_pose);
     desired_ee_vel_ = pinocchio::Motion(desired_ee_vel);
@@ -120,7 +126,7 @@ JointState ImpedanceController::control_right_arm(
 void ImpedanceController::compute_left_arm_control_torques(){
 
     error_pose_in_ee_frame_ = current_left_ee_pose_.inverse()*desired_ee_pose_;
-    error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_); 
+    error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
 
     desired_ee_vel_in_ee_frame_ = pinocchio::changeReferenceFrame(
         current_left_ee_pose_,
@@ -131,13 +137,18 @@ void ImpedanceController::compute_left_arm_control_torques(){
 
     error_vel_in_ee_frame_ = desired_ee_vel_in_ee_frame_ - current_left_ee_vel_in_ee_frame_;
 
+    // Accumulate integral error with anti-windup clamp
+    error_integral_in_ee_frame_ += error_twist_in_ee_frame_.toVector() * dt;
+    error_integral_in_ee_frame_ = error_integral_in_ee_frame_.cwiseMax(-Ki_max).cwiseMin(Ki_max);
+
     l_control_torques = J_body_left_ee_.transpose() * (
-        Kp.asDiagonal() * error_twist_in_ee_frame_.toVector() + 
-        Kd.asDiagonal() * error_vel_in_ee_frame_.toVector()
+        Kp.asDiagonal() * error_twist_in_ee_frame_.toVector() +
+        Kd.asDiagonal() * error_vel_in_ee_frame_.toVector() +
+        Ki.asDiagonal() * error_integral_in_ee_frame_
     );
 
     l_error_magnitude = std::sqrt(
-        error_twist_in_ee_frame_.linear().squaredNorm() + 
+        error_twist_in_ee_frame_.linear().squaredNorm() +
         error_twist_in_ee_frame_.angular().squaredNorm()*0.05
     );
 
@@ -149,7 +160,7 @@ void ImpedanceController::compute_left_arm_control_torques(){
 void ImpedanceController::compute_right_arm_control_torques(){
 
     error_pose_in_ee_frame_ = current_right_ee_pose_.inverse()*desired_ee_pose_;
-    error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_); 
+    error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
 
     desired_ee_vel_in_ee_frame_ = pinocchio::changeReferenceFrame(
         current_right_ee_pose_,
@@ -160,13 +171,18 @@ void ImpedanceController::compute_right_arm_control_torques(){
 
     error_vel_in_ee_frame_ = desired_ee_vel_in_ee_frame_ - current_right_ee_vel_in_ee_frame_;
 
+    // Accumulate integral error with anti-windup clamp
+    error_integral_in_ee_frame_ += error_twist_in_ee_frame_.toVector() * dt;
+    error_integral_in_ee_frame_ = error_integral_in_ee_frame_.cwiseMax(-Ki_max).cwiseMin(Ki_max);
+
     r_control_torques = J_body_right_ee_.transpose() * (
-        Kp.asDiagonal() * error_twist_in_ee_frame_.toVector() + 
-        Kd.asDiagonal() * error_vel_in_ee_frame_.toVector()
+        Kp.asDiagonal() * error_twist_in_ee_frame_.toVector() +
+        Kd.asDiagonal() * error_vel_in_ee_frame_.toVector() +
+        Ki.asDiagonal() * error_integral_in_ee_frame_
     );
 
     r_error_magnitude = std::sqrt(
-        error_twist_in_ee_frame_.linear().squaredNorm() + 
+        error_twist_in_ee_frame_.linear().squaredNorm() +
         error_twist_in_ee_frame_.angular().squaredNorm()*0.05
     );
     std::cout<< "lin: " << error_twist_in_ee_frame_.linear().squaredNorm() <<std::endl;

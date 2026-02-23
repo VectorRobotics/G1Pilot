@@ -131,6 +131,7 @@ if(ROS2_DEFAULT)
     find_package(rclcpp REQUIRED)
     find_package(sensor_msgs REQUIRED)
     find_package(nav_msgs REQUIRED)
+    find_package(geometry_msgs REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(impede_arms src/impede_arms.cpp)
@@ -153,12 +154,17 @@ if(ROS2_DEFAULT)
     target_link_libraries(grav_ff g1_pilot)
     ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
 
-    install (TARGETS 
-        ik_joint_state_publisher 
+    add_executable(visual_servo_ik src/visual_servo_ik.cpp)
+    target_link_libraries(visual_servo_ik g1_pilot)
+    ament_target_dependencies(visual_servo_ik ament_index_cpp rclcpp sensor_msgs nav_msgs geometry_msgs)
+
+    install (TARGETS
+        ik_joint_state_publisher
         impede_arms
         joint_traj_publisher
         visual_servo
         grav_ff
+        visual_servo_ik
         DESTINATION lib/${PROJECT_NAME}
     )
 
