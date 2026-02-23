@@ -52,8 +52,7 @@ public:
 
 		t = 0;
 
-
-        // with motion planner
+		// with motion planner
         // arm_handle_->controller->Kp_linear = 120;
         // arm_handle_->controller->Kp_angular = 0.8;
 
@@ -61,11 +60,11 @@ public:
         // arm_handle_->controller->Kd_angular = 0.0;
 
 		// without motion planner
-		arm_handle_->controller->Kp_linear = 10;
-        arm_handle_->controller->Kp_angular = 1;
+		arm_handle_->controller->Kp_linear = 30;
+        arm_handle_->controller->Kp_angular = 30;
 
-        arm_handle_->controller->Kd_linear = 1;
-        arm_handle_->controller->Kd_angular = 0.2;
+        arm_handle_->controller->Kd_linear = 2;
+        arm_handle_->controller->Kd_angular = 2;
 
 	}
 
