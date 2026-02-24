@@ -13,6 +13,7 @@ class HumanoidIK;
 class ImpedanceController;
 class PolynomialTrajectoryGenerator;
 class VisualServoPlanner;
+class IKTrajTracker;
 
 class G1DualArm {
 
@@ -23,7 +24,7 @@ public:
     );
 
     HumanoidIK* ik;
-    ImpedanceController* controller;
+    IKTrajTracker* controller;
     PolynomialTrajectoryGenerator* motion_planner;
 
     JointState grav_ff(JointState input);

@@ -63,7 +63,7 @@ G1DualArm::G1DualArm(
         model_g1_14_wo_hands, 
         geom_g1_14_wo_hands
     );
-    controller = new ImpedanceController(model_g1_14_wo_hands);
+    controller = new IKTrajTracker(model_g1_14_wo_hands, ik);
     motion_planner = new PolynomialTrajectoryGenerator();
 
 }

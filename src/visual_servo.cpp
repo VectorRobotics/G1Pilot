@@ -37,7 +37,9 @@ public:
 
 
         /* Publishers */
-        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control",10);
+        // joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control",10);
+        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("position_control",10);
+
         path_pub_ = this->create_publisher<nav_msgs::msg::Path>("traj",10);
 
 
