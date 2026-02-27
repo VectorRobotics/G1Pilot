@@ -16,6 +16,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(pinocchio REQUIRED)
 
 # ---- CASADi setup ---- #
+# Requires: sudo apt install coinor-libipopt-dev
+set(WITH_IPOPT ON CACHE BOOL "" FORCE)
+
 # Add CASADi
 add_subdirectory(third_party/casadi)
 
