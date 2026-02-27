@@ -3,7 +3,8 @@ Panels:
     Help Height: 70
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /Goal Pose1
       Splitter Ratio: 0.5
     Tree Height: 289
   - Class: rviz_common/Views
@@ -543,6 +544,26 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /traj
       Value: true
+    - Alpha: 1
+      Axes Length: 0.05000000074505806
+      Axes Radius: 0.009999999776482582
+      Class: rviz_default_plugins/Pose
+      Color: 25; 255; 0
+      Enabled: true
+      Head Length: 0.20000000298023224
+      Head Radius: 0.07999999821186066
+      Name: Goal Pose
+      Shaft Length: 0.05000000074505806
+      Shaft Radius: 0.019999999552965164
+      Shape: Axes
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /goal_pose
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -558,16 +579,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.6709874868392944
+      Distance: 0.16736368834972382
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.24100537598133087
+        Y: -0.17070597410202026
+        Z: 0.11073782294988632
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -588,5 +609,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 1356
-  Y: 54
+  X: 424
+  Y: 447
