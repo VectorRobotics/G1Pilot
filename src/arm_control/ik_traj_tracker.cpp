@@ -65,11 +65,10 @@ JointState IKTrajTracker::control_left_arm(
     update();
 
     desired_left_ee_pose_ = pinocchio::SE3(desired_ee_pose);
-    desired_right_ee_pose_ = current_right_ee_pose_;
 
     result = ik_handle_->solve_ik(
         desired_left_ee_pose_,
-        desired_right_ee_pose_,
+        true,
         &current_joint_pos_,
         &current_joint_vel_
     );
@@ -78,14 +77,6 @@ JointState IKTrajTracker::control_left_arm(
     error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
 
     l_error_magnitude = std::sqrt(
-        error_twist_in_ee_frame_.linear().squaredNorm() +
-        error_twist_in_ee_frame_.angular().squaredNorm()*0.05
-    );
-
-    error_pose_in_ee_frame_ = current_right_ee_pose_.inverse()*desired_right_ee_pose_;
-    error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
-
-    r_error_magnitude = std::sqrt(
         error_twist_in_ee_frame_.linear().squaredNorm() +
         error_twist_in_ee_frame_.angular().squaredNorm()*0.05
     );
@@ -107,23 +98,13 @@ JointState IKTrajTracker::control_right_arm(
 
     update();
 
-    desired_left_ee_pose_ = current_left_ee_pose_;
     desired_right_ee_pose_ = pinocchio::SE3(desired_ee_pose);
-    
 
     result = ik_handle_->solve_ik(
-        desired_left_ee_pose_,
         desired_right_ee_pose_,
+        false,
         &current_joint_pos_,
         &current_joint_vel_
-    );
-
-    error_pose_in_ee_frame_ = current_left_ee_pose_.inverse()*desired_left_ee_pose_;
-    error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
-
-    l_error_magnitude = std::sqrt(
-        error_twist_in_ee_frame_.linear().squaredNorm() +
-        error_twist_in_ee_frame_.angular().squaredNorm()*0.05
     );
 
     error_pose_in_ee_frame_ = current_right_ee_pose_.inverse()*desired_right_ee_pose_;

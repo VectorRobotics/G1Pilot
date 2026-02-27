@@ -42,10 +42,28 @@ protected:
 
     RobotConfig robot_config_;
 
-    std::vector<std::string> waist_joints;
-    std::vector<std::string> leg_joints;
-    std::vector<std::string> hand_joints;
-    std::vector<std::string> wrist_joints;
+    std::vector<std::string> 
+        left_leg_joints,
+        right_leg_joints,
+
+        waist_joints,
+
+        left_upper_arm_joints,
+        right_upper_arm_joints,
+
+        left_wrist_joints,
+        right_wrist_joints,
+
+        left_hand_joints,
+        right_hand_joints,
+        
+        leg_joints,
+        upper_arm_joints,
+        wrist_joints,
+        hand_joints,
+
+        left_arm_joints,
+        right_arm_joints;
 
     pinocchio::Model model_g1_29;
     pinocchio::Model model_g1_26;

@@ -31,10 +31,22 @@ public:
         const Eigen::VectorXd* EE_efrc_R = nullptr
     );
 
+    virtual JointState solve_ik(
+        const Eigen::Matrix4d& wrist,
+        const bool left = false,
+        const Eigen::VectorXd* current_lr_arm_motor_q = nullptr,
+        const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr,
+        const Eigen::VectorXd* EE_efrc = nullptr
+    );
+
 protected:
     void setup_optimization();
     void filter_adjacent_collision_pairs();
 
+    void generalize_ext_wrenches(
+        const Eigen::VectorXd* EE_efrc_L = nullptr,
+        const Eigen::VectorXd* EE_efrc_R = nullptr
+    );
     pinocchio::Model model_;
     pinocchio::Data data_;
     pinocchio::GeometryModel geom_model_;
@@ -42,11 +54,22 @@ protected:
 
     #ifdef USE_CASADI
 
+        casadi::Opti opti_l_;
+        casadi::Opti opti_r_;
         casadi::Opti opti_;
-        casadi::MX var_q_;
-        casadi::MX var_q_last_;
-        casadi::MX param_tf_l_;
-        casadi::MX param_tf_r_;
+
+        casadi::MX b_var_q_;
+        casadi::MX b_var_q_last_;
+        casadi::MX b_param_tf_l_;
+        casadi::MX b_param_tf_r_;
+
+        casadi::MX l_var_q_;
+        casadi::MX l_var_q_last_;
+        casadi::MX l_param_tf_l_;
+
+        casadi::MX r_var_q_;
+        casadi::MX r_var_q_last_;
+        casadi::MX r_param_tf_r_;
 
     #else // USE_CASADI
 

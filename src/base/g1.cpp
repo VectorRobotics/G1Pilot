@@ -69,54 +69,125 @@ G1DualArm::G1DualArm(
 }
 
 void G1DualArm::categorize_joints() {
+
+    left_leg_joints = {
+        "left_hip_pitch_joint",
+        "left_hip_roll_joint", 
+        "left_hip_yaw_joint",
+        "left_knee_joint", 
+        "left_ankle_pitch_joint", 
+        "left_ankle_roll_joint"
+    };
+
+    right_leg_joints = {
+        "right_hip_pitch_joint", 
+        "right_hip_roll_joint", 
+        "right_hip_yaw_joint",
+        "right_knee_joint", 
+        "right_ankle_pitch_joint", 
+        "right_ankle_roll_joint"
+    };
+
     waist_joints = {
         // "waist_yaw_joint", 
         "waist_roll_joint", 
         "waist_pitch_joint"
     };
 
-    wrist_joints = {
+    left_upper_arm_joints = {
+        "left_shoulder_pitch_joint",
+        "left_shoulder_roll_joint",
+        "left_shoulder_yaw_joint",
+        "left_elbow_joint"
+    };
+
+    right_upper_arm_joints = {
+        "right_shoulder_pitch_joint",
+        "right_shoulder_roll_joint",
+        "right_shoulder_yaw_joint",
+        "right_elbow_joint"
+    };
+
+    left_wrist_joints = {
         "left_wrist_pitch_joint",
         "left_wrist_roll_joint",
-        "left_wrist_yaw_joint",
+        "left_wrist_yaw_joint"
+    };
+
+    right_wrist_joints = {
         "right_wrist_pitch_joint",
         "right_wrist_roll_joint",
         "right_wrist_yaw_joint"
     };
 
-    leg_joints = {
-        "left_hip_pitch_joint",
-        "left_hip_roll_joint", 
-        "left_hip_yaw_joint",
-        "left_knee_joint", 
-        "left_ankle_pitch_joint", 
-        "left_ankle_roll_joint",
-        "right_hip_pitch_joint", 
-        "right_hip_roll_joint", 
-        "right_hip_yaw_joint",
-        "right_knee_joint", 
-        "right_ankle_pitch_joint", 
-        "right_ankle_roll_joint",
-
-    };
-
-    hand_joints = {
+    left_hand_joints = {
         "left_hand_thumb_0_joint", 
         "left_hand_thumb_1_joint", 
         "left_hand_thumb_2_joint",
         "left_hand_middle_0_joint", 
         "left_hand_middle_1_joint",
         "left_hand_index_0_joint", 
-        "left_hand_index_1_joint",
+        "left_hand_index_1_joint"
+    };
+
+    right_hand_joints = {
         "right_hand_thumb_0_joint", 
         "right_hand_thumb_1_joint", 
         "right_hand_thumb_2_joint",
-        "right_hand_index_0_joint", 
-        "right_hand_index_1_joint",
         "right_hand_middle_0_joint", 
-        "right_hand_middle_1_joint"
+        "right_hand_middle_1_joint",
+        "right_hand_index_0_joint", 
+        "right_hand_index_1_joint"
     };
+
+    leg_joints.reserve(
+        left_leg_joints.size() + 
+        right_leg_joints.size()
+    );
+
+    leg_joints.insert(leg_joints.end(), left_leg_joints.begin(), left_leg_joints.end());
+    leg_joints.insert(leg_joints.end(), right_leg_joints.begin(), right_leg_joints.end());
     
+    upper_arm_joints.reserve(
+        left_upper_arm_joints.size() + 
+        right_upper_arm_joints.size()
+    );
+
+    upper_arm_joints.insert(upper_arm_joints.end(), left_upper_arm_joints.begin(), left_upper_arm_joints.end());
+    upper_arm_joints.insert(upper_arm_joints.end(), right_upper_arm_joints.begin(), right_upper_arm_joints.end());
+
+    wrist_joints.reserve(
+        left_wrist_joints.size() + 
+        right_wrist_joints.size()
+    );
+
+    wrist_joints.insert(wrist_joints.end(), left_wrist_joints.begin(), left_wrist_joints.end());
+    wrist_joints.insert(wrist_joints.end(), right_wrist_joints.begin(), right_wrist_joints.end());
+
+    left_arm_joints.reserve(
+        left_upper_arm_joints.size() + 
+        left_wrist_joints.size()
+    );
+
+    left_arm_joints.insert(left_arm_joints.end(), left_upper_arm_joints.begin(), left_upper_arm_joints.end());
+    left_arm_joints.insert(left_arm_joints.end(), left_wrist_joints.begin(), left_wrist_joints.end());
+    
+    right_arm_joints.reserve(
+        right_upper_arm_joints.size() + 
+        right_wrist_joints.size()
+    );
+
+    right_arm_joints.insert(right_arm_joints.end(), right_upper_arm_joints.begin(), right_upper_arm_joints.end());
+    right_arm_joints.insert(right_arm_joints.end(), right_wrist_joints.begin(), right_wrist_joints.end());
+    
+    hand_joints.reserve(
+        left_hand_joints.size() + 
+        right_hand_joints.size()
+    );
+
+    hand_joints.insert(hand_joints.end(), left_hand_joints.begin(), left_hand_joints.end());
+    hand_joints.insert(hand_joints.end(), right_hand_joints.begin(), right_hand_joints.end());
+
 }
 
 void G1DualArm::add_end_effector_frames() {

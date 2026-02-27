@@ -51,9 +51,10 @@ public:
 
 		left_target = create_se3(1,0,0,0, 0.21, 0.149, 0.095);
 		right_target = create_se3(1,0,0,0, 0.21, -0.149, 0.095);
+		left_start = left_target;
 		right_start = right_target;
 		tiny_side_vel = Eigen::VectorXd::Zero(6);
-		tiny_side_vel(1) =-0.2; // Only for right arm
+		tiny_side_vel(1) =0.2; // Only for right arm
 
 		t = 0;
 
@@ -63,7 +64,8 @@ public:
 
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;
-    Eigen::Matrix4d right_start;
+    Eigen::Matrix4d left_start;
+	Eigen::Matrix4d right_start;
 
     std::vector<Eigen::MatrixXd> traj;
 
@@ -77,17 +79,23 @@ private:
 		auto message = sensor_msgs::msg::JointState();
 
 		right_target.block<3,1>(0,3) = right_start.block<3,1>(0,3) + Eigen::Vector3d(0.09,-0.05,0.1);
+		left_target.block<3,1>(0,3) = left_start.block<3,1>(0,3) + Eigen::Vector3d(0.09,0.05,0.1);
 
+		// traj = arm_->motion_planner->planTrajectory(
+		// 	new Eigen::MatrixXd(right_target),
+		// 	new Eigen::MatrixXd(right_start),
+		// 	&tiny_side_vel
+		// );
 		traj = arm_->motion_planner->planTrajectory(
-			new Eigen::MatrixXd(right_target),
-			new Eigen::MatrixXd(right_start),
+			new Eigen::MatrixXd(left_target),
+			new Eigen::MatrixXd(left_start),
 			&tiny_side_vel
 		);
 
 		path_publisher_->publish(convertToPath(traj,"pelvis", this->get_clock()->now()));
 
 		for (auto pose: traj){
-			auto result = arm_->ik->solve_ik(left_target, pose);
+			auto result = arm_->ik->solve_ik(pose, true);
 			auto q = Eigen::VectorXd::Map(result.position.data(), result.position.size());
 			// std::cout << "IK solution q: " << q.transpose() << std::endl;
 			message.header.stamp = this->get_clock()->now();

@@ -76,7 +76,7 @@ private:
 
     message.header.stamp = this->get_clock()->now();
 
-    double x = 0.2 + 0.15 * sin(0.1 * t);
+    double x = 0.2;// + 0.1 * sin(0.1 * t);
     left_target = create_se3(1.0, 0.0, 0.0, 0, x, 0.2, 0.1);
     right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.0-x, 0.1);
     RCLCPP_INFO(this->get_logger(), "Starting IK Joint States at time: %d", t);
