@@ -39,7 +39,7 @@ def generate_launch_description():
         executable='joint_state_publisher',
         condition=UnlessCondition(LaunchConfiguration('jsp_gui')),
         parameters=[{
-            'source_list': ['feedback'],
+            'source_list': ['position_control'],
         }]
     ))
     ld.add_action(Node(
