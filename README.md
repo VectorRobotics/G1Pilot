@@ -143,3 +143,8 @@ Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
     return create_se3(q, t);
 }
 ```
+
+### Publish goal pose
+```bash
+ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'pelvis'}, pose: {position: {x: 0.2, y: -0.2, z: 0.1}, orientation: {w: 1.0}}}"
+```
