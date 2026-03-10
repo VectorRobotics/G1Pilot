@@ -145,6 +145,14 @@ Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
 ```
 
 ### Publish goal pose
+
+Home position of wrist yaw joint for right arm
 ```bash
-ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'pelvis'}, pose: {position: {x: 0.2, y: -0.2, z: 0.1}, orientation: {w: 1.0}}}"
+ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'pelvis'}, pose: {position: {x: 0.2, y: -0.15, z: 0.1}, orientation: {w: 1.0}}}"
+```
+
+
+Home position of tip of the index finger of the right arm
+```bash
+ros2 topic pub --once /goal_pose geometry_msgs/msg/PoseStamped "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'pelvis'}, pose: {position: {x: 0.417, y: -0.158, z: 0.2}, orientation: {w: 1.0}}}"
 ```
