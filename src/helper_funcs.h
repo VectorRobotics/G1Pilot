@@ -6,6 +6,7 @@
 #include <string>
 #include <nav_msgs/msg/path.hpp>
 #include <builtin_interfaces/msg/time.hpp>
+#include <stdio.h>
 
 Eigen::Matrix4d create_se3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
 {
@@ -51,5 +52,30 @@ nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& poses, std
 
     return path;
 };
+
+bool isWithinLimits(const Eigen::MatrixXd& T, 
+                    const Eigen::Vector3d& minPos = Eigen::Vector3d(0.1, -0.6, 0.0), 
+                    const Eigen::Vector3d& maxPos = Eigen::Vector3d(0.6, 0.6, 1.0),
+                    double maxRoll = 1.57, // pi/2
+                    double maxPitch = 0.785, // pi/4
+                    double maxYaw = 0.785  // pi/4
+                ) 
+{
+    
+    Eigen::Vector3d pos = T.block<3, 1>(0, 3);
+    
+    bool posValid = (pos.array() >= minPos.array()).all() && 
+                    (pos.array() <= maxPos.array()).all();
+    
+    if (!posValid) return false;
+
+    Eigen::Vector3d euler = T.block<3, 3>(0, 0).eulerAngles(2, 1, 0);
+
+    if (std::abs(euler[2]) > maxRoll)  return false; // Roll
+    if (std::abs(euler[1]) > maxPitch) return false; // Pitch
+    if (std::abs(euler[0]) > maxYaw)   return false; // Yaw
+
+    return true;
+}
 
 #endif

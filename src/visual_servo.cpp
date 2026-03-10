@@ -76,7 +76,11 @@ public:
 
         // arm_handle_->controller->Ki_linear = 10.0;
         // arm_handle_->controller->Ki_angular = 0.1;
+
+        last_goal_time_ = this->get_clock()->now();
     }
+
+    bool right_handed = true;
 
 
 private:
@@ -116,9 +120,7 @@ private:
     JointState cmd_;
     JointState current_state_;
 
-    std::stringstream left_ee_pose_debug;
-    std::stringstream right_ee_pose_debug;
-
+    rclcpp::Time last_goal_time_;
 
     void controller_(){
 
@@ -154,16 +156,18 @@ private:
 
         if (left_trajectory_.size()>1){
             left_error_ = arm_handle_->controller->get_current_left_ee_error();
-            if (left_error_<0.05){ // 2 cm 
+            if (left_error_<0.02){ // 2 cm 
                 left_trajectory_.pop_back();
             }
+            RCLCPP_INFO(this->get_logger(), "Left error: %f", left_error_);
         }
 
         if (right_trajectory_.size()>1){
             right_error_ = arm_handle_->controller->get_current_right_ee_error();
-            if (right_error_<0.05){ // 2 cm 
+            if (right_error_<0.02){ // 2 cm 
                 right_trajectory_.pop_back();
             }
+            RCLCPP_INFO(this->get_logger(), "Right error: %f", right_error_);
         }
 
         left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
@@ -171,15 +175,15 @@ private:
         // left_ee_vel_ = arm_handle_->controller->get_current_left_ee_vel();
         // right_ee_vel_ = arm_handle_->controller->get_current_right_ee_vel();
 
-        auto reply = sensor_msgs::msg::JointState();
-        reply.header.stamp = this->get_clock()->now();
+        auto cmd_msg_ = sensor_msgs::msg::JointState();
+        cmd_msg_.header.stamp = this->get_clock()->now();
 
-        reply.name = cmd_.name;
-        reply.position = cmd_.position;
-        reply.velocity = cmd_.velocity;
-        reply.effort = cmd_.effort;
+        cmd_msg_.name = cmd_.name;
+        cmd_msg_.position = cmd_.position;
+        cmd_msg_.velocity = cmd_.velocity;
+        cmd_msg_.effort = cmd_.effort;
 
-        joint_states_pub_->publish(reply);
+        joint_states_pub_->publish(cmd_msg_);
 
     }
 
@@ -189,6 +193,8 @@ private:
             RCLCPP_WARN(this->get_logger(), "EE poses not yet initialized, ignoring goal");
             return;
         }
+
+        RCLCPP_INFO(this->get_logger(), "Received new goal");
 
         Eigen::Quaterniond q(
             msg->pose.orientation.w,
@@ -204,7 +210,19 @@ private:
             msg->pose.position.z
         );
 
-        if (goal_(1,3)<=0){
+        if (!isWithinLimits(goal_)){
+            RCLCPP_WARN(this->get_logger(), "Goal out of bounds");
+            return;
+        }
+
+        if (this->get_clock()->now() - last_goal_time_ < rclcpp::Duration::from_seconds(1.0)){
+            return;
+        }
+
+        last_goal_time_ = this->get_clock()->now();
+
+        if (right_handed){
+
             right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &right_ee_pose_,
@@ -212,7 +230,9 @@ private:
             );
             path_pub_->publish(convertToPath(right_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(right_trajectory_.begin(), right_trajectory_.end());
+        
         } else {
+
             left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &left_ee_pose_,
@@ -220,9 +240,10 @@ private:
             );
             path_pub_->publish(convertToPath(left_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(left_trajectory_.begin(), left_trajectory_.end());
+        
         }
 
-        RCLCPP_INFO(this->get_logger(), "New goal processed");
+        RCLCPP_INFO(this->get_logger(), "------/////|||||| New Trajectory Generated |||||||////////------");
         
     }
 
