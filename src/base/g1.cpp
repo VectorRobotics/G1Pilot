@@ -203,9 +203,17 @@ void G1DualArm::add_end_effector_frames() {
 
     }
     pinocchio::SE3 left_placement(Eigen::Matrix3d::Identity(), 
-                                   Eigen::Vector3d(0, 0, 0));
+                                   Eigen::Vector3d(
+                                    0.0415+0.0777+0.0458+0.0458, 
+                                    0.003+0.0016, 
+                                    0.0+0.0285
+                                ));
     pinocchio::SE3 right_placement(Eigen::Matrix3d::Identity(), 
-                                    Eigen::Vector3d(0, 0, 0));
+                                    Eigen::Vector3d(
+                                    0.0415+0.0777+0.0458+0.0458, 
+                                    -0.003-0.0016, 
+                                    0.0+0.0285
+                                ));
 
     model_g1_29.addFrame(pinocchio::Frame("L_ee", left_elbow_id, 
                                              left_placement, pinocchio::OP_FRAME));
