@@ -64,7 +64,7 @@ G1DualArm::G1DualArm(
         geom_g1_14_wo_hands
     );
     controller = new IKTrajTracker(model_g1_14_wo_hands, ik);
-    motion_planner = new PolynomialTrajectoryGenerator();
+    motion_planner = new VisualServoPlanner();
 
 }
 

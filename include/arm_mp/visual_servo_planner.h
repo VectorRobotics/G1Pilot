@@ -8,7 +8,7 @@ namespace ArmPilot{
 
 class VisualServoPlanner : public PolynomialTrajectoryGenerator {
     public:
-        VisualServoPlanner(double z_offset = 0.05, int order = 20);
+        VisualServoPlanner(double z_offset = 0.05, int order = 5);
         virtual ~VisualServoPlanner();
 
         std::vector<Eigen::MatrixXd> 
@@ -23,13 +23,14 @@ class VisualServoPlanner : public PolynomialTrajectoryGenerator {
         );
 
     protected:
-        void construct_line_ (int steps) override;
 
         Eigen::MatrixXd intermediate_pose_offset_;
         Eigen::MatrixXd intermediate_pose_;
 
         Eigen::MatrixXd intermediate_p_unscaled_;
 
+        std::vector<Eigen::MatrixXd> final_leg_line_;
+        Eigen::MatrixXd goal_pose_;
 
 };
 
