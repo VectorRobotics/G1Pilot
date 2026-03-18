@@ -22,6 +22,8 @@
 
 You don't need a robot to use this library.
 
+You can learn about this package in depth [here](docs/docs.md)
+
 # Installation
 
 ## Building with ROS2
