@@ -23,14 +23,13 @@ class VisualServoPlanner : public PolynomialTrajectoryGenerator {
         );
 
     protected:
-        void construct_line_ (int steps) override;
 
         Eigen::MatrixXd intermediate_pose_offset_;
         Eigen::MatrixXd intermediate_pose_;
 
         Eigen::MatrixXd intermediate_p_unscaled_;
 
-        std::vector<Eigen::VectorXd> final_leg_line_;
+        std::vector<Eigen::MatrixXd> final_leg_line_;
         Eigen::MatrixXd goal_pose_;
 
 };

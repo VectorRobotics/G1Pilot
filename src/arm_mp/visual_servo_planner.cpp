@@ -16,7 +16,8 @@ VisualServoPlanner::VisualServoPlanner(double offset, int order) :
         0, 0, 1, 0,
         0, 0, 0, 1;
 
-    goal_p_unscaled_ = vee(intermediate_pose_offset_.log());
+    goal_p_unscaled_ = Eigen::VectorXd::Zero(6);
+    goal_p_unscaled_(0) = offset;
 
     start_p_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
     start_vel_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
@@ -65,17 +66,17 @@ VisualServoPlanner::planPath(
         start_acc_unscaled_ = Eigen::VectorXd::Zero(twist_size);
 
 
-    double pos_dist = (goal_pose->block<3,0>(0, 3) - start_pose_.block<3,0>(0, 3)).norm();
+    double pos_dist = (goal_pose->block<3,1>(0, 3) - start_pose_.block<3,1>(0, 3)).norm();
     bool is_close = pos_dist < 0.1;
 
     // Building the first part of the path
     if (is_close){
-        goal_pose_ = *goal_pose;
+        goal_pose_ = start_pose_.lu().solve(*goal_pose);
     } else {
-        goal_pose_ = start_pose_.lu().solve(*goal_pose*intermediate_pose_offset_);
+        goal_pose_ = start_pose_.lu().solve(intermediate_pose_offset_*(*goal_pose));
     }
     
-    goal_p_unscaled_ = goal_pose_.log();
+    goal_p_unscaled_ = vee(goal_pose_.log());
 
     construct_line_(steps);
 
@@ -85,11 +86,11 @@ VisualServoPlanner::planPath(
         path.push_back(start_pose_*(hat(twist).exp()));
     }
 
-    if (is_close){
+    if (!is_close){
 
         // Building the second part of the path
         for (auto pose: final_leg_line_){
-            path.push_back(goal_pose_*pose);
+            path.push_back(start_pose_*goal_pose_*pose);
         }
     }
 
