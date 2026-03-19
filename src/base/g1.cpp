@@ -90,8 +90,8 @@ void G1DualArm::categorize_joints() {
 
     waist_joints = {
         // "waist_yaw_joint", 
-        "waist_roll_joint", 
-        "waist_pitch_joint"
+        // "waist_roll_joint", 
+        // "waist_pitch_joint"
     };
 
     left_upper_arm_joints = {
