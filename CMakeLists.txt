@@ -154,17 +154,12 @@ if(ROS2_DEFAULT)
     target_link_libraries(grav_ff g1_pilot)
     ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
 
-    add_executable(visual_servo_ik src/visual_servo_ik.cpp)
-    target_link_libraries(visual_servo_ik g1_pilot)
-    ament_target_dependencies(visual_servo_ik ament_index_cpp rclcpp sensor_msgs nav_msgs geometry_msgs)
-
     install (TARGETS
         ik_joint_state_publisher
         impede_arms
         joint_traj_publisher
         visual_servo
         grav_ff
-        visual_servo_ik
         DESTINATION lib/${PROJECT_NAME}
     )
 
