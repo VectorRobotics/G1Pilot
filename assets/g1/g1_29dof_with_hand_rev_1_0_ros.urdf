@@ -11,9 +11,9 @@
   </mujoco>
 
   <!-- [CAUTION] uncomment when convert to mujoco -->
-  <link name="g1_center"></link>
+  <link name="base_link"></link>
   <joint name="g1_reference_to_pelvis_joint" type="fixed">
-    <parent link="g1_center"/>
+    <parent link="base_link"/>
     <child link="pelvis"/>
   </joint>
 
@@ -560,20 +560,20 @@
   </joint>
 
   <!-- d435 -->
-  <link name="d435_link"></link>
+  <link name="camera_link"></link>
   <joint name="d435_joint" type="fixed">
     <!--<origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0"/>-->
     <origin xyz="0.0799335 0.01753 0.41036" rpy="0 0.401426 0"/>
     <parent link="torso_link"/>
-    <child link="d435_link"/>
+    <child link="camera_link"/>
   </joint>
 
   <!-- mid360 -->
-  <link name="mid360_link"></link>
+  <link name="sensor"></link>
   <joint name="mid360_joint" type="fixed">
-    <origin xyz="0.0002835 0.00003 0.41618" rpy="0 0.04014257279586953 0"/>
-    <parent link="torso_link"/>
-    <child link="mid360_link"/>
+    <origin xyz="-0.0002835 -0.00003 -0.41618" rpy="0 -0.04014257279586953 0"/>
+    <parent link="sensor"/>
+    <child link="torso_link"/>
   </joint>
 
   <!-- Arm -->
