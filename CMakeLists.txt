@@ -23,6 +23,12 @@ endif()
 
 list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
 
+set(ENV{PATH} "/opt/openrobots/bin:$ENV{PATH}")
+set(ENV{PKG_CONFIG_PATH} "/opt/openrobots/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+set(ENV{LD_LIBRARY_PATH} "/opt/openrobots/lib:$ENV{LD_LIBRARY_PATH}")
+set(ENV{PYTHONPATH} "/opt/openrobots/lib/python3.10/site-packages:$ENV{PYTHONPATH}")
+set(ENV{LIBRARY_PATH} "/opt/openrobots/lib:$ENV{LIBRARY_PATH}")
+link_directories(/opt/openrobots/lib)
 
 # ---- Options & Dependencies ---- #
 

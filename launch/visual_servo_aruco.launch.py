@@ -1,6 +1,6 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
@@ -10,6 +10,11 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     ld = LaunchDescription()
+
+    ld.add_action(SetEnvironmentVariable(
+        'LIBRARY_PATH',
+        ['/opt/openrobots/lib:', EnvironmentVariable('LIBRARY_PATH', default_value='')]
+    ))
 
     package_name = 'g1_pilot'
     package_path = FindPackageShare(package_name)
