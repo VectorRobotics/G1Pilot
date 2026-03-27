@@ -23,12 +23,16 @@ public:
 	ImpedeArms() : Node("impedence_controller")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control", 10);
+		this->declare_parameter<std::string>("feedback_topic", "feedback");
+		this->declare_parameter<std::string>("goal_pose_topic", "goal_pose");
+		this->declare_parameter<std::string>("effort_control_topic", "effort_control");
+
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(this->get_parameter("effort_control_topic").as_string(), 10);
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-			"feedback", 10,
+			this->get_parameter("feedback_topic").as_string(), 10,
 			std::bind(&ImpedeArms::handle_new_state_, this, std::placeholders::_1));
 		goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/goal_pose",10,
+            this->get_parameter("goal_pose_topic").as_string(),10,
             std::bind(&ImpedeArms::handle_new_goal_pose_, this, std::placeholders::_1)
         );
 		

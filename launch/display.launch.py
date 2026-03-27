@@ -14,7 +14,7 @@ def generate_launch_description():
 
     package_path = FindPackageShare('g1_pilot')
     default_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros.urdf'])
-    default_rviz_config_path = PathJoinSubstitution([package_path, 'rviz', 'model.rviz'])
+    default_rviz_config_path = PathJoinSubstitution([package_path, 'rviz', 'manipulation.rviz'])
 
     # These parameters are maintained for backwards compatibility
     gui_arg = DeclareLaunchArgument(name='jsp_gui', default_value='false', choices=['true', 'false'],

@@ -22,8 +22,10 @@ class JointStatePublisher : public rclcpp::Node
 public:
   JointStatePublisher() : Node("ik_joint_state_publisher_cpp")
   {
+    this->declare_parameter<std::string>("position_control_topic", "position_control");
+
     // Create a publisher on the "joint_states" topic
-    publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("position_control", 10);
+    publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(this->get_parameter("position_control_topic").as_string(), 10);
 
     // Timer to call the callback at 10Hz
     timer_ = this->create_wall_timer(100ms, std::bind(&JointStatePublisher::timer_callback, this));

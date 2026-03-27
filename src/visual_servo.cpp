@@ -37,20 +37,25 @@ public:
 
 
         /* Publishers */
-        // joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control",10);
-        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("position_control",10);
+        this->declare_parameter<std::string>("position_control_topic", "position_control");
+        this->declare_parameter<std::string>("traj_topic", "traj");
 
-        path_pub_ = this->create_publisher<nav_msgs::msg::Path>("traj",10);
+        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>(this->get_parameter("position_control_topic").as_string(),10);
+
+        path_pub_ = this->create_publisher<nav_msgs::msg::Path>(this->get_parameter("traj_topic").as_string(),10);
 
 
         /* Subscribers */
+        this->declare_parameter<std::string>("goal_pose_topic", "goal_pose");
+        this->declare_parameter<std::string>("feedback_topic", "feedback");
+
         goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/goal_pose",10,
+            this->get_parameter("goal_pose_topic").as_string(),10,
             std::bind(&VisualServo::handle_new_goal_pose_, this, std::placeholders::_1)
         );
 
         feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-            "/feedback",10,
+            this->get_parameter("feedback_topic").as_string(),10,
             std::bind(&VisualServo::handle_new_feedback_, this, std::placeholders::_1)
         );
 
