@@ -23,7 +23,7 @@ def generate_launch_description():
         'PublishTF', default_value='false',
         description='Whether to include display.launch.py for TF publishing'
     ))
-    ld.add_action(DeclareLaunchArgument('goal_pose_topic', default_value='goal_pose'))
+    ld.add_action(DeclareLaunchArgument('goal_pose_topic', default_value='arm/goal_pose'))
     ld.add_action(DeclareLaunchArgument('feedback_topic', default_value='feedback'))
     ld.add_action(DeclareLaunchArgument('position_control_topic', default_value='position_control'))
     ld.add_action(DeclareLaunchArgument('traj_topic', default_value='traj'))
