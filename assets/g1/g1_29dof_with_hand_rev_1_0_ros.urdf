@@ -437,7 +437,7 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <parent link="waist_yaw_link"/>
     <child link="pelvis"/>
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 0 -1"/>
     <limit lower="-2.618" upper="2.618" effort="88" velocity="32"/>
   </joint>
   <link name="waist_roll_link">
@@ -458,7 +458,7 @@
     <origin xyz="0.0039635 0 -0.044" rpy="0 0 0"/>
     <parent link="waist_roll_link"/>
     <child link="waist_yaw_link"/>
-    <axis xyz="1 0 0"/>
+    <axis xyz="-1 0 0"/>
     <limit lower="-0.52" upper="0.52" effort="35" velocity="30"/>
   </joint>
   <link name="torso_link">
@@ -485,7 +485,7 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <parent link="torso_link"/>
     <child link="waist_roll_link"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-0.52" upper="0.52" effort="35" velocity="30"/>
   </joint>
 
@@ -563,7 +563,7 @@
   <link name="camera_link"></link>
   <joint name="d435_joint" type="fixed">
     <!--<origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0"/>-->
-    <origin xyz="0.0799335 0.01753 0.41036" rpy="0 0.401426 0"/>
+    <origin xyz="0.0856235 0.03553 0.4407" rpy="0 0.501426 0"/>
     <parent link="torso_link"/>
     <child link="camera_link"/>
   </joint>
