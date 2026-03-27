@@ -20,7 +20,7 @@ def generate_launch_description():
 
     ld.add_action(DeclareLaunchArgument('namespace', default_value=''))
     ld.add_action(DeclareLaunchArgument(
-        'PublishTF', default_value='true',
+        'PublishTF', default_value='false',
         description='Whether to include display.launch.py for TF publishing'
     ))
     ld.add_action(DeclareLaunchArgument('goal_pose_topic', default_value='goal_pose'))
