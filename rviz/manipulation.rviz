@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1
+        - /Path1
+        - /left_goal1
       Splitter Ratio: 0.5
     Tree Height: 289
   - Class: rviz_common/Views
@@ -553,7 +555,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.20000000298023224
       Head Radius: 0.07999999821186066
-      Name: left_traj
+      Name: left_goal
       Shaft Length: 0.05000000074505806
       Shaft Radius: 0.019999999552965164
       Shape: Axes
@@ -573,7 +575,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.20000000298023224
       Head Radius: 0.07999999821186066
-      Name: right_traj
+      Name: right_goal
       Shaft Length: 0.05000000074505806
       Shaft Radius: 0.019999999552965164
       Shape: Axes
@@ -630,5 +632,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 424
-  Y: 447
+  X: 158
+  Y: 262
