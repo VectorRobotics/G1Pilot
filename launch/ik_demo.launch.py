@@ -1,64 +1,63 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
-from launch.conditions import IfCondition, UnlessCondition
-from launch_ros.parameter_descriptions import ParameterValue
-from launch.substitutions import Command
+from launch.conditions import IfCondition
 
 
 
 def generate_launch_description():
     ld = LaunchDescription()
 
-    package_path = FindPackageShare('g1_pilot')
-    default_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros.urdf'])
-    default_rviz_config_path = PathJoinSubstitution([package_path, 'rviz', 'model.rviz'])
-
-    # These parameters are maintained for backwards compatibility
-    gui_arg = DeclareLaunchArgument(name='jsp_gui', default_value='false', choices=['true', 'false'],
-                                    description='Flag to enable joint_state_publisher_gui')
-    ld.add_action(gui_arg)
-    rviz_arg = DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
-                                     description='Absolute path to rviz config file')
-    ld.add_action(rviz_arg)
-
-    robot_description_content = ParameterValue(Command(['xacro ', default_model_path]), value_type=str)
-
-    robot_state_publisher_node = Node(package='robot_state_publisher',
-                                      executable='robot_state_publisher',
-                                      parameters=[{
-                                          'robot_description': robot_description_content,
-                                      }])
-
-    ld.add_action(robot_state_publisher_node)
-
-    ld.add_action(Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        condition=UnlessCondition(LaunchConfiguration('jsp_gui')),
-        parameters=[{
-            'source_list': ['position_control'],
-        }]
+    ld.add_action(SetEnvironmentVariable(
+        'LIBRARY_PATH',
+        ['/opt/openrobots/lib:', EnvironmentVariable('LIBRARY_PATH', default_value='')]
     ))
-    ld.add_action(Node(
-        package='joint_state_publisher_gui',
-        executable='joint_state_publisher_gui',
-        condition=IfCondition(LaunchConfiguration('jsp_gui'))
+    ld.add_action(SetEnvironmentVariable(
+        'PATH',
+        ['/opt/openrobots/bin:', EnvironmentVariable('PATH', default_value='')]
+    ))
+    ld.add_action(SetEnvironmentVariable(
+        'PKG_CONFIG_PATH',
+        ['/opt/openrobots/lib/pkgconfig:', EnvironmentVariable('PKG_CONFIG_PATH', default_value='')]
+    ))
+    ld.add_action(SetEnvironmentVariable(
+        'LD_LIBRARY_PATH',
+        ['/opt/openrobots/lib:', EnvironmentVariable('LD_LIBRARY_PATH', default_value='')]
+    ))
+    ld.add_action(SetEnvironmentVariable(
+        'PYTHONPATH',
+        ['/opt/openrobots/lib/python3.10/site-packages:', EnvironmentVariable('PYTHONPATH', default_value='')]
+    ))
+    ld.add_action(SetEnvironmentVariable(
+        'CMAKE_PREFIX_PATH',
+        ['/opt/openrobots:', EnvironmentVariable('CMAKE_PREFIX_PATH', default_value='')]
     ))
 
-    ld.add_action(Node(
-        package='rviz2',
-        executable='rviz2',
-        output='screen',
-        arguments=['-d', LaunchConfiguration('rviz_config')],
+    package_name = 'g1_pilot'
+    package_path = FindPackageShare(package_name)
+
+    ld.add_action(DeclareLaunchArgument('namespace', default_value=''))
+    ld.add_action(DeclareLaunchArgument(
+        'PublishTF', default_value='true',
+        description='Whether to include display.launch.py for TF publishing'
+    ))
+    ld.add_action(DeclareLaunchArgument('position_control_topic', default_value='position_control'))
+
+    ld.add_action(IncludeLaunchDescription(
+        PathJoinSubstitution([package_path, 'launch', 'display.launch.py']),
+        condition=IfCondition(LaunchConfiguration('PublishTF'))
     ))
 
     ld.add_action(Node(
         package='g1_pilot',
         executable='ik_joint_state_publisher',
         name='ik_joint_state_publisher',
+        namespace=LaunchConfiguration('namespace'),
         output='screen',
+        parameters=[{
+            'position_control_topic': LaunchConfiguration('position_control_topic'),
+        }],
     ))
     return ld

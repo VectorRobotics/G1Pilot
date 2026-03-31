@@ -5,6 +5,10 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "helper_funcs.h"
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.hpp>
+
 #include <algorithm>
 #include <chrono>
 
@@ -35,31 +39,37 @@ public:
 
         arm_handle_ = std::make_unique<G1DualArm>(&config);
 
+        /* TF2 */
+        tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+        tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
         /* Publishers */
-        // joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control",10);
-        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("position_control",10);
+        this->declare_parameter<std::string>("position_control_topic", "position_control");
+        this->declare_parameter<std::string>("traj_topic", "traj");
 
-        path_pub_ = this->create_publisher<nav_msgs::msg::Path>("traj",10);
+        joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>(this->get_parameter("position_control_topic").as_string(),10);
 
+        path_pub_ = this->create_publisher<nav_msgs::msg::Path>(this->get_parameter("traj_topic").as_string(),10);
+
+        this->declare_parameter<double>("goal_cooldown", 1.0);
 
         /* Subscribers */
-        goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/goal_pose",10,
-            std::bind(&VisualServo::handle_new_goal_pose_, this, std::placeholders::_1)
+        this->declare_parameter<std::string>("goal_pose_topic", "goal_pose");
+        this->declare_parameter<std::string>("feedback_topic", "feedback");
+
+        left_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            this->get_parameter("goal_pose_topic").as_string() + "/left",10,
+            [this](geometry_msgs::msg::PoseStamped::UniquePtr msg){ handle_new_goal_pose_(std::move(msg), true); }
+        );
+        right_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            this->get_parameter("goal_pose_topic").as_string() + "/right",10,
+            [this](geometry_msgs::msg::PoseStamped::UniquePtr msg){ handle_new_goal_pose_(std::move(msg), false); }
         );
 
         feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-            "/feedback",10,
+            this->get_parameter("feedback_topic").as_string(),10,
             std::bind(&VisualServo::handle_new_feedback_, this, std::placeholders::_1)
         );
-
-        // left_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/feedback/dex3/left/odom",10,
-        //     [this](nav_msgs::msg::Odometry::UniquePtr msg){this->handle_odom_(msg, &(this->left_ee_pose_))});
-
-        // right_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/feedback/dex3/right/odom",10,
-        //     [this](nav_msgs::msg::Odometry::UniquePtr msg){this->handle_odom_(msg, &(this->right_ee_pose_))});
-
 
         /* Timer loops */
         control_loop_ = this->create_wall_timer(50ms, std::bind(&VisualServo::controller_, this));
@@ -68,16 +78,8 @@ public:
         /* Initializing variables */
         goal_ = Eigen::MatrixXd::Identity(4,4);
 
-		arm_handle_->controller->Kp_linear = 100;
-        arm_handle_->controller->Kp_angular = 1;
-
-        arm_handle_->controller->Kd_linear = 2;
-        arm_handle_->controller->Kd_angular = 0.2;
-
-        // arm_handle_->controller->Ki_linear = 10.0;
-        // arm_handle_->controller->Ki_angular = 0.1;
-
-        last_goal_time_ = this->get_clock()->now();
+        last_left_goal_time_ = this->get_clock()->now();
+        last_right_goal_time_ = this->get_clock()->now();
     }
 
     bool right_handed = true;
@@ -90,13 +92,16 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
 
     // Subscribers
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr left_goal_pose_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr right_goal_pose_sub_;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr feedback_sub_;
-    // rclcpp::Subscription<nav_msgs::msg::Odometry>::ShatedPtr left_odom_sub_;
-    // rclcpp::Subscription<nav_msgs::msg::Odometry>::ShatedPtr right_odom_sub_;
 
     // Timers
     rclcpp::TimerBase::SharedPtr control_loop_;
+
+    // TF2
+    std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     // Arm Handle
     std::unique_ptr<G1DualArm> arm_handle_;
@@ -120,7 +125,8 @@ private:
     JointState cmd_;
     JointState current_state_;
 
-    rclcpp::Time last_goal_time_;
+    rclcpp::Time last_left_goal_time_;
+    rclcpp::Time last_right_goal_time_;
 
     void controller_(){
 
@@ -187,51 +193,65 @@ private:
 
     }
 
-    void handle_new_goal_pose_(geometry_msgs::msg::PoseStamped::UniquePtr msg){
+    void handle_new_goal_pose_(geometry_msgs::msg::PoseStamped::UniquePtr msg, bool left){
         // Wait until controller has computed EE poses from feedback
         if (left_ee_pose_.size() == 0 || right_ee_pose_.size() == 0){
             RCLCPP_WARN(this->get_logger(), "EE poses not yet initialized, ignoring goal");
             return;
         }
 
-        RCLCPP_INFO(this->get_logger(), "Received new goal");
+        auto& last_time = left ? last_left_goal_time_ : last_right_goal_time_;
+        double cooldown = this->get_parameter("goal_cooldown").as_double();
+        if (this->get_clock()->now() - last_time < rclcpp::Duration::from_seconds(cooldown)){
+            RCLCPP_INFO(this->get_logger(), "Ignoring %s goal: less than %.1fs since last %s goal",
+                left ? "left" : "right", cooldown, left ? "left" : "right");
+            return;
+        }
 
-        Eigen::Quaterniond q(
+        last_time = this->get_clock()->now();
+
+        RCLCPP_INFO(this->get_logger(), "Received new goal in frame: %s", msg->header.frame_id.c_str());
+
+        // Look up transform from the goal's parent frame to pelvis
+        geometry_msgs::msg::TransformStamped tf_stamped;
+        try {
+            tf_stamped = tf_buffer_->lookupTransform(
+                "pelvis", msg->header.frame_id, tf2::TimePointZero
+            );
+        } catch (const tf2::TransformException &ex) {
+            RCLCPP_WARN(this->get_logger(), "TF lookup failed: %s", ex.what());
+            return;
+        }
+
+        // Convert TF to Eigen
+        Eigen::Isometry3d tf_pelvis_from_source = tf2::transformToEigen(tf_stamped);
+
+        // Convert incoming pose to Eigen
+        Eigen::Quaterniond q_msg(
             msg->pose.orientation.w,
             msg->pose.orientation.x,
             msg->pose.orientation.y,
             msg->pose.orientation.z
         );
-        
-        goal_.block<3,3>(0,0) = q.normalized().toRotationMatrix();
-        goal_.block<3,1>(0,3) = Eigen::Vector3d(
+        Eigen::Isometry3d pose_in_source = Eigen::Isometry3d::Identity();
+        pose_in_source.linear() = q_msg.normalized().toRotationMatrix();
+        pose_in_source.translation() = Eigen::Vector3d(
             msg->pose.position.x,
             msg->pose.position.y,
             msg->pose.position.z
         );
+
+        // Transform goal into pelvis frame
+        Eigen::Isometry3d goal_in_pelvis = tf_pelvis_from_source * pose_in_source;
+        goal_.block<3,3>(0,0) = goal_in_pelvis.rotation();
+        goal_.block<3,1>(0,3) = goal_in_pelvis.translation();
 
         if (!isWithinLimits(goal_)){
             RCLCPP_WARN(this->get_logger(), "Goal out of bounds");
             return;
         }
 
-        if (this->get_clock()->now() - last_goal_time_ < rclcpp::Duration::from_seconds(1.0)){
-            return;
-        }
-
-        last_goal_time_ = this->get_clock()->now();
-
-        if (right_handed){
-
-            right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
-                &goal_,
-                &right_ee_pose_,
-                &right_ee_vel_
-            );
-            path_pub_->publish(convertToPath(right_trajectory_, "pelvis", this->get_clock()->now()));
-            std::reverse(right_trajectory_.begin(), right_trajectory_.end());
-        
-        } else {
+        if (left){
 
             left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
@@ -240,7 +260,17 @@ private:
             );
             path_pub_->publish(convertToPath(left_trajectory_, "pelvis", this->get_clock()->now()));
             std::reverse(left_trajectory_.begin(), left_trajectory_.end());
-        
+
+        } else {
+
+            right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
+                &goal_,
+                &right_ee_pose_,
+                &right_ee_vel_
+            );
+            path_pub_->publish(convertToPath(right_trajectory_, "pelvis", this->get_clock()->now()));
+            std::reverse(right_trajectory_.begin(), right_trajectory_.end());
+
         }
 
         RCLCPP_INFO(this->get_logger(), "------/////|||||| New Trajectory Generated |||||||////////------");
@@ -255,29 +285,6 @@ private:
         current_state_.effort = msg->effort;
 
     }
-
-    // void handle_odom_(
-    //     nav_msgs::msg::Odometry::UniquePtr msg,
-    //     Eigen::MatrixXd* pose
-    // ){
-    //     *pose = Eigen::MatrixXd::Identity(4,4);
-
-    //     Eigen::Quaterniond q(
-    //         msg->pose.orientation.w,
-    //         msg->pose.orientation.x,
-    //         msg->pose.orientation.y,
-    //         msg->pose.orientation.z
-    //     );
-        
-    //     pose->block<3,3>(0,0) = q.normalized().toRotationMatrix();
-    //     pose->block<3,1>(0,3) = Eigen::Vector3d(
-    //         msg->pose.position.x,
-    //         msg->pose.position.y,
-    //         msg->pose.position.z
-    //     );
-    // }
-
-    
 
 };
 

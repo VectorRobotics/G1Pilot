@@ -42,7 +42,7 @@ HumanoidIK::HumanoidIK(
     
     // Initialize filter and data
     Eigen::VectorXd weights(4);
-    weights << 0.4, 0.3, 0.2, 0.1;
+    weights << 0.35, 0.3, 0.25, 0.1;
     smooth_filter_ = std::make_unique<WeightedMovingFilter>(weights, model_.nv);
 
     nq_ = model_.nq;
@@ -281,7 +281,7 @@ JointState HumanoidIK::solve_ik(
     sol_q = smooth_filter_->filtered_data();
     
     // Compute velocity
-    sol_v = 0.0*sol_q;
+    sol_v = Eigen::VectorXd::Zero(model_.nv);
     
     // Compute feedforward torques using RNEA
     sol_t = pinocchio::rnea(
@@ -358,7 +358,7 @@ JointState HumanoidIK::solve_ik(
     sol_q = smooth_filter_->filtered_data();
     
     // Compute velocity
-    sol_v = 0.0*sol_q;
+    sol_v = Eigen::VectorXd::Zero(model_.nv);
     
     // Compute feedforward torques using RNEA
     sol_t = pinocchio::rnea(

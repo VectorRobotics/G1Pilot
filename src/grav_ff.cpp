@@ -21,9 +21,12 @@ public:
 	GravFF() : Node("gravity_feedforward")
 	{
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("effort_control", 10);
+		this->declare_parameter<std::string>("feedback_topic", "feedback");
+		this->declare_parameter<std::string>("effort_control_topic", "effort_control");
+
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(this->get_parameter("effort_control_topic").as_string(), 10);
 		subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-			"feedback", 10,
+			this->get_parameter("feedback_topic").as_string(), 10,
 			std::bind(&GravFF::handle_new_state_, this, std::placeholders::_1));
 
 		RCLCPP_INFO(this->get_logger(), "Pilot Gravity Feedforward Node has started.");

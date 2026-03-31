@@ -23,6 +23,12 @@ endif()
 
 list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
 
+set(ENV{PATH} "/opt/openrobots/bin:$ENV{PATH}")
+set(ENV{PKG_CONFIG_PATH} "/opt/openrobots/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+set(ENV{LD_LIBRARY_PATH} "/opt/openrobots/lib:$ENV{LD_LIBRARY_PATH}")
+set(ENV{PYTHONPATH} "/opt/openrobots/lib/python3.10/site-packages:$ENV{PYTHONPATH}")
+set(ENV{LIBRARY_PATH} "/opt/openrobots/lib:$ENV{LIBRARY_PATH}")
+link_directories(/opt/openrobots/lib)
 
 # ---- Options & Dependencies ---- #
 
@@ -132,12 +138,15 @@ if(ROS2_DEFAULT)
     find_package(sensor_msgs REQUIRED)
     find_package(nav_msgs REQUIRED)
     find_package(geometry_msgs REQUIRED)
+    find_package(tf2_ros REQUIRED)
+    find_package(tf2_eigen REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(impede_arms src/impede_arms.cpp)
     add_executable(joint_traj_publisher src/joint_traj_publisher.cpp)
     add_executable(visual_servo src/visual_servo.cpp)
     add_executable(grav_ff src/grav_ff.cpp)
+    add_executable(visual_servo_tf src/visual_servo_tf.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs nav_msgs)
@@ -154,12 +163,16 @@ if(ROS2_DEFAULT)
     target_link_libraries(grav_ff g1_pilot)
     ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
 
+    target_link_libraries(visual_servo_tf g1_pilot)
+    ament_target_dependencies(visual_servo_tf ament_index_cpp rclcpp nav_msgs sensor_msgs tf2_ros tf2_eigen)
+
     install (TARGETS
         ik_joint_state_publisher
         impede_arms
         joint_traj_publisher
         visual_servo
         grav_ff
+        visual_servo_tf
         DESTINATION lib/${PROJECT_NAME}
     )
 

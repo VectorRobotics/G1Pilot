@@ -21,9 +21,12 @@ class JointTrajPublisher : public rclcpp::Node
 public:
 	JointTrajPublisher() : Node("joint_traj_publisher")
 	{
+		this->declare_parameter<std::string>("position_control_topic", "position_control");
+		this->declare_parameter<std::string>("traj_topic", "traj");
+
 		// Create a publisher on the "joint_states" topic
-		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("position_control", 10);
-		path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("/traj", 10);
+		publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(this->get_parameter("position_control_topic").as_string(), 10);
+		path_publisher_ = this->create_publisher<nav_msgs::msg::Path>(this->get_parameter("traj_topic").as_string(), 10);
 
 		// Timer to call the callback at 10Hz
 		timer_ = this->create_wall_timer(3s, std::bind(&JointTrajPublisher::timer_callback, this));

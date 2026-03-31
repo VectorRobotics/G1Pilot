@@ -3,7 +3,11 @@ Panels:
     Help Height: 70
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /Global Options1
+        - /TF1
+        - /Path1
+        - /left_goal1
       Splitter Ratio: 0.5
     Tree Height: 289
   - Class: rviz_common/Views
@@ -32,29 +36,6 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz_default_plugins/Pose
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.029999999329447746
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Goal Pose
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: Axes
-      Radius: 0.004999999888241291
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic:
-        Value: /goal_pose
-      Value: true
     - Alpha: 0.800000011920929
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -73,11 +54,11 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        d435_link:
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        g1_center:
+        camera_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -204,10 +185,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        mid360_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         pelvis:
           Alpha: 1
           Show Axes: false
@@ -323,6 +300,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        sensor:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         torso_link:
           Alpha: 1
           Show Axes: false
@@ -353,9 +334,9 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        d435_link:
+        base_link:
           Value: true
-        g1_center:
+        camera_link:
           Value: true
         head_link:
           Value: true
@@ -407,8 +388,6 @@ Visualization Manager:
           Value: true
         logo_link:
           Value: true
-        mid360_link:
-          Value: true
         pelvis:
           Value: true
         pelvis_contour_link:
@@ -455,6 +434,8 @@ Visualization Manager:
           Value: true
         right_wrist_yaw_link:
           Value: true
+        sensor:
+          Value: true
         torso_link:
           Value: true
         waist_roll_link:
@@ -467,81 +448,149 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        g1_center:
-          pelvis:
-            imu_in_pelvis:
+        sensor:
+          torso_link:
+            camera_link:
               {}
-            left_hip_pitch_link:
-              left_hip_roll_link:
-                left_hip_yaw_link:
-                  left_knee_link:
-                    left_ankle_pitch_link:
-                      left_ankle_roll_link:
-                        {}
-            pelvis_contour_link:
+            head_link:
               {}
-            right_hip_pitch_link:
-              right_hip_roll_link:
-                right_hip_yaw_link:
-                  right_knee_link:
-                    right_ankle_pitch_link:
-                      right_ankle_roll_link:
-                        {}
-            waist_yaw_link:
-              waist_roll_link:
-                torso_link:
-                  d435_link:
+            imu_in_torso:
+              {}
+            left_shoulder_pitch_link:
+              left_shoulder_roll_link:
+                left_shoulder_yaw_link:
+                  left_elbow_link:
+                    left_wrist_roll_link:
+                      left_wrist_pitch_link:
+                        left_wrist_yaw_link:
+                          left_hand_palm_link:
+                            left_hand_index_0_link:
+                              left_hand_index_1_link:
+                                {}
+                            left_hand_middle_0_link:
+                              left_hand_middle_1_link:
+                                {}
+                            left_hand_thumb_0_link:
+                              left_hand_thumb_1_link:
+                                left_hand_thumb_2_link:
+                                  {}
+            logo_link:
+              {}
+            right_shoulder_pitch_link:
+              right_shoulder_roll_link:
+                right_shoulder_yaw_link:
+                  right_elbow_link:
+                    right_wrist_roll_link:
+                      right_wrist_pitch_link:
+                        right_wrist_yaw_link:
+                          right_hand_palm_link:
+                            right_hand_index_0_link:
+                              right_hand_index_1_link:
+                                {}
+                            right_hand_middle_0_link:
+                              right_hand_middle_1_link:
+                                {}
+                            right_hand_thumb_0_link:
+                              right_hand_thumb_1_link:
+                                right_hand_thumb_2_link:
+                                  {}
+            waist_roll_link:
+              waist_yaw_link:
+                pelvis:
+                  base_link:
                     {}
-                  head_link:
+                  imu_in_pelvis:
                     {}
-                  imu_in_torso:
+                  left_hip_pitch_link:
+                    left_hip_roll_link:
+                      left_hip_yaw_link:
+                        left_knee_link:
+                          left_ankle_pitch_link:
+                            left_ankle_roll_link:
+                              {}
+                  pelvis_contour_link:
                     {}
-                  left_shoulder_pitch_link:
-                    left_shoulder_roll_link:
-                      left_shoulder_yaw_link:
-                        left_elbow_link:
-                          left_wrist_roll_link:
-                            left_wrist_pitch_link:
-                              left_wrist_yaw_link:
-                                left_hand_palm_link:
-                                  left_hand_index_0_link:
-                                    left_hand_index_1_link:
-                                      {}
-                                  left_hand_middle_0_link:
-                                    left_hand_middle_1_link:
-                                      {}
-                                  left_hand_thumb_0_link:
-                                    left_hand_thumb_1_link:
-                                      left_hand_thumb_2_link:
-                                        {}
-                  logo_link:
-                    {}
-                  mid360_link:
-                    {}
-                  right_shoulder_pitch_link:
-                    right_shoulder_roll_link:
-                      right_shoulder_yaw_link:
-                        right_elbow_link:
-                          right_wrist_roll_link:
-                            right_wrist_pitch_link:
-                              right_wrist_yaw_link:
-                                right_hand_palm_link:
-                                  right_hand_index_0_link:
-                                    right_hand_index_1_link:
-                                      {}
-                                  right_hand_middle_0_link:
-                                    right_hand_middle_1_link:
-                                      {}
-                                  right_hand_thumb_0_link:
-                                    right_hand_thumb_1_link:
-                                      right_hand_thumb_2_link:
-                                        {}
+                  right_hip_pitch_link:
+                    right_hip_roll_link:
+                      right_hip_yaw_link:
+                        right_knee_link:
+                          right_ankle_pitch_link:
+                            right_ankle_roll_link:
+                              {}
       Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.029999999329447746
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: Axes
+      Radius: 0.004999999888241291
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /traj
+      Value: true
+    - Alpha: 1
+      Axes Length: 0.05000000074505806
+      Axes Radius: 0.009999999776482582
+      Class: rviz_default_plugins/Pose
+      Color: 25; 255; 0
+      Enabled: true
+      Head Length: 0.20000000298023224
+      Head Radius: 0.07999999821186066
+      Name: left_goal
+      Shaft Length: 0.05000000074505806
+      Shaft Radius: 0.019999999552965164
+      Shape: Axes
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /arm/goal_pose/left
+      Value: true
+    - Alpha: 1
+      Axes Length: 0.05000000074505806
+      Axes Radius: 0.009999999776482582
+      Class: rviz_default_plugins/Pose
+      Color: 25; 255; 0
+      Enabled: true
+      Head Length: 0.20000000298023224
+      Head Radius: 0.07999999821186066
+      Name: right_goal
+      Shaft Length: 0.05000000074505806
+      Shaft Radius: 0.019999999552965164
+      Shape: Axes
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /arm/goal_pose/right
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: g1_center
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -553,25 +602,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.7000000476837158
+      Distance: 1.4237667322158813
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.07478713244199753
+        Y: -0.0985947847366333
+        Z: 0.14647501707077026
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6699997186660767
+      Pitch: 0.35500001907348633
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.12681496143341064
+      Yaw: 0.7418160438537598
     Saved: ~
 Window Geometry:
   Displays:
@@ -579,9 +628,9 @@ Window Geometry:
   Height: 800
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001c9000002c2fc0200000002fb000000100044006900730070006c006100790073010000003f000001a7000000cc00fffffffb0000000a0056006900650077007301000001ec00000115000000a900ffffff000002e1000002c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000010000000000000156000002c2fc0200000002fb000000100044006900730070006c006100790073010000003f000001a7000000cc00fffffffb0000000a0056006900650077007301000001ec00000115000000a900ffffff00000354000002c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1200
-  X: -453
-  Y: 244
+  X: 158
+  Y: 262
