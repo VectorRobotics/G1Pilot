@@ -55,7 +55,8 @@ nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& poses, std
     return path;
 };
 
-std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path) {
+std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path,
+                                                bool reverse = false) {
     std::vector<Eigen::MatrixXd> trajectory;
     trajectory.reserve(path.poses.size());
 
@@ -64,6 +65,10 @@ std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path
         trajectory.push_back(create_se3(
             p.orientation.w, p.orientation.x, p.orientation.y, p.orientation.z,
             p.position.x, p.position.y, p.position.z));
+    }
+
+    if (reverse) {
+        std::reverse(trajectory.begin(), trajectory.end());
     }
 
     return trajectory;

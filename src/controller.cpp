@@ -11,6 +11,9 @@
 
 #include <chrono>
 #include <mutex>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
 
 using namespace ArmPilot;
 using namespace std::chrono_literals;
@@ -21,6 +24,15 @@ using GoalHandleControl = rclcpp_action::ServerGoalHandle<TrajectoryControllerAc
 class TrajectoryControllerActionServer : public rclcpp::Node
 {
 public:
+    ~TrajectoryControllerActionServer()
+    {
+        shutting_down_.store(true);
+        goal_cv_.notify_all();
+        if (execute_thread_.joinable()) {
+            execute_thread_.join();
+        }
+    }
+
     TrajectoryControllerActionServer() : Node("trajectory_controller_action_server")
     {
         /* Initialize arm handle */
@@ -104,11 +116,19 @@ private:
     JointState cmd_;
     JointState current_state_;
 
+    // Feedback state mutex (protects current_state_)
+    std::mutex feedback_mutex_;
+    std::mutex goal_mutex_;
+
     // Active goal tracking
     std::shared_ptr<GoalHandleControl> active_goal_handle_;
     bool active_goal_is_left_ = false;
     uint32_t active_total_waypoints_ = 0;
-    std::mutex goal_mutex_;
+    std::condition_variable goal_cv_;
+
+    // Thread management
+    std::thread execute_thread_;
+    std::atomic<bool> shutting_down_{false};
 
     // --- Action server callbacks ---
     rclcpp_action::GoalResponse handle_goal_(
@@ -139,7 +159,7 @@ private:
 
         {
             std::lock_guard<std::mutex> lock(goal_mutex_);
-            trajectory_ = convertToTrajectory(goal->trajectory);
+            trajectory_ = convertToTrajectory(goal->trajectory, true);
             active_total_waypoints_ = trajectory_.size();
             active_goal_is_left_ = goal->left_arm;
 
@@ -149,8 +169,10 @@ private:
                 result->success = false;
                 result->final_error = -2.0;
                 active_goal_handle_->abort(result);
+                active_goal_handle_ = nullptr;
             }
         }
+        goal_cv_.notify_all();
 
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
@@ -165,10 +187,12 @@ private:
 
     void handle_accepted_(const std::shared_ptr<GoalHandleControl> goal_handle)
     {
-        // Spin up a thread so we don't block the executor
-        std::thread{std::bind(&TrajectoryControllerActionServer::execute_goal_, this, std::placeholders::_1),
-                    goal_handle}
-            .detach();
+        // Join previous thread before starting a new one
+        if (execute_thread_.joinable()) {
+            execute_thread_.join();
+        }
+        execute_thread_ = std::thread(
+            &TrajectoryControllerActionServer::execute_goal_, this, goal_handle);
     }
 
     void execute_goal_(const std::shared_ptr<GoalHandleControl> goal_handle)
@@ -183,11 +207,10 @@ private:
             active_goal_handle_ = goal_handle;
         }
 
-        rclcpp::Rate rate(10); // 10 Hz feedback
-        while (rclcpp::ok()) {
+        while (rclcpp::ok() && !shutting_down_.load()) {
 
             {
-                std::lock_guard<std::mutex> lock(goal_mutex_);
+                std::unique_lock<std::mutex> lock(goal_mutex_);
 
                 // This goal was preempted by a newer goal
                 if (active_goal_handle_ != goal_handle) {
@@ -224,19 +247,20 @@ private:
                 feedback->waypoints_remaining = trajectory_.size();
                 feedback->total_waypoints = active_total_waypoints_;
                 goal_handle->publish_feedback(feedback);
-            }
 
-            rate.sleep();
+                // Wait with timeout instead of busy-polling
+                goal_cv_.wait_for(lock, 100ms);
+            }
         }
     }
 
     void controller_()
     {
+        std::scoped_lock lock(feedback_mutex_, goal_mutex_);
+
         if (current_state_.name.empty()) {
             return;
         }
-
-        std::lock_guard<std::mutex> lock(goal_mutex_);
 
         if (trajectory_.empty()){
             cmd_ = arm_handle_->controller->control_no_arms(
@@ -262,8 +286,9 @@ private:
                             arm_handle_->controller->get_current_left_ee_error() :
                             arm_handle_->controller->get_current_right_ee_error();
 
-            if (error_ < 0.02){ // 2 cm
+            if (error_ < 0.04){
                 trajectory_.pop_back();
+                goal_cv_.notify_all();
             }
             RCLCPP_INFO(this->get_logger(), "Error: %f, waypoints remaining: %lu", error_, trajectory_.size());
         }
@@ -288,6 +313,7 @@ private:
 
     void handle_new_feedback_(sensor_msgs::msg::JointState::UniquePtr msg)
     {
+        std::lock_guard<std::mutex> lock(feedback_mutex_);
         current_state_.name = msg->name;
         current_state_.position = msg->position;
         current_state_.velocity = msg->velocity;

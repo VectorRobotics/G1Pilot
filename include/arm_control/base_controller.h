@@ -16,8 +16,8 @@ public:
     Eigen::MatrixXd get_current_left_ee_pose(){return current_left_ee_pose_.toHomogeneousMatrix();};
     Eigen::MatrixXd get_current_right_ee_pose(){return current_right_ee_pose_.toHomogeneousMatrix();};
 
-    Eigen::VectorXd get_current_left_ee_vel(){return current_left_ee_pose_.act(current_left_ee_vel_in_ee_frame_).toVector();};
-    Eigen::VectorXd get_current_right_ee_vel(){return current_right_ee_pose_.act(current_right_ee_vel_in_ee_frame_).toVector();};
+    Eigen::VectorXd get_current_left_ee_vel(){return current_left_ee_vel_.toVector();};
+    Eigen::VectorXd get_current_right_ee_vel(){return current_right_ee_vel_.toVector();};
 
     double get_current_left_ee_error(){return l_error_magnitude;};
     double get_current_right_ee_error(){return r_error_magnitude;};
@@ -25,6 +25,8 @@ public:
     JointState control_no_arms(
         JointState current_state
     );
+
+    double dt = 0.01;
 
 protected:
     void update();
@@ -53,8 +55,6 @@ protected:
     Eigen::VectorXd r_control_torques;
     Eigen::VectorXd grav_torques;
     Eigen::VectorXd torques;
-
-    double dt = 0.01;
 
     double l_error_magnitude;
     double r_error_magnitude;

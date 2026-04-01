@@ -67,7 +67,7 @@ VisualServoPlanner::planPath(
 
 
     double pos_dist = (goal_pose->block<3,1>(0, 3) - start_pose_.block<3,1>(0, 3)).norm();
-    bool is_close = pos_dist < 0.1;
+    bool is_close = pos_dist < 0.05;
 
     // Building the first part of the path
     if (is_close){
