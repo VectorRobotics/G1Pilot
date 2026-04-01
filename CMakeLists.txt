@@ -140,13 +140,21 @@ if(ROS2_DEFAULT)
     find_package(geometry_msgs REQUIRED)
     find_package(tf2_ros REQUIRED)
     find_package(tf2_eigen REQUIRED)
+    find_package(tf2_geometry_msgs REQUIRED)
+    find_package(rclcpp_action REQUIRED)
+    find_package(manipulation_interfaces REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(impede_arms src/impede_arms.cpp)
     add_executable(joint_traj_publisher src/joint_traj_publisher.cpp)
     add_executable(visual_servo src/visual_servo.cpp)
     add_executable(grav_ff src/grav_ff.cpp)
-    add_executable(visual_servo_tf src/visual_servo_tf.cpp)
+
+    # Service Servers
+    add_executable(plan_trajecory src/plan_trajecory.cpp)
+
+    # Action Servers
+    add_executable(controller src/controller.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs nav_msgs)
@@ -158,21 +166,25 @@ if(ROS2_DEFAULT)
     ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp nav_msgs sensor_msgs)
 
     target_link_libraries(visual_servo g1_pilot)
-    ament_target_dependencies(visual_servo ament_index_cpp rclcpp nav_msgs sensor_msgs)
+    ament_target_dependencies(visual_servo ament_index_cpp rclcpp nav_msgs sensor_msgs tf2_ros tf2_eigen)
 
     target_link_libraries(grav_ff g1_pilot)
     ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
 
-    target_link_libraries(visual_servo_tf g1_pilot)
-    ament_target_dependencies(visual_servo_tf ament_index_cpp rclcpp nav_msgs sensor_msgs tf2_ros tf2_eigen)
+    target_link_libraries(controller g1_pilot)
+    ament_target_dependencies(controller ament_index_cpp rclcpp rclcpp_action sensor_msgs geometry_msgs manipulation_interfaces)
 
-    install (TARGETS
+    target_link_libraries(plan_trajecory g1_pilot)
+    ament_target_dependencies(plan_trajecory ament_index_cpp rclcpp nav_msgs tf2_ros tf2_eigen tf2_geometry_msgs manipulation_interfaces)
+
+    install(TARGETS
         ik_joint_state_publisher
         impede_arms
         joint_traj_publisher
         visual_servo
         grav_ff
-        visual_servo_tf
+        controller
+        plan_trajecory
         DESTINATION lib/${PROJECT_NAME}
     )
 
