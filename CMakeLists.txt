@@ -22,13 +22,8 @@ else()
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
-
-set(ENV{PATH} "/opt/openrobots/bin:$ENV{PATH}")
-set(ENV{PKG_CONFIG_PATH} "/opt/openrobots/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-set(ENV{LD_LIBRARY_PATH} "/opt/openrobots/lib:$ENV{LD_LIBRARY_PATH}")
-set(ENV{PYTHONPATH} "/opt/openrobots/lib/python3.10/site-packages:$ENV{PYTHONPATH}")
-set(ENV{LIBRARY_PATH} "/opt/openrobots/lib:$ENV{LIBRARY_PATH}")
-link_directories(/opt/openrobots/lib)
+set(CMAKE_INSTALL_RPATH "/opt/openrobots/lib")
+set(CMAKE_BUILD_RPATH "/opt/openrobots/lib")
 
 # ---- Options & Dependencies ---- #
 
@@ -69,7 +64,7 @@ target_include_directories(g1_pilot PUBLIC
 target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio)
 
 if(USE_CASADI)
-    target_link_libraries(g1_pilot PUBLIC casadi)
+    target_link_libraries(g1_pilot PUBLIC casadi::casadi)
     target_compile_definitions(g1_pilot PRIVATE USE_CASADI)
 endif()
 
