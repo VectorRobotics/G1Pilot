@@ -14,38 +14,65 @@ def generate_launch_description():
 
     package_path = FindPackageShare('g1_pilot')
     default_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros.urdf'])
+    ctrl_viz_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros_ctrl_viz.urdf'])
     default_rviz_config_path = PathJoinSubstitution([package_path, 'rviz', 'manipulation.rviz'])
 
     # These parameters are maintained for backwards compatibility
-    gui_arg = DeclareLaunchArgument(name='jsp_gui', default_value='false', choices=['true', 'false'],
-                                    description='Flag to enable joint_state_publisher_gui')
-    ld.add_action(gui_arg)
     rviz_arg = DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
                                      description='Absolute path to rviz config file')
     ld.add_action(rviz_arg)
 
     robot_description_content = ParameterValue(Command(['xacro ', default_model_path]), value_type=str)
+    ctrl_viz_description_content = ParameterValue(Command(['xacro ', ctrl_viz_model_path]), value_type=str)
 
-    robot_state_publisher_node = Node(package='robot_state_publisher',
-                                      executable='robot_state_publisher',
-                                      parameters=[{
-                                          'robot_description': robot_description_content,
-                                      }])
-
-    ld.add_action(robot_state_publisher_node)
+    ld.add_action(Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        parameters=[{
+            'robot_description': robot_description_content,
+        }],
+        remappings=[('joint_states', 'js_feedback')]
+    ))
 
     ld.add_action(Node(
         package='joint_state_publisher',
         executable='joint_state_publisher',
-        condition=UnlessCondition(LaunchConfiguration('jsp_gui')),
+        name='joint_state_publisher',
         parameters=[{
-            'source_list': ['feedback'],
-        }]
+            'source_list': ['/feedback'],
+        }],
+        remappings=[('joint_states', 'js_feedback')]
     ))
+    
     ld.add_action(Node(
-        package='joint_state_publisher_gui',
-        executable='joint_state_publisher_gui',
-        condition=IfCondition(LaunchConfiguration('jsp_gui'))
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        namespace='control_viz',
+        parameters=[{
+            'robot_description': ctrl_viz_description_content,
+            'frame_prefix': 'control/'
+        }],
+        remappings=[('joint_states', 'js_control')]
+    ))
+
+    ld.add_action(Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        namespace='control_viz',
+        parameters=[{
+            'source_list': ['/position_control'],
+        }],
+        remappings=[('joint_states', 'js_control')]
+    ))
+
+    ld.add_action(Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='control_feedback_bridge_transform',
+        arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'control/base_link']
     ))
 
     ld.add_action(Node(
