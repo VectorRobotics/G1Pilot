@@ -18,8 +18,14 @@ ArmController::ArmController(
 
 }
 
-void ArmController::update()
+void ArmController::update(JointState current_state)
 {
+    std::tie(
+        current_joint_pos_,
+        current_joint_vel_,
+        current_joint_eff_
+    ) = jointstate_to_vectors(current_state, model_);
+
     pinocchio::forwardKinematics(
         model_,
         data_,
@@ -53,14 +59,6 @@ JointState ArmController::control_no_arms(
     JointState current_state
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-    
-    update();
-
     torques = 1.0*grav_torques;
 
     JointState result = vectors_to_jointstate(

@@ -13,6 +13,8 @@ public:
         pinocchio::Model& model
     );
 
+    void update(JointState current_state);
+
     Eigen::MatrixXd get_current_left_ee_pose(){return current_left_ee_pose_.toHomogeneousMatrix();};
     Eigen::MatrixXd get_current_right_ee_pose(){return current_right_ee_pose_.toHomogeneousMatrix();};
 
@@ -29,7 +31,6 @@ public:
     double dt = 0.01;
 
 protected:
-    void update();
 
     pinocchio::Model model_;
     pinocchio::Data data_;

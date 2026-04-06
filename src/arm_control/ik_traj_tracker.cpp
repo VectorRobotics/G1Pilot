@@ -13,13 +13,6 @@ JointState IKTrajTracker::control_both_arms(
     Eigen::VectorXd desired_r_ee_vel
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-
-    update();
     
     desired_left_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
     desired_right_ee_pose_ = pinocchio::SE3(desired_r_ee_pose);
@@ -56,13 +49,6 @@ JointState IKTrajTracker::control_left_arm(
     Eigen::VectorXd desired_ee_vel
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-
-    update();
 
     desired_left_ee_pose_ = pinocchio::SE3(desired_ee_pose);
 
@@ -90,13 +76,6 @@ JointState IKTrajTracker::control_right_arm(
     Eigen::VectorXd desired_ee_vel
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-
-    update();
 
     desired_right_ee_pose_ = pinocchio::SE3(desired_ee_pose);
 

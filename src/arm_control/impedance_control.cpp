@@ -13,14 +13,6 @@ JointState ImpedanceController::control_both_arms(
     Eigen::VectorXd desired_r_ee_vel
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-    
-    update();
-
     Kp.head<3>().setConstant(Kp_linear);
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
@@ -54,13 +46,6 @@ JointState ImpedanceController::control_left_arm(
     Eigen::VectorXd desired_ee_vel
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-
-    update();
 
     Kp.head<3>().setConstant(Kp_linear);
     Kp.tail<3>().setConstant(Kp_angular);
@@ -91,13 +76,6 @@ JointState ImpedanceController::control_right_arm(
     Eigen::VectorXd desired_ee_vel
 )
 {
-    std::tie(
-        current_joint_pos_,
-        current_joint_vel_,
-        current_joint_eff_
-    ) = jointstate_to_vectors(current_state, model_);
-
-    update();
 
     Kp.head<3>().setConstant(Kp_linear);
     Kp.tail<3>().setConstant(Kp_angular);

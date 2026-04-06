@@ -68,6 +68,7 @@ public:
             this->get_parameter("right_ee_pose_topic").as_string(), 10);
 
         /* Subscribers */
+        this->declare_parameter<double>("waypoint_error_margin", 0.01);
         this->declare_parameter<std::string>("feedback_topic", "feedback");
 
         feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
@@ -122,7 +123,7 @@ private:
 
     // Active goal tracking
     std::shared_ptr<GoalHandleControl> active_goal_handle_;
-    bool active_goal_is_left_ = false;
+    bool left_arm_active = false;
     uint32_t active_total_waypoints_ = 0;
     std::condition_variable goal_cv_;
 
@@ -161,7 +162,7 @@ private:
             std::lock_guard<std::mutex> lock(goal_mutex_);
             trajectory_ = convertToTrajectory(goal->trajectory, true);
             active_total_waypoints_ = trajectory_.size();
-            active_goal_is_left_ = goal->left_arm;
+            left_arm_active = goal->left_arm;
 
             if (active_goal_handle_ && active_goal_handle_->is_active()) {
                 RCLCPP_INFO(this->get_logger(), "Preempting active goal");
@@ -183,6 +184,16 @@ private:
         RCLCPP_INFO(this->get_logger(), "Received cancel request");
         (void)goal_handle;
         return rclcpp_action::CancelResponse::ACCEPT;
+    }
+
+    void handle_success_(const std::shared_ptr<GoalHandleControl> goal_handle){
+        auto result = std::make_shared<TrajectoryControllerAction::Result>();
+        result->success = true;
+        result->final_error = error_;
+        goal_handle->succeed(result);
+        active_goal_handle_ = nullptr;
+        RCLCPP_INFO(this->get_logger(), "Goal succeeded with error: %f", result->final_error);
+        return;
     }
 
     void handle_accepted_(const std::shared_ptr<GoalHandleControl> goal_handle)
@@ -212,13 +223,11 @@ private:
             {
                 std::unique_lock<std::mutex> lock(goal_mutex_);
 
-                // This goal was preempted by a newer goal
                 if (active_goal_handle_ != goal_handle) {
                     RCLCPP_INFO(this->get_logger(), "Goal preempted, exiting execute thread");
                     return;
                 }
 
-                // Check for cancellation
                 if (goal_handle->is_canceling()) {
                     trajectory_.clear();
                     auto result = std::make_shared<TrajectoryControllerAction::Result>();
@@ -231,14 +240,7 @@ private:
                 }
 
                 if (trajectory_.size() <= 1) {
-                    // Trajectory complete (last waypoint is being tracked by controller)
-                    auto result = std::make_shared<TrajectoryControllerAction::Result>();
-                    result->success = true;
-                    result->final_error = error_;
-                    goal_handle->succeed(result);
-                    active_goal_handle_ = nullptr;
-                    RCLCPP_INFO(this->get_logger(), "Goal succeeded with error: %f", result->final_error);
-                    return;
+                    handle_success_(goal_handle);
                 }
 
                 // Publish feedback
@@ -262,13 +264,20 @@ private:
             return;
         }
 
+        arm_handle_->controller->update(current_state_);
+
+        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
+        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
+
+        left_ee_pose_pub_->publish(convertToPoseStamped(left_ee_pose_, "pelvis", this->get_clock()->now()));
+        right_ee_pose_pub_->publish(convertToPoseStamped(right_ee_pose_, "pelvis", this->get_clock()->now()));
+
+
         if (trajectory_.empty()){
-            cmd_ = arm_handle_->controller->control_no_arms(
-                current_state_
-            );
-            RCLCPP_DEBUG(this->get_logger(), "No active trajectory, applying gravity compensation only");
+            return;
         }
-        else if (active_goal_is_left_){
+
+        if (left_arm_active){
             cmd_ = arm_handle_->controller->control_left_arm(
                 current_state_,
                 trajectory_.back()
@@ -281,23 +290,17 @@ private:
             );
         }
 
-        if (trajectory_.size() > 1){
-            error_ = active_goal_is_left_ ?
+        if (trajectory_.size() > 0){
+            error_ = left_arm_active ?
                             arm_handle_->controller->get_current_left_ee_error() :
                             arm_handle_->controller->get_current_right_ee_error();
 
-            if (error_ < 0.04){
+            if (error_ < this->get_parameter("waypoint_error_margin").as_double()){
                 trajectory_.pop_back();
                 goal_cv_.notify_all();
             }
             RCLCPP_INFO(this->get_logger(), "Error: %f, waypoints remaining: %lu", error_, trajectory_.size());
         }
-
-        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
-        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
-
-        left_ee_pose_pub_->publish(convertToPoseStamped(left_ee_pose_, "pelvis", this->get_clock()->now()));
-        right_ee_pose_pub_->publish(convertToPoseStamped(right_ee_pose_, "pelvis", this->get_clock()->now()));
 
         auto cmd_msg = sensor_msgs::msg::JointState();
         cmd_msg.header.stamp = this->get_clock()->now();
