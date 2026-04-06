@@ -3,8 +3,9 @@ Panels:
     Help Height: 100
     Name: Displays
     Property Tree Widget:
+      Expanded: ~
       Splitter Ratio: 0.5
-    Tree Height: 634
+    Tree Height: 761
 Visualization Manager:
   Class: ""
   Displays:
@@ -319,7 +320,7 @@ Visualization Manager:
       Visual Enabled: true
     - Class: rviz_default_plugins/TF
       Enabled: true
-      Filter (blacklist): "control/.*"
+      Filter (blacklist): control/.*
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
@@ -327,114 +328,6 @@ Visualization Manager:
         base_link:
           Value: true
         camera_link:
-          Value: true
-        control/base_link:
-          Value: false
-        control/camera_link:
-          Value: false
-        control/head_link:
-          Value: false
-        control/imu_in_pelvis:
-          Value: false
-        control/imu_in_torso:
-          Value: false
-        control/left_ankle_pitch_link:
-          Value: true
-        control/left_ankle_roll_link:
-          Value: true
-        control/left_elbow_link:
-          Value: true
-        control/left_hand_index_0_link:
-          Value: true
-        control/left_hand_index_1_link:
-          Value: true
-        control/left_hand_middle_0_link:
-          Value: true
-        control/left_hand_middle_1_link:
-          Value: true
-        control/left_hand_palm_link:
-          Value: false
-        control/left_hand_thumb_0_link:
-          Value: true
-        control/left_hand_thumb_1_link:
-          Value: true
-        control/left_hand_thumb_2_link:
-          Value: true
-        control/left_hip_pitch_link:
-          Value: true
-        control/left_hip_roll_link:
-          Value: true
-        control/left_hip_yaw_link:
-          Value: true
-        control/left_knee_link:
-          Value: true
-        control/left_shoulder_pitch_link:
-          Value: true
-        control/left_shoulder_roll_link:
-          Value: true
-        control/left_shoulder_yaw_link:
-          Value: true
-        control/left_wrist_pitch_link:
-          Value: true
-        control/left_wrist_roll_link:
-          Value: true
-        control/left_wrist_yaw_link:
-          Value: false
-        control/logo_link:
-          Value: false
-        control/pelvis:
-          Value: false
-        control/pelvis_contour_link:
-          Value: false
-        control/right_ankle_pitch_link:
-          Value: true
-        control/right_ankle_roll_link:
-          Value: true
-        control/right_elbow_link:
-          Value: true
-        control/right_hand_index_0_link:
-          Value: true
-        control/right_hand_index_1_link:
-          Value: true
-        control/right_hand_middle_0_link:
-          Value: true
-        control/right_hand_middle_1_link:
-          Value: true
-        control/right_hand_palm_link:
-          Value: false
-        control/right_hand_thumb_0_link:
-          Value: true
-        control/right_hand_thumb_1_link:
-          Value: true
-        control/right_hand_thumb_2_link:
-          Value: true
-        control/right_hip_pitch_link:
-          Value: true
-        control/right_hip_roll_link:
-          Value: true
-        control/right_hip_yaw_link:
-          Value: true
-        control/right_knee_link:
-          Value: true
-        control/right_shoulder_pitch_link:
-          Value: true
-        control/right_shoulder_roll_link:
-          Value: true
-        control/right_shoulder_yaw_link:
-          Value: true
-        control/right_wrist_pitch_link:
-          Value: true
-        control/right_wrist_roll_link:
-          Value: true
-        control/right_wrist_yaw_link:
-          Value: false
-        control/sensor:
-          Value: false
-        control/torso_link:
-          Value: false
-        control/waist_roll_link:
-          Value: true
-        control/waist_yaw_link:
           Value: true
         head_link:
           Value: true
@@ -546,144 +439,75 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        base_link:
-          control/base_link:
-            control/pelvis:
-              control/imu_in_pelvis:
-                {}
-              control/left_hip_pitch_link:
-                control/left_hip_roll_link:
-                  control/left_hip_yaw_link:
-                    control/left_knee_link:
-                      control/left_ankle_pitch_link:
-                        control/left_ankle_roll_link:
-                          {}
-              control/pelvis_contour_link:
-                {}
-              control/right_hip_pitch_link:
-                control/right_hip_roll_link:
-                  control/right_hip_yaw_link:
-                    control/right_knee_link:
-                      control/right_ankle_pitch_link:
-                        control/right_ankle_roll_link:
-                          {}
-              control/waist_yaw_link:
-                control/waist_roll_link:
-                  control/torso_link:
-                    control/camera_link:
-                      {}
-                    control/head_link:
-                      {}
-                    control/imu_in_torso:
-                      {}
-                    control/left_shoulder_pitch_link:
-                      control/left_shoulder_roll_link:
-                        control/left_shoulder_yaw_link:
-                          control/left_elbow_link:
-                            control/left_wrist_roll_link:
-                              control/left_wrist_pitch_link:
-                                control/left_wrist_yaw_link:
-                                  control/left_hand_palm_link:
-                                    control/left_hand_index_0_link:
-                                      control/left_hand_index_1_link:
-                                        {}
-                                    control/left_hand_middle_0_link:
-                                      control/left_hand_middle_1_link:
-                                        {}
-                                    control/left_hand_thumb_0_link:
-                                      control/left_hand_thumb_1_link:
-                                        control/left_hand_thumb_2_link:
-                                          {}
-                    control/logo_link:
-                      {}
-                    control/right_shoulder_pitch_link:
-                      control/right_shoulder_roll_link:
-                        control/right_shoulder_yaw_link:
-                          control/right_elbow_link:
-                            control/right_wrist_roll_link:
-                              control/right_wrist_pitch_link:
-                                control/right_wrist_yaw_link:
-                                  control/right_hand_palm_link:
-                                    control/right_hand_index_0_link:
-                                      control/right_hand_index_1_link:
-                                        {}
-                                    control/right_hand_middle_0_link:
-                                      control/right_hand_middle_1_link:
-                                        {}
-                                    control/right_hand_thumb_0_link:
-                                      control/right_hand_thumb_1_link:
-                                        control/right_hand_thumb_2_link:
-                                          {}
-                    control/sensor:
-                      {}
-          pelvis:
-            imu_in_pelvis:
+        sensor:
+          torso_link:
+            camera_link:
               {}
-            left_hip_pitch_link:
-              left_hip_roll_link:
-                left_hip_yaw_link:
-                  left_knee_link:
-                    left_ankle_pitch_link:
-                      left_ankle_roll_link:
-                        {}
-            pelvis_contour_link:
+            head_link:
               {}
-            right_hip_pitch_link:
-              right_hip_roll_link:
-                right_hip_yaw_link:
-                  right_knee_link:
-                    right_ankle_pitch_link:
-                      right_ankle_roll_link:
-                        {}
-            waist_yaw_link:
-              waist_roll_link:
-                torso_link:
-                  camera_link:
+            imu_in_torso:
+              {}
+            left_shoulder_pitch_link:
+              left_shoulder_roll_link:
+                left_shoulder_yaw_link:
+                  left_elbow_link:
+                    left_wrist_roll_link:
+                      left_wrist_pitch_link:
+                        left_wrist_yaw_link:
+                          left_hand_palm_link:
+                            left_hand_index_0_link:
+                              left_hand_index_1_link:
+                                {}
+                            left_hand_middle_0_link:
+                              left_hand_middle_1_link:
+                                {}
+                            left_hand_thumb_0_link:
+                              left_hand_thumb_1_link:
+                                left_hand_thumb_2_link:
+                                  {}
+            logo_link:
+              {}
+            right_shoulder_pitch_link:
+              right_shoulder_roll_link:
+                right_shoulder_yaw_link:
+                  right_elbow_link:
+                    right_wrist_roll_link:
+                      right_wrist_pitch_link:
+                        right_wrist_yaw_link:
+                          right_hand_palm_link:
+                            right_hand_index_0_link:
+                              right_hand_index_1_link:
+                                {}
+                            right_hand_middle_0_link:
+                              right_hand_middle_1_link:
+                                {}
+                            right_hand_thumb_0_link:
+                              right_hand_thumb_1_link:
+                                right_hand_thumb_2_link:
+                                  {}
+            waist_roll_link:
+              waist_yaw_link:
+                pelvis:
+                  base_link:
                     {}
-                  head_link:
+                  imu_in_pelvis:
                     {}
-                  imu_in_torso:
+                  left_hip_pitch_link:
+                    left_hip_roll_link:
+                      left_hip_yaw_link:
+                        left_knee_link:
+                          left_ankle_pitch_link:
+                            left_ankle_roll_link:
+                              {}
+                  pelvis_contour_link:
                     {}
-                  left_shoulder_pitch_link:
-                    left_shoulder_roll_link:
-                      left_shoulder_yaw_link:
-                        left_elbow_link:
-                          left_wrist_roll_link:
-                            left_wrist_pitch_link:
-                              left_wrist_yaw_link:
-                                left_hand_palm_link:
-                                  left_hand_index_0_link:
-                                    left_hand_index_1_link:
-                                      {}
-                                  left_hand_middle_0_link:
-                                    left_hand_middle_1_link:
-                                      {}
-                                  left_hand_thumb_0_link:
-                                    left_hand_thumb_1_link:
-                                      left_hand_thumb_2_link:
-                                        {}
-                  logo_link:
-                    {}
-                  right_shoulder_pitch_link:
-                    right_shoulder_roll_link:
-                      right_shoulder_yaw_link:
-                        right_elbow_link:
-                          right_wrist_roll_link:
-                            right_wrist_pitch_link:
-                              right_wrist_yaw_link:
-                                right_hand_palm_link:
-                                  right_hand_index_0_link:
-                                    right_hand_index_1_link:
-                                      {}
-                                  right_hand_middle_0_link:
-                                    right_hand_middle_1_link:
-                                      {}
-                                  right_hand_thumb_0_link:
-                                    right_hand_thumb_1_link:
-                                      right_hand_thumb_2_link:
-                                        {}
-                  sensor:
-                    {}
+                  right_hip_pitch_link:
+                    right_hip_roll_link:
+                      right_hip_yaw_link:
+                        right_knee_link:
+                          right_ankle_pitch_link:
+                            right_ankle_roll_link:
+                              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -722,7 +546,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.20000000298023224
       Head Radius: 0.07999999821186066
-      Name: left_goal
+      Name: left_ee_pose
       Shaft Length: 0.05000000074505806
       Shaft Radius: 0.019999999552965164
       Shape: Axes
@@ -732,7 +556,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /arm/goal_pose/left
+        Value: /left_ee_pose
       Value: true
     - Alpha: 1
       Axes Length: 0.05000000074505806
@@ -742,7 +566,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.20000000298023224
       Head Radius: 0.07999999821186066
-      Name: right_goal
+      Name: right_ee_pose
       Shaft Length: 0.05000000074505806
       Shaft Radius: 0.019999999552965164
       Shape: Axes
@@ -752,9 +576,9 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /arm/goal_pose/right
+        Value: /right_ee_pose
       Value: true
-    - Alpha: 0.4
+    - Alpha: 0.4000000059604645
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
       Description File: ""
@@ -1045,6 +869,26 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Axes Length: 0.10000000149011612
+      Axes Radius: 0.009999999776482582
+      Class: rviz_default_plugins/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: goal_candidate
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /track3d/selected_normal_pose_filtered_upright
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1060,7 +904,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.4237667322158813
+      Distance: 1.785973072052002
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1082,13 +926,11 @@ Visualization Manager:
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
-  Height: 1371
-  Hide Left Dock: false
+    collapsed: true
+  Height: 1019
+  Hide Left Dock: true
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000028a000004fdfc0200000002fb000000100044006900730070006c006100790073010000003f00000300000000cc00fffffffb0000000a005600690065007700730100000345000001f7000000a900ffffff0000072e000004fd00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-  Views:
-    collapsed: false
-  Width: 2494
-  X: 66
-  Y: 32
+  QMainWindow State: 000000ff00000000fd00000001000000000000028a0000039dfc0200000002fb000000100044006900730070006c006100790073000000003f0000039d000000cc00fffffffb0000000a005600690065007700730100000345000001f70000000000000000000004480000039d00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 1096
+  X: 1328
+  Y: 289
