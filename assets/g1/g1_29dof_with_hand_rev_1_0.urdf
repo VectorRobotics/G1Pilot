@@ -616,7 +616,7 @@
     <parent link="torso_link"/>
     <child link="left_shoulder_pitch_link"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-3.0892" upper="2.6704" effort="25" velocity="37"/>
+    <limit lower="-1.3" upper="1.3" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_shoulder_roll_link">
@@ -644,7 +644,7 @@
     <parent link="left_shoulder_pitch_link"/>
     <child link="left_shoulder_roll_link"/>
     <axis xyz="1 0 0"/>
-    <limit lower="-1.5882" upper="2.2515" effort="25" velocity="37"/>
+    <limit lower="0.1" upper="1.59" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_shoulder_yaw_link">
@@ -700,7 +700,7 @@
     <parent link="left_shoulder_yaw_link"/>
     <child link="left_elbow_link"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-1.0472" upper="2.0944" effort="25" velocity="37"/>
+    <limit lower="-0.7" upper="2.0944" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <joint name="left_wrist_roll_joint" type="revolute">
@@ -1033,7 +1033,7 @@
     <parent link="torso_link"/>
     <child link="right_shoulder_pitch_link"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-3.0892" upper="2.6704" effort="25" velocity="37"/>
+    <limit lower="-1.3" upper="1.3" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_shoulder_roll_link">
@@ -1061,7 +1061,7 @@
     <parent link="right_shoulder_pitch_link"/>
     <child link="right_shoulder_roll_link"/>
     <axis xyz="1 0 0"/>
-    <limit lower="-2.2515" upper="1.5882" effort="25" velocity="37"/>
+    <limit lower="-1.59" upper="-0.1" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_shoulder_yaw_link">
@@ -1117,7 +1117,7 @@
     <parent link="right_shoulder_yaw_link"/>
     <child link="right_elbow_link"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-1.0472" upper="2.0944" effort="25" velocity="37"/>
+    <limit lower="-0.7" upper="2.0944" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <joint name="right_wrist_roll_joint" type="revolute">
