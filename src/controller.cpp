@@ -240,6 +240,7 @@ private:
                 }
 
                 if (trajectory_.size() <= 1) {
+                    trajectory_.clear();
                     handle_success_(goal_handle);
                 }
 
