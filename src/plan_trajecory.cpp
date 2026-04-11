@@ -9,11 +9,11 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-#include "manipulation_interfaces/srv/plan_trajectory.hpp"
+#include "humanoid_manipulation_interfaces/srv/plan_trajectory.hpp"
 
 using namespace ArmPilot;
 
-using PlanTrajectoryService = manipulation_interfaces::srv::PlanTrajectory;
+using PlanTrajectoryService = humanoid_manipulation_interfaces::srv::PlanTrajectory;
 
 class PlanTrajectoryServer : public rclcpp::Node
 {

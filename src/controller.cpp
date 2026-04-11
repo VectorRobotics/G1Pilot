@@ -7,7 +7,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "helper_funcs.h"
 
-#include "manipulation_interfaces/action/control_trajectory.hpp"
+#include "humanoid_manipulation_interfaces/action/control_trajectory.hpp"
 
 #include <chrono>
 #include <mutex>
@@ -18,7 +18,7 @@
 using namespace ArmPilot;
 using namespace std::chrono_literals;
 
-using TrajectoryControllerAction = manipulation_interfaces::action::ControlTrajectory;
+using TrajectoryControllerAction = humanoid_manipulation_interfaces::action::ControlTrajectory;
 using GoalHandleControl = rclcpp_action::ServerGoalHandle<TrajectoryControllerAction>;
 
 class TrajectoryControllerActionServer : public rclcpp::Node

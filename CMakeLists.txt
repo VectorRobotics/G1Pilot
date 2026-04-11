@@ -137,7 +137,7 @@ if(ROS2_DEFAULT)
     find_package(tf2_eigen REQUIRED)
     find_package(tf2_geometry_msgs REQUIRED)
     find_package(rclcpp_action REQUIRED)
-    find_package(manipulation_interfaces REQUIRED)
+    find_package(humanoid_manipulation_interfaces REQUIRED)
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(impede_arms src/impede_arms.cpp)
@@ -167,10 +167,10 @@ if(ROS2_DEFAULT)
     ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
 
     target_link_libraries(controller g1_pilot)
-    ament_target_dependencies(controller ament_index_cpp rclcpp rclcpp_action sensor_msgs geometry_msgs manipulation_interfaces)
+    ament_target_dependencies(controller ament_index_cpp rclcpp rclcpp_action sensor_msgs geometry_msgs humanoid_manipulation_interfaces)
 
     target_link_libraries(plan_trajecory g1_pilot)
-    ament_target_dependencies(plan_trajecory ament_index_cpp rclcpp nav_msgs tf2_ros tf2_eigen tf2_geometry_msgs manipulation_interfaces)
+    ament_target_dependencies(plan_trajecory ament_index_cpp rclcpp nav_msgs tf2_ros tf2_eigen tf2_geometry_msgs humanoid_manipulation_interfaces)
 
     install(TARGETS
         ik_joint_state_publisher
