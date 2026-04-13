@@ -887,7 +887,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /track3d/selected_normal_pose_filtered_upright
+        Value: /track_3d/selected_normal_pose_filtered_upright
       Value: true
   Enabled: true
   Global Options:

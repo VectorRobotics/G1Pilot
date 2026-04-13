@@ -242,6 +242,7 @@ private:
 
                 if (trajectory_.size() <= 1) {
                     trajectory_.clear();
+                    arm_handle_->ik->reset();
                     handle_success_(goal_handle);
                 }
 
