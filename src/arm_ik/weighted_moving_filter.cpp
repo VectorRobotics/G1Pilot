@@ -35,6 +35,11 @@ Eigen::VectorXd WeightedMovingFilter::apply_filter() {
     return temp_filtered_data;
 }
 
+void WeightedMovingFilter::reset() {
+    data_queue_.clear();
+    filtered_data_ = Eigen::VectorXd::Zero(data_size_);
+}
+
 void WeightedMovingFilter::add_data(const Eigen::VectorXd& new_data) {
     if (new_data.size() != data_size_) {
         throw std::invalid_argument("New data size does not match expected data size");

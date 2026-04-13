@@ -233,6 +233,11 @@ void HumanoidIK::setup_optimization() {
 
 }
 
+void HumanoidIK::reset() {
+    init_data_ = Eigen::VectorXd::Zero(model_.nq);
+    smooth_filter_->reset();
+}
+
 JointState HumanoidIK::solve_ik(
     const Eigen::Matrix4d& left_wrist,
     const Eigen::Matrix4d& right_wrist,

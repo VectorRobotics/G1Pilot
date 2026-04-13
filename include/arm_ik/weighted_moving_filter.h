@@ -27,6 +27,11 @@ public:
      */
     Eigen::VectorXd filtered_data() const { return filtered_data_; }
 
+    /**
+     * @brief Reset the filter, clearing all buffered data
+     */
+    void reset();
+
 private:
     /**
      * @brief Apply the weighted moving average filter

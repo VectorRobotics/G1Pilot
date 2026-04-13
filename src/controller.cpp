@@ -230,6 +230,7 @@ private:
 
                 if (goal_handle->is_canceling()) {
                     trajectory_.clear();
+                    arm_handle_->ik->reset();
                     auto result = std::make_shared<TrajectoryControllerAction::Result>();
                     result->success = false;
                     result->final_error = -1.0;

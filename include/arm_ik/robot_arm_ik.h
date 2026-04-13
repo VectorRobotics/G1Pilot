@@ -39,6 +39,8 @@ public:
         const Eigen::VectorXd* EE_efrc = nullptr
     );
 
+    void reset();
+
 protected:
     void setup_optimization();
     void filter_adjacent_collision_pairs();
