@@ -672,7 +672,7 @@
     <parent link="left_shoulder_roll_link"/>
     <child link="left_shoulder_yaw_link"/>
     <axis xyz="0 0 1"/>
-    <limit lower="-2.618" upper="2.618" effort="25" velocity="37"/>
+    <limit lower="-0.2" upper="1.3" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="left_elbow_link">
@@ -1089,7 +1089,7 @@
     <parent link="right_shoulder_roll_link"/>
     <child link="right_shoulder_yaw_link"/>
     <axis xyz="0 0 1"/>
-    <limit lower="-2.618" upper="2.618" effort="25" velocity="37"/>
+    <limit lower="-1.3" upper="0.2" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <link name="right_elbow_link">
