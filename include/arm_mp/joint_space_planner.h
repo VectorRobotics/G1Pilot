@@ -93,7 +93,7 @@ class JointSpacePlanner {
 
         struct TwoPhaseLegs {
             std::vector<Eigen::VectorXd> leg1;      // start -> intermediate (RRT*)
-            std::vector<Eigen::VectorXd> leg2;      // intermediate -> goal  (straight)
+            std::vector<Eigen::MatrixXd> leg2;      // intermediate -> goal  (straight)
             Eigen::Matrix4d T_start;
             Eigen::Matrix4d T_intermediate;
             bool is_close;
@@ -120,6 +120,8 @@ class JointSpacePlanner {
         std::vector<Eigen::MatrixXd> densify(
             const std::vector<Eigen::VectorXd>& path, int steps
         );
+
+        Eigen::MatrixXd interpolate_poses(const Eigen::MatrixXd& T1, const Eigen::MatrixXd& T2, double t);
 
         pinocchio::Model model_;
         pinocchio::GeometryModel geom_model_;

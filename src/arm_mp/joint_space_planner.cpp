@@ -291,8 +291,8 @@ JointSpacePlanner::TwoPhaseLegs JointSpacePlanner::planTwoPhaseLegs(
         out.leg2.reserve(n2);
         for (int k = 1; k <= n2; ++k) {
             double t = static_cast<double>(k) / n2;
-            Eigen::VectorXd q = intermediate_q + t * (goal_q - intermediate_q);
-            out.leg2.push_back(q.cwiseMax(q_lower_).cwiseMin(q_upper_));
+            Eigen::Matrix4d T = interpolate_poses(out.T_intermediate, T_goal, t);
+            out.leg2.push_back(T);
         }
     }
 
@@ -372,7 +372,7 @@ std::vector<Eigen::MatrixXd> JointSpacePlanner::planPath(
     std::vector<Eigen::MatrixXd> out;
     out.reserve(leg1.size() + legs.leg2.size());
     for (const auto& q : leg1) out.push_back(fkPose(q));
-    for (const auto& q : legs.leg2) out.push_back(fkPose(q));
+    for (const auto& T : legs.leg2) out.push_back(T);
     return out;
 }
 
@@ -416,8 +416,29 @@ std::vector<Eigen::MatrixXd> JointSpacePlanner::planTrajectory(
     std::vector<Eigen::MatrixXd> out;
     out.reserve(leg1.size() + legs.leg2.size());
     for (const auto& q : leg1) out.push_back(fkPose(q));
-    for (const auto& q : legs.leg2) out.push_back(fkPose(q));
+    for (const auto& T : legs.leg2) out.push_back(T);
     return out;
+}
+
+Eigen::MatrixXd JointSpacePlanner::interpolate_poses(const Eigen::MatrixXd& T1, const Eigen::MatrixXd& T2, double t) {
+    Eigen::Vector3d pos1 = T1.block<3,1>(0,3);
+    Eigen::Vector3d pos2 = T2.block<3,1>(0,3);
+    Eigen::Vector3d pos_interp = pos1 + t * (pos2 - pos1);
+
+    // 2. Interpolate Rotation (SLERP)
+    // We cast the 3x3 block to a Quaternion
+    Eigen::Quaterniond q1(T1.block<3,3>(0,0));
+    Eigen::Quaterniond q2(T2.block<3,3>(0,0));
+    
+    // Slerp handles the spherical path between orientations
+    Eigen::Quaterniond rot_interp = q1.slerp(t, q2);
+
+    // 3. Reconstruct as MatrixXd
+    Eigen::MatrixXd T_out = Eigen::MatrixXd::Identity(4, 4);
+    T_out.block<3,3>(0,0) = rot_interp.toRotationMatrix();
+    T_out.block<3,1>(0,3) = pos_interp;
+    
+    return T_out;
 }
 
 } // namespace ArmPilot
