@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <stdexcept>
 
@@ -73,6 +74,20 @@ Eigen::VectorXd JointSpacePlanner::poseToJointConfig(const Eigen::MatrixXd& pose
 
     auto [q, v, e] = jointstate_to_vectors(js, model_);
     (void)v; (void)e;
+
+    Eigen::Matrix4d T_fk = fkPose(q);
+    Eigen::Vector3d pos_err = T_fk.block<3, 1>(0, 3) - T.block<3, 1>(0, 3);
+    Eigen::Matrix3d R_err = T_fk.block<3, 3>(0, 0) * T.block<3, 3>(0, 0).transpose();
+    double cos_angle = std::clamp(0.5 * (R_err.trace() - 1.0), -1.0, 1.0);
+    double rot_err = std::acos(cos_angle);
+    std::cout << "[poseToJointConfig] IK pos err (m): " << pos_err.norm()
+              << ", rot err (rad): " << rot_err << std::endl;
+
+    if (pos_err.norm() > 0.1 || rot_err > 0.26) {
+        std::cout << "[poseToJointConfig] IK error exceeds threshold; returning empty config" << std::endl;
+        return Eigen::VectorXd();
+    }
+
     return q;
 }
 
@@ -258,17 +273,15 @@ JointSpacePlanner::TwoPhaseLegs JointSpacePlanner::planTwoPhaseLegs(
     const Eigen::MatrixXd* start_pose
 ) {
     TwoPhaseLegs out;
-
-    Eigen::Matrix4d T_goal = goal_pose;
-    out.T_intermediate = T_goal * intermediate_pose_offset_;
-
-    Eigen::VectorXd goal_q = poseToJointConfig(T_goal);
-    goal_q = goal_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
-
+    
     Eigen::VectorXd start_q;
     if (start_pose != nullptr) {
         out.T_start = *start_pose;
+        std::cout << "IK for start pose:" << std::endl;
         start_q = poseToJointConfig(out.T_start);
+        if (start_q.size() == 0) {
+            return out;
+        }
     } else {
         out.T_start = Eigen::Matrix4d::Identity();
         start_q = Eigen::VectorXd::Zero(nq_);
@@ -276,24 +289,36 @@ JointSpacePlanner::TwoPhaseLegs JointSpacePlanner::planTwoPhaseLegs(
     start_q = start_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
 
     double translational_dist =
-        (T_goal.block<3,1>(0,3) - out.T_start.block<3,1>(0,3)).norm();
+        (goal_pose.block<3,1>(0,3) - start_pose->block<3,1>(0,3)).norm();
     out.is_close = translational_dist < 2.0 * approach_offset_;
 
     if (out.is_close) {
-        out.leg1 = runRRTStar(start_q, goal_q, step_size_);
-    } else {
-        Eigen::VectorXd intermediate_q = poseToJointConfig(out.T_intermediate);
-        intermediate_q = intermediate_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
-
-        out.leg1 = runRRTStar(start_q, intermediate_q, step_size_);
-
-        int n2 = std::max(2, final_leg_steps_);
-        out.leg2.reserve(n2);
-        for (int k = 1; k <= n2; ++k) {
-            double t = static_cast<double>(k) / n2;
-            Eigen::Matrix4d T = interpolate_poses(out.T_intermediate, T_goal, t);
-            out.leg2.push_back(T);
+        std::cout << "IK for goal pose:" << std::endl;
+        Eigen::VectorXd goal_q = poseToJointConfig(goal_pose);
+        if (goal_q.size() == 0) {
+            return out;
         }
+        goal_q = goal_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
+        out.leg1 = runRRTStar(start_q, goal_q, step_size_);
+        return out;
+    }
+
+    out.T_intermediate = goal_pose * intermediate_pose_offset_;
+    std::cout << "IK for intermediate pose:" << std::endl;
+    Eigen::VectorXd intermediate_q = poseToJointConfig(out.T_intermediate);
+    if (intermediate_q.size() == 0) {
+        return out;
+    }
+    intermediate_q = intermediate_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
+
+    out.leg1 = runRRTStar(start_q, intermediate_q, step_size_);
+
+    int n2 = std::max(2, final_leg_steps_);
+    out.leg2.reserve(n2);
+    for (int k = 1; k <= n2; ++k) {
+        double t = static_cast<double>(k) / n2;
+        Eigen::Matrix4d T = interpolate_poses(out.T_intermediate, goal_pose, t);
+        out.leg2.push_back(T);
     }
 
     return out;

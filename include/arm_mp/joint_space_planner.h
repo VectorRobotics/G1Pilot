@@ -72,6 +72,7 @@ class JointSpacePlanner {
         );
 
         void setSeed(unsigned int seed);
+        void setLeftArm(bool left_arm) { left_arm_ = left_arm; }
 
     protected:
         struct Node {

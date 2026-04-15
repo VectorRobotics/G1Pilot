@@ -101,8 +101,17 @@ private:
             return;
         }
 
+        arm_handle_->motion_planner->setLeftArm(request->left_arm);
+
         auto trajectory = arm_handle_->motion_planner->planTrajectory(
                 &goal_matrix, &start_matrix);
+
+        if (trajectory.empty()) {
+            RCLCPP_ERROR(this->get_logger(),
+                "Trajectory planning failed: empty trajectory (likely IK error exceeded threshold)");
+            response->success = false;
+            return;
+        }
 
         response->success = true;
         response->trajectory = convertToPath(trajectory, "pelvis", this->get_clock()->now());

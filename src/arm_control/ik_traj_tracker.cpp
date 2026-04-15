@@ -86,6 +86,22 @@ JointState IKTrajTracker::control_right_arm(
         &current_joint_vel_
     );
 
+    {
+        JointState filtered;
+        filtered.name.reserve(result.name.size());
+        filtered.position.reserve(result.position.size());
+        filtered.velocity.reserve(result.velocity.size());
+        filtered.effort.reserve(result.effort.size());
+        for (size_t i = 0; i < result.name.size(); ++i) {
+            if (result.name[i].rfind("left_", 0) == 0) continue;
+            filtered.name.push_back(result.name[i]);
+            if (i < result.position.size()) filtered.position.push_back(result.position[i]);
+            if (i < result.velocity.size()) filtered.velocity.push_back(result.velocity[i]);
+            if (i < result.effort.size())   filtered.effort.push_back(result.effort[i]);
+        }
+        result = std::move(filtered);
+    }
+
     error_pose_in_ee_frame_ = current_right_ee_pose_.inverse()*desired_right_ee_pose_;
     error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
 
