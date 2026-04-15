@@ -127,21 +127,21 @@ void HumanoidIK::setup_optimization() {
             casadi::SX::sumsqr(left_rot_err) +
             casadi::SX::sumsqr(right_rot_err)
         ) + 
-        0.02 * casadi::SX::sumsqr(cq) +
+        0.005 * casadi::SX::sumsqr(cq) +
         0.1 * casadi::SX::sumsqr(cq - cq_last)
     );
 
     casadi::SX left_arm_cost = (
         50.0 * casadi::SX::sumsqr(left_trans_err) + 
         3.0 * casadi::SX::sumsqr(left_rot_err) + 
-        0.02 * casadi::SX::sumsqr(cq) +
+        0.005 * casadi::SX::sumsqr(cq) +
         0.1 * casadi::SX::sumsqr(cq - cq_last)
     );
 
     casadi::SX right_arm_cost = (
         50.0 * casadi::SX::sumsqr(right_trans_err) + 
         3.0 * casadi::SX::sumsqr(right_rot_err) + 
-        0.02 * casadi::SX::sumsqr(cq) +
+        0.005 * casadi::SX::sumsqr(cq) +
         0.1 * casadi::SX::sumsqr(cq - cq_last)
     );
 
