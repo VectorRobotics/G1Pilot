@@ -282,8 +282,8 @@ JointState HumanoidIK::solve_ik(
     sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
     
     // Apply smoothing filter
-    smooth_filter_->add_data(sol_q);
-    sol_q = smooth_filter_->filtered_data();
+    // smooth_filter_->add_data(sol_q);
+    // sol_q = smooth_filter_->filtered_data();
     
     // Compute velocity
     sol_v = Eigen::VectorXd::Zero(model_.nv);
@@ -358,9 +358,9 @@ JointState HumanoidIK::solve_ik(
 
     sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
     
-    // Apply smoothing filter
-    smooth_filter_->add_data(sol_q);
-    sol_q = smooth_filter_->filtered_data();
+    // // Apply smoothing filter
+    // smooth_filter_->add_data(sol_q);
+    // sol_q = smooth_filter_->filtered_data();
     
     // Compute velocity
     sol_v = Eigen::VectorXd::Zero(model_.nv);

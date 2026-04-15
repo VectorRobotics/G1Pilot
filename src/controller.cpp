@@ -193,6 +193,7 @@ private:
         goal_handle->succeed(result);
         active_goal_handle_ = nullptr;
         RCLCPP_INFO(this->get_logger(), "Goal succeeded with error: %f", result->final_error);
+        arm_handle_->ik->reset();
         return;
     }
 
