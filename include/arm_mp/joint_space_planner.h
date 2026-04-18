@@ -3,11 +3,6 @@
 
 #include "../arm_ik/arm_ik.h"
 
-#include <pinocchio/multibody/data.hpp>
-#include <pinocchio/multibody/geometry.hpp>
-
-#include <Eigen/Dense>
-#include <vector>
 #include <random>
 
 namespace ArmPilot {
@@ -31,12 +26,12 @@ class JointSpacePlanner {
             HumanoidIK* ik_handle,
             bool left_arm = false,
             double joint_limit_safety_offset = 0.05,
-            double step_size = 0.1,
+            double step_size = 0.05,
             double goal_bias = 0.1,
             double rewire_radius = 0.5,
             int max_iterations = 2000,
-            double goal_tolerance = 0.05,
-            double approach_offset = 0.05,
+            double goal_tolerance = 0.01,
+            double approach_offset = 0.1,
             int final_leg_steps = 10
         );
         virtual ~JointSpacePlanner();

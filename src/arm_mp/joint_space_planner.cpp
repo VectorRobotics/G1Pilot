@@ -290,7 +290,7 @@ JointSpacePlanner::TwoPhaseLegs JointSpacePlanner::planTwoPhaseLegs(
 
     double translational_dist =
         (goal_pose.block<3,1>(0,3) - start_pose->block<3,1>(0,3)).norm();
-    out.is_close = translational_dist < 2.0 * approach_offset_;
+    out.is_close = translational_dist < 0.85 * approach_offset_;
 
     if (out.is_close) {
         std::cout << "IK for goal pose:" << std::endl;
