@@ -9,6 +9,9 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include <mutex>
+
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "humanoid_manipulation_interfaces/srv/plan_trajectory.hpp"
 
 using namespace ArmPilot;
@@ -48,6 +51,26 @@ public:
         path_pub_ = this->create_publisher<nav_msgs::msg::Path>(
             this->get_parameter("traj_topic").as_string(), 10);
 
+        /* EE pose subscribers — used as the live start pose for planning */
+        this->declare_parameter<std::string>("left_ee_pose_topic", "/left_ee_pose");
+        this->declare_parameter<std::string>("right_ee_pose_topic", "/right_ee_pose");
+
+        left_ee_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            this->get_parameter("left_ee_pose_topic").as_string(), 5,
+            [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+                std::lock_guard<std::mutex> lock(ee_pose_mutex_);
+                left_ee_pose_ = *msg;
+                have_left_ee_pose_ = true;
+            });
+
+        right_ee_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            this->get_parameter("right_ee_pose_topic").as_string(), 5,
+            [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+                std::lock_guard<std::mutex> lock(ee_pose_mutex_);
+                right_ee_pose_ = *msg;
+                have_right_ee_pose_ = true;
+            });
+
         /* Service server */
         service_ = this->create_service<PlanTrajectoryService>(
             "plan_trajectory",
@@ -66,6 +89,15 @@ private:
 
     // Service server
     rclcpp::Service<PlanTrajectoryService>::SharedPtr service_;
+
+    // EE pose subscribers + latest-pose cache
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr left_ee_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr right_ee_sub_;
+    std::mutex ee_pose_mutex_;
+    geometry_msgs::msg::PoseStamped left_ee_pose_;
+    geometry_msgs::msg::PoseStamped right_ee_pose_;
+    bool have_left_ee_pose_{false};
+    bool have_right_ee_pose_{false};
 
     // Arm Handle
     std::unique_ptr<G1DualArm> arm_handle_;
@@ -92,8 +124,22 @@ private:
         RCLCPP_INFO(this->get_logger(), "Received request for goal in frame: %s",
                      request->target_pose.header.frame_id.c_str());
 
+        geometry_msgs::msg::PoseStamped live_start_pose;
+        {
+            std::lock_guard<std::mutex> lock(ee_pose_mutex_);
+            const bool have_pose = request->left_arm ? have_left_ee_pose_ : have_right_ee_pose_;
+            if (!have_pose) {
+                RCLCPP_ERROR(this->get_logger(),
+                    "No %s EE pose received yet — cannot plan",
+                    request->left_arm ? "left" : "right");
+                response->success = false;
+                return;
+            }
+            live_start_pose = request->left_arm ? left_ee_pose_ : right_ee_pose_;
+        }
+
         Eigen::MatrixXd goal_matrix = get_pose_in_pelvis_(request->target_pose);
-        Eigen::MatrixXd start_matrix = get_pose_in_pelvis_(request->start_pose);
+        Eigen::MatrixXd start_matrix = get_pose_in_pelvis_(live_start_pose);
 
         if (goal_matrix.size() == 0 || start_matrix.size() == 0) {
             RCLCPP_ERROR(this->get_logger(), "Failed to transform poses to pelvis frame");
