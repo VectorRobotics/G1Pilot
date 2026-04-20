@@ -700,7 +700,7 @@
     <parent link="left_shoulder_yaw_link"/>
     <child link="left_elbow_link"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-0.7" upper="2.0944" effort="25" velocity="37"/>
+    <limit lower="-1.0" upper="2.0944" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <joint name="left_wrist_roll_joint" type="revolute">
@@ -1117,7 +1117,7 @@
     <parent link="right_shoulder_yaw_link"/>
     <child link="right_elbow_link"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-0.7" upper="2.0944" effort="25" velocity="37"/>
+    <limit lower="-1.0" upper="2.0944" effort="25" velocity="37"/>
     <dynamics damping="0.05" friction="0.2"/>
   </joint>
   <joint name="right_wrist_roll_joint" type="revolute">
