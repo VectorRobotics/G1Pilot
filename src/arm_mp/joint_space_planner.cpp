@@ -83,7 +83,7 @@ Eigen::VectorXd JointSpacePlanner::poseToJointConfig(const Eigen::MatrixXd& pose
     std::cout << "[poseToJointConfig] IK pos err (m): " << pos_err.norm()
               << ", rot err (rad): " << rot_err << std::endl;
 
-    if (pos_err.norm() > 0.1 || rot_err > 0.26) {
+    if (pos_err.norm() > 0.3 || rot_err > 0.4) {
         std::cout << "[poseToJointConfig] IK error exceeds threshold; returning empty config" << std::endl;
         return Eigen::VectorXd();
     }
