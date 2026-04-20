@@ -68,7 +68,7 @@ public:
             this->get_parameter("right_ee_pose_topic").as_string(), 10);
 
         /* Subscribers */
-        this->declare_parameter<double>("waypoint_error_margin", 0.01);
+        this->declare_parameter<double>("waypoint_error_margin", 0.007);
         this->declare_parameter<std::string>("feedback_topic", "feedback");
 
         feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
