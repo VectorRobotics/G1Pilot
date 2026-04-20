@@ -563,7 +563,7 @@
   <link name="camera_link"></link>
   <joint name="d435_joint" type="fixed">
     <!--<origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0"/>-->
-    <origin xyz="0.068042 0.016300 0.414516" rpy="-0.111720 0.453641 0.026073"/>
+    <origin xyz="0.068042 0.016300 0.414516" rpy="-0.011720 0.453641 0.026073"/>
     <parent link="torso_link"/>
     <child link="camera_link"/>
   </joint>
