@@ -3,6 +3,7 @@
 
 #include "interfaces.h"
 
+#include <map>
 #include <pinocchio/multibody/geometry.hpp>
 #include <pinocchio/multibody/data.hpp>
 
@@ -38,6 +39,7 @@ protected:
 
     void extract_config();
     void add_end_effector_frames();
+    void apply_joint_limit_overrides();
     void reduce_model(
         std::vector<std::string> joint_names,
         pinocchio::Model &model_in,
@@ -60,6 +62,12 @@ protected:
     EEFrame right_ee_;
 
     std::vector<std::string> locked_joints_;
+
+    struct JointLimit {
+        double lower;
+        double upper;
+    };
+    std::map<std::string, JointLimit> joint_limit_overrides_;
 
     Eigen::VectorXd q;
     Eigen::VectorXd v;

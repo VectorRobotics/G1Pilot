@@ -174,24 +174,6 @@ void HumanoidIK::setup_optimization() {
     casadi::DM lower_limits = eigen_to_casadi(model_.lowerPositionLimit);
     casadi::DM upper_limits = eigen_to_casadi(model_.upperPositionLimit);
 
-    if (cmodel.existJointName("waist_yaw_joint")){
-        int idx = cmodel.joints[cmodel.getJointId("waist_yaw_joint")].idx_q();
-        lower_limits(idx) = -0.0001;
-        upper_limits(idx) = 0.0001;
-    }
-
-    if (cmodel.existJointName("waist_pitch_joint")){
-        int idx = cmodel.joints[cmodel.getJointId("waist_pitch_joint")].idx_q();
-        lower_limits(idx) = -0.0001;
-        upper_limits(idx) = 0.0001;
-    }
-
-    if (cmodel.existJointName("waist_roll_joint")){
-        int idx = cmodel.joints[cmodel.getJointId("waist_roll_joint")].idx_q();
-        lower_limits(idx) = -0.0001;
-        upper_limits(idx) = 0.0001;
-    }
-
     opti_.subject_to(opti_.bounded(lower_limits, b_var_q_, upper_limits));
     opti_l_.subject_to(opti_l_.bounded(lower_limits, l_var_q_, upper_limits));
     opti_r_.subject_to(opti_r_.bounded(lower_limits, r_var_q_, upper_limits));

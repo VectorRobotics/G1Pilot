@@ -43,6 +43,8 @@ Humanoid::Humanoid(
         geom
     );
 
+    apply_joint_limit_overrides();
+
     data = pinocchio::Data(model);
 
     // Initialize Tools with appropriate models
@@ -109,6 +111,31 @@ void Humanoid::extract_config() {
     YAML::Node ees = config["end_effectors"];
     left_ee_ = parse_ee(ees["left"]);
     right_ee_ = parse_ee(ees["right"]);
+
+    joint_limit_overrides_.clear();
+    YAML::Node overrides = config["joint_limit_overrides"];
+    for (const auto& kv : overrides) {
+        std::string joint_name = kv.first.as<std::string>();
+        JointLimit lim;
+        lim.lower = kv.second["lower"].as<double>();
+        lim.upper = kv.second["upper"].as<double>();
+        joint_limit_overrides_[joint_name] = lim;
+    }
+}
+
+void Humanoid::apply_joint_limit_overrides() {
+    for (const auto& [joint_name, lim] : joint_limit_overrides_) {
+        if (!model.existJointName(joint_name)) {
+            std::cerr
+                << "[Humanoid] joint_limit_overrides references joint '"
+                << joint_name << "' which is not in the reduced model "
+                << "(probably locked) — skipping" << std::endl;
+            continue;
+        }
+        int idx = model.joints[model.getJointId(joint_name)].idx_q();
+        model.lowerPositionLimit(idx) = lim.lower;
+        model.upperPositionLimit(idx) = lim.upper;
+    }
 }
 
 void Humanoid::add_end_effector_frames() {
