@@ -238,6 +238,18 @@ void HumanoidIK::reset() {
     smooth_filter_->reset();
 }
 
+std::pair<double, double> compute_error(Eigen::Matrix4d A, Eigen::Matrix4d B){
+    return {
+        (A.block<3,1>(0,3) - A.block<3,1>(0,3)).norm(),
+        std::acos(std::clamp(
+            0.5 * ((
+                A.block<3, 3>(0, 0) * B.block<3, 3>(0, 0).transpose()
+            ).trace() - 1),
+            -1,1
+        ));
+    }
+}
+
 JointState HumanoidIK::solve_ik(
     const Eigen::Matrix4d& left_wrist,
     const Eigen::Matrix4d& right_wrist,
@@ -280,6 +292,13 @@ JointState HumanoidIK::solve_ik(
     }
 
     sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
+
+    pinocchio::framesForwardKinematics(model_, data_, sol_q);
+
+    auto {pos_err, rot_err} = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist);
+    std::cout << "IK result: left_wrist: pos_err: " << pos_err << ", rot_err: " << rot_err << std::endl;
+    auto {pos_err, rot_err} = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
+    std::cout << "IK result: right_wrist: pos_err: " << pos_err << ", rot_err: " << rot_err << std::endl;
     
     // Apply smoothing filter
     // smooth_filter_->add_data(sol_q);
