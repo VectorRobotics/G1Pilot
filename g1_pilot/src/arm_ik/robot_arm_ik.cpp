@@ -384,10 +384,10 @@ JointState HumanoidIK::solve_ik(
     pinocchio::framesForwardKinematics(model_, data_, sol_q);
 
     if (left){
-        auto [l_pos_err, l_rot_err] = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist);
+        auto [l_pos_err, l_rot_err] = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), wrist);
         std::cout << "IK result: left_wrist: pos_err: " << l_pos_err << ", rot_err: " << l_rot_err << std::endl;
     } else {
-        auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
+        auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), wrist);
         std::cout << "IK result: right_wrist: pos_err: " << r_pos_err << ", rot_err: " << r_rot_err << std::endl;
     }
     
