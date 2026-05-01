@@ -1,9 +1,9 @@
 <robot name="g1_29dof_with_hand_rev_1_0">
   <material name="dark">
-    <color rgba="0.6 0.2 0.8 0.4"/>
+    <color rgba="0.2 0.2 0.2 1"/>
   </material>
   <material name="white">
-    <color rgba="0.6 0.2 0.8 0.4"/>
+    <color rgba="0.7 0.7 0.7 1"/>
   </material>
 
   <mujoco>
@@ -13,8 +13,8 @@
   <!-- [CAUTION] uncomment when convert to mujoco -->
   <link name="base_link"></link>
   <joint name="g1_reference_to_pelvis_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="pelvis"/>
+    <parent link="pelvis"/>
+    <child link="base_link"/>
   </joint>
 
   <link name="pelvis">
@@ -26,7 +26,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/pelvis.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/pelvis.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -40,14 +40,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/pelvis_contour_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/pelvis_contour_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/pelvis_contour_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/pelvis_contour_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -66,14 +66,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hip_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hip_pitch_link.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hip_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hip_pitch_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -93,14 +93,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hip_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hip_roll_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hip_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hip_roll_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -120,14 +120,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hip_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hip_yaw_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hip_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hip_yaw_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -147,14 +147,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_knee_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_knee_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_knee_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_knee_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -174,14 +174,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_ankle_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_ankle_pitch_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_ankle_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_ankle_pitch_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -201,7 +201,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_ankle_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_ankle_roll_link.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -246,14 +246,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hip_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hip_pitch_link.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hip_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hip_pitch_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -273,14 +273,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hip_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hip_roll_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hip_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hip_roll_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -300,14 +300,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hip_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hip_yaw_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hip_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hip_yaw_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -327,14 +327,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_knee_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_knee_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_knee_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_knee_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -354,14 +354,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_ankle_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_ankle_pitch_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_ankle_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_ankle_pitch_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -381,7 +381,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_ankle_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_ankle_roll_link.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
@@ -428,16 +428,16 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/waist_yaw_link_rev_1_0.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/waist_yaw_link_rev_1_0.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
   </link>
   <joint name="waist_yaw_joint" type="revolute">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <parent link="pelvis"/>
-    <child link="waist_yaw_link"/>
-    <axis xyz="0 0 1"/>
+    <parent link="waist_yaw_link"/>
+    <child link="pelvis"/>
+    <axis xyz="0 0 -1"/>
     <limit lower="-2.618" upper="2.618" effort="88" velocity="32"/>
   </joint>
   <link name="waist_roll_link">
@@ -449,16 +449,16 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/waist_roll_link_rev_1_0.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/waist_roll_link_rev_1_0.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
   </link>
   <joint name="waist_roll_joint" type="revolute">
-    <origin xyz="-0.0039635 0 0.044" rpy="0 0 0"/>
-    <parent link="waist_yaw_link"/>
-    <child link="waist_roll_link"/>
-    <axis xyz="1 0 0"/>
+    <origin xyz="0.0039635 0 -0.044" rpy="0 0 0"/>
+    <parent link="waist_roll_link"/>
+    <child link="waist_yaw_link"/>
+    <axis xyz="-1 0 0"/>
     <limit lower="-0.52" upper="0.52" effort="35" velocity="30"/>
   </joint>
   <link name="torso_link">
@@ -470,22 +470,22 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/torso_link_rev_1_0.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/torso_link_rev_1_0.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/torso_link_rev_1_0.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/torso_link_rev_1_0.STL"/>
       </geometry>
     </collision>
   </link>
   <joint name="waist_pitch_joint" type="revolute">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <parent link="waist_roll_link"/>
-    <child link="torso_link"/>
-    <axis xyz="0 1 0"/>
+    <parent link="torso_link"/>
+    <child link="waist_roll_link"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-0.52" upper="0.52" effort="35" velocity="30"/>
   </joint>
 
@@ -504,14 +504,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/logo_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/logo_link.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/logo_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/logo_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -526,14 +526,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/head_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/head_link.STL"/>
       </geometry>
       <material name="dark"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/head_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/head_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -563,7 +563,7 @@
   <link name="camera_link"></link>
   <joint name="d435_joint" type="fixed">
     <!--<origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0"/>-->
-    <origin xyz="0.0856235 0.03553 0.4407" rpy="0 0.501426 0"/>
+    <origin xyz="0.068042 0.016300 0.414516" rpy="-0.011720 0.453641 0.026073"/>
     <parent link="torso_link"/>
     <child link="camera_link"/>
   </joint>
@@ -571,9 +571,9 @@
   <!-- mid360 -->
   <link name="sensor"></link>
   <joint name="mid360_joint" type="fixed">
-    <origin xyz="0.0002835 0.00003 0.41618" rpy="0 0.04014257279586953 0"/>
-    <parent link="torso_link"/>
-    <child link="sensor"/>
+    <origin xyz="-0.0002835 -0.00003 -0.41618" rpy="0 -0.04014257279586953 0"/>
+    <parent link="sensor"/>
+    <child link="torso_link"/>
   </joint>
 
   <!-- Arm -->
@@ -586,7 +586,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_shoulder_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_shoulder_pitch_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -613,7 +613,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_shoulder_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_shoulder_roll_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -640,14 +640,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_shoulder_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_shoulder_yaw_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_shoulder_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_shoulder_yaw_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -667,14 +667,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_elbow_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_elbow_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_elbow_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_elbow_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -701,14 +701,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_wrist_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_wrist_roll_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_wrist_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_wrist_roll_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -728,14 +728,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_wrist_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_wrist_pitch_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_wrist_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_wrist_pitch_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -755,14 +755,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_wrist_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_wrist_yaw_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_wrist_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_wrist_yaw_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -780,14 +780,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_palm_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_palm_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_palm_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_palm_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -807,14 +807,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_thumb_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_thumb_0_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_thumb_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_thumb_0_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -834,7 +834,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_thumb_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_thumb_1_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -861,14 +861,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_thumb_2_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_thumb_2_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_thumb_2_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_thumb_2_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -888,14 +888,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_middle_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_middle_0_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_middle_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_middle_0_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -915,14 +915,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_middle_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_middle_1_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_middle_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_middle_1_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -942,14 +942,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_index_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_index_0_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_index_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_index_0_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -969,14 +969,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_index_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_index_1_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/left_hand_index_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/left_hand_index_1_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -989,7 +989,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_shoulder_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_shoulder_pitch_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -1016,7 +1016,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_shoulder_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_shoulder_roll_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -1043,14 +1043,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_shoulder_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_shoulder_yaw_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_shoulder_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_shoulder_yaw_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1070,14 +1070,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_elbow_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_elbow_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_elbow_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_elbow_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1104,14 +1104,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_wrist_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_wrist_roll_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_wrist_roll_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_wrist_roll_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1131,14 +1131,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_wrist_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_wrist_pitch_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_wrist_pitch_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_wrist_pitch_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1158,14 +1158,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_wrist_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_wrist_yaw_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_wrist_yaw_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_wrist_yaw_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1183,14 +1183,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_palm_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_palm_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_palm_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_palm_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1210,14 +1210,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_thumb_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_thumb_0_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_thumb_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_thumb_0_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1237,7 +1237,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_thumb_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_thumb_1_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -1264,14 +1264,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_thumb_2_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_thumb_2_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_thumb_2_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_thumb_2_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1291,14 +1291,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_middle_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_middle_0_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_middle_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_middle_0_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1318,14 +1318,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_middle_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_middle_1_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_middle_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_middle_1_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1345,14 +1345,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_index_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_index_0_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_index_0_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_index_0_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -1372,14 +1372,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_index_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_index_1_link.STL"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://g1_pilot/assets/g1/meshes/right_hand_index_1_link.STL"/>
+        <mesh filename="package://g1_description/assets/g1/meshes/right_hand_index_1_link.STL"/>
       </geometry>
     </collision>
   </link>

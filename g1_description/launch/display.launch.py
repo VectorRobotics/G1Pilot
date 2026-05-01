@@ -12,7 +12,7 @@ from launch.substitutions import Command
 def generate_launch_description():
     ld = LaunchDescription()
 
-    package_path = FindPackageShare('g1_pilot')
+    package_path = FindPackageShare('g1_description')
     default_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros.urdf'])
     ctrl_viz_model_path = PathJoinSubstitution([package_path, 'assets', 'g1', 'g1_29dof_with_hand_rev_1_0_ros_ctrl_viz.urdf'])
     default_rviz_config_path = PathJoinSubstitution([package_path, 'rviz', 'manipulation.rviz'])
