@@ -116,12 +116,10 @@ install(TARGETS
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(DIRECTORY assets/  DESTINATION share/${PROJECT_NAME}/assets)
 
 if(INSTALL_TESTING)
     install(FILES test/arm_ik/test_ik.cpp DESTINATION share/${PROJECT_NAME}/test)
     install(FILES test/arm_control/test_control.cpp DESTINATION share/${PROJECT_NAME}/test)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/assets)
 endif()
 
 # ---- ROS 2 Integration ---- #
@@ -183,7 +181,7 @@ if(ROS2_DEFAULT)
         DESTINATION lib/${PROJECT_NAME}
     )
 
-    install(DIRECTORY launch assets rviz DESTINATION share/${PROJECT_NAME})
+    install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
     if(BUILD_TESTING)
         find_package(ament_lint_auto REQUIRED)

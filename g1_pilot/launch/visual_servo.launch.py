@@ -12,6 +12,9 @@ def generate_launch_description():
     package_name = 'g1_pilot'
     package_path = FindPackageShare(package_name)
 
+    descripiton_pkg_name = 'g1_description'
+    descripiton_pkg_path = FindPackageShare(descripiton_pkg_name)
+
     ld.add_action(DeclareLaunchArgument('namespace', default_value=''))
     ld.add_action(DeclareLaunchArgument(
         'PublishTF', default_value='false',
@@ -24,12 +27,12 @@ def generate_launch_description():
     ld.add_action(DeclareLaunchArgument('goal_cooldown', default_value='1.0'))
 
     ld.add_action(IncludeLaunchDescription(
-        PathJoinSubstitution([package_path, 'launch', 'display.launch.py']),
+        PathJoinSubstitution([descripiton_pkg_path, 'launch', 'display.launch.py']),
         condition=IfCondition(LaunchConfiguration('PublishTF'))
     ))
 
     ld.add_action(Node(
-        package='g1_pilot',
+        package=package_name,
         executable='visual_servo',
         name='visual_servo',
         namespace=LaunchConfiguration('namespace'),

@@ -36,7 +36,7 @@ public:
     TrajectoryControllerActionServer() : Node("trajectory_controller_action_server")
     {
         /* Initialize arm handle */
-        std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_pilot");
+        std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_description");
 
         std::string default_asset_file = package_share_directory + "/assets/g1/g1_29dof_with_hand_rev_1_0.urdf";
         std::string default_asset_root = package_share_directory + "/assets/g1/";

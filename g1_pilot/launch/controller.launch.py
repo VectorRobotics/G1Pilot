@@ -8,9 +8,12 @@ from launch.conditions import IfCondition
 
 def generate_launch_description():
     ld = LaunchDescription()
-
+    
     package_name = 'g1_pilot'
     package_path = FindPackageShare(package_name)
+
+    description_pkg_name = 'g1_description'
+    description_pkg_path = FindPackageShare(description_pkg_name)
 
     ld.add_action(DeclareLaunchArgument('namespace', default_value=''))
     ld.add_action(DeclareLaunchArgument(
@@ -23,12 +26,12 @@ def generate_launch_description():
     ld.add_action(DeclareLaunchArgument('right_ee_pose_topic', default_value='right_ee_pose'))
 
     ld.add_action(IncludeLaunchDescription(
-        PathJoinSubstitution([package_path, 'launch', 'display.launch.py']),
+        PathJoinSubstitution([description_pkg_path, 'launch', 'display.launch.py']),
         condition=IfCondition(LaunchConfiguration('PublishTF'))
     ))
 
     ld.add_action(Node(
-        package='g1_pilot',
+        package=package_name,
         executable='controller',
         name='trajectory_controller',
         namespace=LaunchConfiguration('namespace'),

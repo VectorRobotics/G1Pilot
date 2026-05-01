@@ -12,6 +12,9 @@ def generate_launch_description():
 
     package_name = 'g1_pilot'
     package_path = FindPackageShare(package_name)
+
+    description_pkg_name = 'g1_description'
+    description_pkg_path = FindPackageShare(description_pkg_name)
     perception_path = FindPackageShare('hand_eye_calibration')
 
     ld.add_action(DeclareLaunchArgument('namespace', default_value=''))
@@ -29,7 +32,7 @@ def generate_launch_description():
     ld.add_action(DeclareLaunchArgument('traj_topic', default_value='traj'))
 
     ld.add_action(IncludeLaunchDescription(
-        PathJoinSubstitution([package_path, 'launch', 'display.launch.py']),
+        PathJoinSubstitution([description_pkg_path, 'launch', 'display.launch.py']),
         condition=IfCondition(LaunchConfiguration('PublishTF'))
     ))
 
@@ -66,7 +69,7 @@ def generate_launch_description():
     ))
 
     ld.add_action(Node(
-        package='g1_pilot',
+        package=package_name,
         executable='visual_servo',
         name='visual_servo',
         namespace=LaunchConfiguration('namespace'),
