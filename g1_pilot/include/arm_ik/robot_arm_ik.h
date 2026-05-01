@@ -49,6 +49,8 @@ protected:
         const Eigen::VectorXd* EE_efrc_L = nullptr,
         const Eigen::VectorXd* EE_efrc_R = nullptr
     );
+
+    std::pair<double, double> compute_error(Eigen::Matrix4d, Eigen::Matrix4d);
     pinocchio::Model model_;
     pinocchio::Data data_;
     pinocchio::GeometryModel geom_model_;
