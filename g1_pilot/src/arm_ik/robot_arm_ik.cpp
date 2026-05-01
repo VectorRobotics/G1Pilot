@@ -3,6 +3,7 @@
 #include <pinocchio/autodiff/casadi.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
 #include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/collision/collision.hpp>
 
 #include <memory>
 #include <fstream>
@@ -234,7 +235,7 @@ void HumanoidIK::reset() {
 
 std::pair<double, double> HumanoidIK::compute_error(Eigen::Matrix4d A, Eigen::Matrix4d B){
     return {
-        (A.block<3,1>(0,3) - A.block<3,1>(0,3)).norm(),
+        (A.block<3,1>(0,3) - B.block<3,1>(0,3)).norm(),
         std::acos(std::clamp(
             0.5 * ((
                 A.block<3, 3>(0, 0) * B.block<3, 3>(0, 0).transpose()
@@ -250,8 +251,13 @@ JointState HumanoidIK::solve_ik(
     const Eigen::VectorXd* current_lr_arm_motor_q,
     const Eigen::VectorXd* current_lr_arm_motor_dq,
     const Eigen::VectorXd* EE_efrc_L,
-    const Eigen::VectorXd* EE_efrc_R
-) 
+    const Eigen::VectorXd* EE_efrc_R,
+    double* l_pos_err,
+    double* l_rot_err,
+    double* r_pos_err,
+    double* r_rot_err,
+    bool* collision
+)
 {
     // Update initial guess
     if (current_lr_arm_motor_q != nullptr) {
@@ -289,10 +295,26 @@ JointState HumanoidIK::solve_ik(
 
     pinocchio::framesForwardKinematics(model_, data_, sol_q);
 
-    auto [l_pos_err, l_rot_err] = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist);
-    std::cout << "IK result: left_wrist: pos_err: " << l_pos_err << ", rot_err: " << l_rot_err << std::endl;
-    auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
-    std::cout << "IK result: right_wrist: pos_err: " << r_pos_err << ", rot_err: " << r_rot_err << std::endl;
+    if (l_pos_err != nullptr || l_rot_err != nullptr) {
+        auto [pe, re] = compute_error(
+            data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist
+        );
+        if (l_pos_err) *l_pos_err = pe;
+        if (l_rot_err) *l_rot_err = re;
+    }
+    if (r_pos_err != nullptr || r_rot_err != nullptr) {
+        auto [pe, re] = compute_error(
+            data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist
+        );
+        if (r_pos_err) *r_pos_err = pe;
+        if (r_rot_err) *r_rot_err = re;
+    }
+
+    if (collision != nullptr) {
+        *collision = pinocchio::computeCollisions(
+            model_, data_, geom_model_, geom_data_, sol_q, true
+        );
+    }
 
     // Compute velocity
     sol_v = Eigen::VectorXd::Zero(model_.nv);
@@ -319,8 +341,11 @@ JointState HumanoidIK::solve_ik(
     const bool left,
     const Eigen::VectorXd* current_lr_arm_motor_q,
     const Eigen::VectorXd* current_lr_arm_motor_dq,
-    const Eigen::VectorXd* EE_efrc
-) 
+    const Eigen::VectorXd* EE_efrc,
+    double* pos_err,
+    double* rot_err,
+    bool* collision
+)
 {
     // Update initial guess
     if (current_lr_arm_motor_q != nullptr) {
@@ -369,14 +394,21 @@ JointState HumanoidIK::solve_ik(
 
     pinocchio::framesForwardKinematics(model_, data_, sol_q);
 
-    if (left){
-        auto [l_pos_err, l_rot_err] = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), wrist);
-        std::cout << "IK result: left_wrist: pos_err: " << l_pos_err << ", rot_err: " << l_rot_err << std::endl;
-    } else {
-        auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), wrist);
-        std::cout << "IK result: right_wrist: pos_err: " << r_pos_err << ", rot_err: " << r_rot_err << std::endl;
+    if (pos_err != nullptr || rot_err != nullptr) {
+        auto frame_id = left ? L_hand_id_ : R_hand_id_;
+        auto [pe, re] = compute_error(
+            data_.oMf[frame_id].toHomogeneousMatrix(), wrist
+        );
+        if (pos_err) *pos_err = pe;
+        if (rot_err) *rot_err = re;
     }
-    
+
+    if (collision != nullptr) {
+        *collision = pinocchio::computeCollisions(
+            model_, data_, geom_model_, geom_data_, sol_q, true
+        );
+    }
+
     // Compute velocity
     sol_v = Eigen::VectorXd::Zero(model_.nv);
     

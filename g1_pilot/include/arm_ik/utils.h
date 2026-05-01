@@ -1,8 +1,6 @@
 #ifndef CASADI_EIGEN_UTILS_H
 #define CASADI_EIGEN_UTILS_H
 
-#ifdef USE_CASADI
-
 #include <casadi/casadi.hpp>
 #include <Eigen/Dense>
 #include <vector>
@@ -35,7 +33,4 @@ inline pinocchio::SE3 eigen_to_pinocchio(const Eigen::Matrix4d& mat) {
     return pinocchio::SE3(mat);
 }
 
-
-
-#endif // USE_CASADI
 #endif // CASADI_EIGEN_UTILS_H

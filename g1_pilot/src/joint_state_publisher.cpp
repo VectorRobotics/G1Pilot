@@ -78,21 +78,29 @@ private:
 
     message.header.stamp = this->get_clock()->now();
 
-    double x = 0.2;// + 0.1 * sin(0.1 * t);
+    double x = 0.2 + 0.1 * sin(0.1 * t);
     left_target = create_se3(1.0, 0.0, 0.0, 0, x, 0.2, 0.1);
     right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.0-x, 0.1);
     RCLCPP_INFO(this->get_logger(), "Starting IK Joint States at time: %d", t);
 
-    // auto result = arm_handle_->solve_ik(
-    //     left_target, right_target,
-    //     nullptr, nullptr,  // current q, dq
-    //     &ext_force_left, &ext_force_right,
-    //     true  // enable collision checking
-    // );
+    double l_pos_err = 0.0, l_rot_err = 0.0;
+    double r_pos_err = 0.0, r_rot_err = 0.0;
+    bool collision = false;
 
     auto result = arm_handle_->ik->solve_ik(
         left_target, right_target,
-        nullptr, nullptr  // current q, dq
+        nullptr, nullptr,  // current q, dq
+        nullptr, nullptr,  // ext force L/R
+        &l_pos_err, &l_rot_err,
+        &r_pos_err, &r_rot_err,
+        &collision
+    );
+
+    RCLCPP_INFO(
+        this->get_logger(),
+        "IK errors  L: pos=%.4f rot=%.4f  R: pos=%.4f rot=%.4f  collision=%s",
+        l_pos_err, l_rot_err, r_pos_err, r_rot_err,
+        collision ? "true" : "false"
     );
 
     message.name = result.name;

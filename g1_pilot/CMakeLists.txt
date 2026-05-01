@@ -27,14 +27,7 @@ set(CMAKE_BUILD_RPATH "/opt/openrobots/lib")
 
 # ---- Options & Dependencies ---- #
 
-option(BUILD_WITH_CASADI_SUPPORT "Build the library with the support of CASADI" ON)
-if(BUILD_WITH_CASADI_SUPPORT)
-    set(USE_CASADI ON)
-    find_package(casadi REQUIRED)
-else()
-    set (USE_CASADI OFF)
-endif()
-
+find_package(casadi REQUIRED)
 find_package(pinocchio REQUIRED)
 
 option(BUILD_TESTING "Build tests" ON)
@@ -61,12 +54,7 @@ target_include_directories(g1_pilot PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio)
-
-if(USE_CASADI)
-    target_link_libraries(g1_pilot PUBLIC casadi::casadi)
-    target_compile_definitions(g1_pilot PRIVATE USE_CASADI)
-endif()
+target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio casadi::casadi)
 
 # ---- Testing ---- #
 
@@ -81,11 +69,6 @@ if(BUILD_TESTING)
 
     add_executable(test_mp_ik test/arm_mp/test_traj_gen.cpp)
     target_link_libraries(test_mp_ik PRIVATE g1_pilot GTest::gtest_main)
-
-    if(USE_CASADI)
-        target_compile_definitions(test_ik PRIVATE USE_CASADI)
-        target_compile_definitions(test_mp_ik PRIVATE USE_CASADI)
-    endif()
 
     # add_executable(math_unittest test/arm_mp/math_unittest.cpp)
     # add_executable(line_unittest test/arm_mp/line_unittest.cpp)

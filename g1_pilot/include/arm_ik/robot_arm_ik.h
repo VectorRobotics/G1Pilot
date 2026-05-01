@@ -27,7 +27,12 @@ public:
         const Eigen::VectorXd* current_lr_arm_motor_q = nullptr,
         const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr,
         const Eigen::VectorXd* EE_efrc_L = nullptr,
-        const Eigen::VectorXd* EE_efrc_R = nullptr
+        const Eigen::VectorXd* EE_efrc_R = nullptr,
+        double* l_pos_err = nullptr,
+        double* l_rot_err = nullptr,
+        double* r_pos_err = nullptr,
+        double* r_rot_err = nullptr,
+        bool* collision = nullptr
     );
 
     virtual JointState solve_ik(
@@ -35,7 +40,10 @@ public:
         const bool left = false,
         const Eigen::VectorXd* current_lr_arm_motor_q = nullptr,
         const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr,
-        const Eigen::VectorXd* EE_efrc = nullptr
+        const Eigen::VectorXd* EE_efrc = nullptr,
+        double* pos_err = nullptr,
+        double* rot_err = nullptr,
+        bool* collision = nullptr
     );
 
     void reset();
@@ -55,39 +63,22 @@ protected:
     pinocchio::GeometryModel geom_model_;
     pinocchio::GeometryData geom_data_;
 
-    #ifdef USE_CASADI
+    casadi::Opti opti_l_;
+    casadi::Opti opti_r_;
+    casadi::Opti opti_;
 
-        casadi::Opti opti_l_;
-        casadi::Opti opti_r_;
-        casadi::Opti opti_;
+    casadi::MX b_var_q_;
+    casadi::MX b_var_q_last_;
+    casadi::MX b_param_tf_l_;
+    casadi::MX b_param_tf_r_;
 
-        casadi::MX b_var_q_;
-        casadi::MX b_var_q_last_;
-        casadi::MX b_param_tf_l_;
-        casadi::MX b_param_tf_r_;
+    casadi::MX l_var_q_;
+    casadi::MX l_var_q_last_;
+    casadi::MX l_param_tf_l_;
 
-        casadi::MX l_var_q_;
-        casadi::MX l_var_q_last_;
-        casadi::MX l_param_tf_l_;
-
-        casadi::MX r_var_q_;
-        casadi::MX r_var_q_last_;
-        casadi::MX r_param_tf_r_;
-
-    #else // USE_CASADI
-
-        const double eps  = 1e-4;
-        const int IT_MAX  = 1000;
-        const double DT   = 1e-1;
-        const double damp = 1e-6;
-
-        Eigen::VectorXd var_q_;
-        Eigen::VectorXd var_q_last_;
-        pinocchio::SE3 param_tf_l_;
-        pinocchio::SE3 param_tf_r_;
-        Eigen::Matrix<double, 12,1> err;
-
-    #endif // USE_CASADI
+    casadi::MX r_var_q_;
+    casadi::MX r_var_q_last_;
+    casadi::MX r_param_tf_r_;
 
     pinocchio::FrameIndex L_hand_id_;
     pinocchio::FrameIndex R_hand_id_;

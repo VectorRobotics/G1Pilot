@@ -6,11 +6,7 @@
 using namespace ArmPilot;
 int main(){
 
-    #ifdef USE_CASADI
     std::cout << "Using CasADi for optimization." << std::endl;
-    #else
-    std::cout << "Not using CasADi for optimization." << std::endl;
-    #endif
 
     try{
         auto handle = G1DualArm();
