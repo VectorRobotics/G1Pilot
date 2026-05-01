@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-using namespace ArmPilot;
+using namespace HumanoidPilot;
 int main(){
 
     try{
@@ -12,7 +12,7 @@ int main(){
         target.block<3,1>(0,3) = Eigen::Vector3d(0.3,-0.149,0.095);
         initial.block<3,1>(0,3) = Eigen::Vector3d(0.21, -0.149, 0.095);
 
-        auto handle = G1DualArm();
+        auto handle = Humanoid();
 
         std::cout <<"Arm Initialized" <<std::endl;
         std::cout <<"Initial" << initial <<std::endl;

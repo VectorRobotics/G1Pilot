@@ -4,7 +4,7 @@
 #include "base_controller.h"
 #include "../arm_ik/arm_ik.h"
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 class IKTrajTracker : public ArmController {
     

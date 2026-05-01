@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-using namespace ArmPilot;
+using namespace HumanoidPilot;
 int main(){
 
     try{
@@ -11,7 +11,7 @@ int main(){
         Eigen::Matrix4d right_target = Eigen::Matrix4d::Identity();
         right_target.block<3,1>(0,3) = Eigen::Vector3d(0.3,-0.149,0.095);
 
-        auto handle = G1DualArm();
+        auto handle = Humanoid();
 
         std::cout <<"Arm Initialized" <<std::endl;
 

@@ -3,7 +3,7 @@
 #include <pinocchio/algorithm/utils/motion.hpp>
 #include <iostream>
 
-namespace ArmPilot {
+namespace HumanoidPilot {
     
 JointState IKTrajTracker::control_both_arms(
     JointState current_state,
@@ -132,4 +132,4 @@ JointState IKTrajTracker::control_right_arm(
 
 
 
-} // ArmPilot namespace
+} // HumanoidPilot namespace

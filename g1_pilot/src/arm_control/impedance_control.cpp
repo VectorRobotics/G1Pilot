@@ -3,7 +3,7 @@
 #include <pinocchio/algorithm/utils/motion.hpp>
 #include <iostream>
 
-namespace ArmPilot {
+namespace HumanoidPilot {
     
 JointState ImpedanceController::control_both_arms(
     JointState current_state,
@@ -170,4 +170,4 @@ void ImpedanceController::compute_right_arm_control_torques(){
 
 
 
-} // ArmPilot namespace
+} // HumanoidPilot namespace

@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <unsupported/Eigen/MatrixFunctions>
 
-namespace ArmPilot{
+namespace HumanoidPilot{
 
 VisualServoPlanner::VisualServoPlanner(double offset, int order) : 
     PolynomialTrajectoryGenerator(order)
@@ -100,4 +100,4 @@ VisualServoPlanner::planPath(
 
 }
 
-} // namespace ArmPilot
+} // namespace HumanoidPilot

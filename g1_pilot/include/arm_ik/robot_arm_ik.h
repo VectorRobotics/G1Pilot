@@ -12,7 +12,7 @@
 #include <string>
 
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 class HumanoidIK {
 public:
@@ -102,5 +102,5 @@ protected:
 
 };
 
-} // ArmPilot namespace
+} // HumanoidPilot namespace
 #endif // ROBOT_ARM_IK_H

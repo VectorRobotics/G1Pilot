@@ -5,7 +5,7 @@
 
 #include <random>
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 /**
  * @brief RRT*-based joint-space motion planner.
@@ -143,6 +143,6 @@ class JointSpacePlanner {
         std::mt19937 rng_;
 };
 
-} // namespace ArmPilot
+} // namespace HumanoidPilot
 
 #endif // JOINT_SPACE_PLANNER_H

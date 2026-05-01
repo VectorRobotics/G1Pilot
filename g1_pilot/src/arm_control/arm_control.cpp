@@ -3,7 +3,7 @@
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
 #include <iostream>
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 ArmController::ArmController(
     pinocchio::Model& model

@@ -29,6 +29,7 @@ set(CMAKE_BUILD_RPATH "/opt/openrobots/lib")
 
 find_package(casadi REQUIRED)
 find_package(pinocchio REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 option(BUILD_TESTING "Build tests" ON)
 cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
@@ -54,7 +55,7 @@ target_include_directories(g1_pilot PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio casadi::casadi)
+target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio casadi::casadi yaml-cpp)
 
 # ---- Testing ---- #
 
@@ -165,6 +166,7 @@ if(ROS2_DEFAULT)
     )
 
     install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+    install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 
     if(BUILD_TESTING)
         find_package(ament_lint_auto REQUIRED)

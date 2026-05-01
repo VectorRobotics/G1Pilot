@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-using namespace ArmPilot;
+using namespace HumanoidPilot;
 
 Eigen::Matrix4d create_se3(const Eigen::Quaterniond& q, const Eigen::Vector3d& t) {
     Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
@@ -25,7 +25,7 @@ int main(){
 
 
     try{
-        auto handle = G1DualArm();
+        auto handle = Humanoid();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception during initialization: " << e.what() << std::endl;
@@ -37,7 +37,7 @@ int main(){
         Eigen::Matrix4d right_target = create_se3(0.0, 1.0, 0.0, 0, 0.2, -0.2, 0.1);
         Eigen::VectorXd current_config = Eigen::VectorXd::Constant(14, 0.1);
 
-        // auto handle = G1DualArm();
+        // auto handle = Humanoid();
 
         // #include <chrono>
 

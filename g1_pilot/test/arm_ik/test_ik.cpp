@@ -3,13 +3,13 @@
 #include <iostream>
 
 
-using namespace ArmPilot;
+using namespace HumanoidPilot;
 int main(){
 
     std::cout << "Using CasADi for optimization." << std::endl;
 
     try{
-        auto handle = G1DualArm();
+        auto handle = Humanoid();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception during IK solver initialization: " << e.what() << std::endl;
@@ -21,7 +21,7 @@ int main(){
         Eigen::Matrix4d left_target = Eigen::Matrix4d::Identity();
         Eigen::Matrix4d right_target = Eigen::Matrix4d::Identity();
 
-        auto handle = G1DualArm();
+        auto handle = Humanoid();
 
         #include <chrono>
 

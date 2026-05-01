@@ -1,5 +1,5 @@
 #include "arm_mp/joint_space_planner.h"
-#include "base/g1.h"
+#include "base/humanoid.h"
 
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/algorithm/frames.hpp>
@@ -10,7 +10,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 JointSpacePlanner::JointSpacePlanner(
     pinocchio::Model& model,
@@ -466,4 +466,4 @@ Eigen::MatrixXd JointSpacePlanner::interpolate_poses(const Eigen::MatrixXd& T1, 
     return T_out;
 }
 
-} // namespace ArmPilot
+} // namespace HumanoidPilot

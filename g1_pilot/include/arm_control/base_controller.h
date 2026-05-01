@@ -4,7 +4,7 @@
 #include <pinocchio/multibody/data.hpp>
 #include "../base/interfaces.h"
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 class ArmController {
 
@@ -62,6 +62,6 @@ protected:
 
 }; // ArmControl class
 
-} // ArmPilot namespace
+} // HumanoidPilot namespace
 
 #endif // BASE_CONTROLLER_H

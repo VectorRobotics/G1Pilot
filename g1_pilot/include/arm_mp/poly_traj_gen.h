@@ -4,7 +4,7 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace ArmPilot{
+namespace HumanoidPilot{
 
 class PolynomialTrajectoryGenerator {
     public:

@@ -14,7 +14,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "humanoid_manipulation_interfaces/srv/plan_trajectory.hpp"
 
-using namespace ArmPilot;
+using namespace HumanoidPilot;
 
 using PlanTrajectoryService = humanoid_manipulation_interfaces::srv::PlanTrajectory;
 
@@ -25,21 +25,25 @@ public:
     {
         /* Initialize arm handle */
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_description");
+        std::string g1_pilot_share_directory = ament_index_cpp::get_package_share_directory("g1_pilot");
 
         std::string default_asset_file = package_share_directory + "/assets/g1/g1_29dof_with_hand_rev_1_0.urdf";
         std::string default_asset_root = package_share_directory + "/assets/g1/";
+        std::string default_config_file = g1_pilot_share_directory + "/config/g1.yaml";
         int default_n_dof = 29;
 
         this->declare_parameter<std::string>("asset_file", default_asset_file);
         this->declare_parameter<std::string>("asset_root", default_asset_root);
+        this->declare_parameter<std::string>("config_file", default_config_file);
         this->declare_parameter<int>("num_dof", default_n_dof);
 
         RobotConfig config;
         config.asset_file = this->get_parameter("asset_file").as_string();
         config.asset_root = this->get_parameter("asset_root").as_string();
+        config.config_file = this->get_parameter("config_file").as_string();
         config.NUM_DOF = this->get_parameter("num_dof").as_int();
 
-        arm_handle_ = std::make_unique<G1DualArm>(&config);
+        arm_handle_ = std::make_unique<Humanoid>(&config);
 
         /* TF2 */
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -100,7 +104,7 @@ private:
     bool have_right_ee_pose_{false};
 
     // Arm Handle
-    std::unique_ptr<G1DualArm> arm_handle_;
+    std::unique_ptr<Humanoid> arm_handle_;
 
     Eigen::MatrixXd get_pose_in_pelvis_(const geometry_msgs::msg::PoseStamped &pose_msg)
     {

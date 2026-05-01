@@ -20,6 +20,7 @@
   <depend>rclcpp_action</depend>
   <depend>g1_description</depend>
   <depend>humanoid_manipulation_interfaces</depend>
+  <depend>yaml-cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

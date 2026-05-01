@@ -16,7 +16,7 @@
 // HumanoidIK Implementation
 // ============================================================================
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 HumanoidIK::HumanoidIK(
     pinocchio::Model& model,
@@ -467,4 +467,4 @@ void HumanoidIK::generalize_ext_wrenches(
 
 }
 
-} // ArmPilot namespace
+} // HumanoidPilot namespace

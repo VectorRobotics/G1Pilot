@@ -15,7 +15,7 @@
 
 
 using namespace std::chrono_literals;
-using namespace ArmPilot;
+using namespace HumanoidPilot;
 
 class JointStatePublisher : public rclcpp::Node
 {
@@ -33,21 +33,25 @@ public:
     RCLCPP_INFO(this->get_logger(), "IK Joint State Publisher Node has started.");
 
     std::string package_share_directory = ament_index_cpp::get_package_share_directory("g1_description");
-    
+    std::string g1_pilot_share_directory = ament_index_cpp::get_package_share_directory("g1_pilot");
+
     std::string default_asset_file = package_share_directory + "/assets/g1/g1_29dof_with_hand_rev_1_0.urdf";
     std::string default_asset_root = package_share_directory + "/assets/g1/";
+    std::string default_config_file = g1_pilot_share_directory + "/config/g1.yaml";
 
     this->declare_parameter<std::string>("asset_file", default_asset_file);
     this->declare_parameter<std::string>("asset_root", default_asset_root);
+    this->declare_parameter<std::string>("config_file", default_config_file);
 
     RobotConfig config;
     config.asset_file = this->get_parameter("asset_file").as_string();
     config.asset_root = this->get_parameter("asset_root").as_string();
+    config.config_file = this->get_parameter("config_file").as_string();
     config.NUM_DOF = 29;
 
     RCLCPP_INFO(this->get_logger(), "Initiaizing IK Classes");
 
-    arm_handle_ = std::make_unique<G1DualArm>(&config);
+    arm_handle_ = std::make_unique<Humanoid>(&config);
 
 
     RCLCPP_INFO(this->get_logger(), "Initialized at time");
@@ -62,7 +66,7 @@ public:
   }
 
     // Create IK solver with collision detection
-    std::unique_ptr<G1DualArm> arm_handle_;
+    std::unique_ptr<Humanoid> arm_handle_;
 
     Eigen::Matrix4d left_target;
     Eigen::Matrix4d right_target;

@@ -1,0 +1,134 @@
+# G1 Pilot configuration.
+#
+# Sections:
+#   1. root_link: the URDF link used as the kinematic root frame.
+#   2. joint_categories: groups of related joints, addressed by name.
+#   3. configs: named profiles. Each profile picks which categories
+#      and joints are locked (held fixed) and where the end-effectors
+#      live.
+#   4. active_config: the profile that is currently in use.
+#
+# What you should edit per application:
+#   - `active_config`: switch to the name of any profile defined
+#     under `configs` to change the robot's behavior.
+#   - `configs`: add or tune profiles to match your use case.
+#
+# What you should NOT change unless the URDF itself changes:
+#   - `root_link` and `joint_categories` describe the robot model.
+#     They must stay consistent with the URDF — a stale or misspelt
+#     link/joint name here will fail at load time.
+
+# URDF link used as the kinematic root. All frames and transforms
+# computed by the library are expressed relative to this link.
+root_link: pelvis
+
+# Groups of joints, referenced by name from each config below.
+joint_categories:
+  left_leg:
+    - left_hip_pitch_joint
+    - left_hip_roll_joint
+    - left_hip_yaw_joint
+    - left_knee_joint
+    - left_ankle_pitch_joint
+    - left_ankle_roll_joint
+
+  right_leg:
+    - right_hip_pitch_joint
+    - right_hip_roll_joint
+    - right_hip_yaw_joint
+    - right_knee_joint
+    - right_ankle_pitch_joint
+    - right_ankle_roll_joint
+
+  waist:
+    - waist_yaw_joint
+    - waist_roll_joint
+    - waist_pitch_joint
+
+  left_upper_arm:
+    - left_shoulder_pitch_joint
+    - left_shoulder_roll_joint
+    - left_shoulder_yaw_joint
+    - left_elbow_joint
+
+  right_upper_arm:
+    - right_shoulder_pitch_joint
+    - right_shoulder_roll_joint
+    - right_shoulder_yaw_joint
+    - right_elbow_joint
+
+  left_wrist:
+    - left_wrist_pitch_joint
+    - left_wrist_roll_joint
+    - left_wrist_yaw_joint
+
+  right_wrist:
+    - right_wrist_pitch_joint
+    - right_wrist_roll_joint
+    - right_wrist_yaw_joint
+
+  left_gripper:
+    - left_hand_thumb_0_joint
+    - left_hand_thumb_1_joint
+    - left_hand_thumb_2_joint
+    - left_hand_middle_0_joint
+    - left_hand_middle_1_joint
+    - left_hand_index_0_joint
+    - left_hand_index_1_joint
+
+  right_gripper:
+    - right_hand_thumb_0_joint
+    - right_hand_thumb_1_joint
+    - right_hand_thumb_2_joint
+    - right_hand_middle_0_joint
+    - right_hand_middle_1_joint
+    - right_hand_index_0_joint
+    - right_hand_index_1_joint
+
+# Named profiles. Each profile defines:
+#   - lock_categories: which joint categories are held fixed.
+#     Categories not listed here stay free to move.
+#   - lock_joints: individual joints (by URDF name) that should also
+#     be held fixed, in addition to whatever `lock_categories`
+#     contributes. Useful for one-off locks that don't warrant a
+#     whole new category.
+#   - end_effectors: the left/right frames that act as the robot's
+#     "hands". Each needs:
+#       * parent_joint: a joint name from the URDF; the frame is
+#                       attached relative to this joint.
+#       * offset:       [x, y, z] translation from the parent joint,
+#                       in that joint's frame, in metres.
+configs:
+  arms_with_waist:
+    lock_categories:
+      - left_leg
+      - right_leg
+      - left_gripper
+      - right_gripper
+    lock_joints: []
+    end_effectors:
+      left:
+        parent_joint: left_wrist_yaw_joint
+        offset: [0.2108, 0.0046, 0.0285]
+      right:
+        parent_joint: right_wrist_yaw_joint
+        offset: [0.2108, -0.0046, 0.0285]
+
+  arms_locked_waist:
+    lock_categories:
+      - left_leg
+      - right_leg
+      - left_gripper
+      - right_gripper
+      - waist
+    lock_joints: []
+    end_effectors:
+      left:
+        parent_joint: left_wrist_yaw_joint
+        offset: [0.2108, 0.0046, 0.0285]
+      right:
+        parent_joint: right_wrist_yaw_joint
+        offset: [0.2108, -0.0046, 0.0285]
+
+# Name of the profile (from `configs` above) that is currently active.
+active_config: arms_with_waist

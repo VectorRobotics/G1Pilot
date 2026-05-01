@@ -4,7 +4,7 @@
 #include "poly_traj_gen.h"
 
 
-namespace ArmPilot{
+namespace HumanoidPilot{
 
 class VisualServoPlanner : public PolynomialTrajectoryGenerator {
     public:

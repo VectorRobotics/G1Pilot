@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <unsupported/Eigen/MatrixFunctions>
 
-namespace ArmPilot{
+namespace HumanoidPilot{
 
 PolynomialTrajectoryGenerator::PolynomialTrajectoryGenerator(int order) : 
     order_(order) 

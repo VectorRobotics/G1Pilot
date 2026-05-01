@@ -4,7 +4,7 @@
 #include <Eigen/Dense>
 #include <pinocchio/multibody/model.hpp>
 
-namespace ArmPilot{
+namespace HumanoidPilot{
 
 struct JointState {
     std::vector<std::string> name;
@@ -16,6 +16,7 @@ struct JointState {
 struct RobotConfig {
     std::string asset_file = "../assets/g1/g1_29dof_with_hand_rev_1_0.urdf";
     std::string asset_root = "../assets/g1/";
+    std::string config_file = "../config/g1.yaml";
     int NUM_DOF = 29;
 };
 

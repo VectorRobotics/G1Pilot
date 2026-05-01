@@ -3,7 +3,7 @@
 
 #include "base_controller.h"
 
-namespace ArmPilot {
+namespace HumanoidPilot {
 
 class ImpedanceController : public ArmController {
     
