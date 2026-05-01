@@ -3,7 +3,6 @@
 
 #include "utils.h"
 #include "../base/interfaces.h"
-#include "weighted_moving_filter.h"
 
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/geometry.hpp>
@@ -100,7 +99,6 @@ protected:
     pinocchio::FrameIndex oMLidar;
 
     Eigen::VectorXd init_data_;
-    std::unique_ptr<WeightedMovingFilter> smooth_filter_;
 
     Eigen::VectorXd sol_q;
     Eigen::VectorXd sol_v;

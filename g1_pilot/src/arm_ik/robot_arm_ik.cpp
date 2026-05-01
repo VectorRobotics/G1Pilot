@@ -39,11 +39,6 @@ HumanoidIK::HumanoidIK(
     data_ = pinocchio::Data(model_);
     geom_data_ = pinocchio::GeometryData(geom_model_);
     init_data_ = Eigen::VectorXd::Zero(model_.nq);
-    
-    // Initialize filter and data
-    Eigen::VectorXd weights(4);
-    weights << 0.35, 0.3, 0.25, 0.1;
-    smooth_filter_ = std::make_unique<WeightedMovingFilter>(weights, model_.nv);
 
     nq_ = model_.nq;
     nv_ = model_.nv;
@@ -235,7 +230,6 @@ void HumanoidIK::setup_optimization() {
 
 void HumanoidIK::reset() {
     init_data_ = Eigen::VectorXd::Zero(model_.nq);
-    smooth_filter_->reset();
 }
 
 std::pair<double, double> HumanoidIK::compute_error(Eigen::Matrix4d A, Eigen::Matrix4d B){
@@ -299,11 +293,7 @@ JointState HumanoidIK::solve_ik(
     std::cout << "IK result: left_wrist: pos_err: " << l_pos_err << ", rot_err: " << l_rot_err << std::endl;
     auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
     std::cout << "IK result: right_wrist: pos_err: " << r_pos_err << ", rot_err: " << r_rot_err << std::endl;
-    
-    // Apply smoothing filter
-    // smooth_filter_->add_data(sol_q);
-    // sol_q = smooth_filter_->filtered_data();
-    
+
     // Compute velocity
     sol_v = Eigen::VectorXd::Zero(model_.nv);
     
@@ -376,10 +366,6 @@ JointState HumanoidIK::solve_ik(
     }
 
     sol_q = Eigen::Map<Eigen::VectorXd>(sol_q_vec.data(), model_.nq);
-    
-    // // Apply smoothing filter
-    // smooth_filter_->add_data(sol_q);
-    // sol_q = smooth_filter_->filtered_data();
 
     pinocchio::framesForwardKinematics(model_, data_, sol_q);
 
