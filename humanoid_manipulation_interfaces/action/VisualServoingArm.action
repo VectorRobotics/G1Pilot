@@ -1,0 +1,16 @@
+# Goal - text description of target to track
+string target_description
+bool left_arm
+---
+# Result
+float64 final_distance
+float64 orientation_error_deg
+bool success
+string message
+---
+# Feedback
+float64 distance_to_goal
+float64 orientation_error_deg
+bool tracking_lost
+float64 elapsed_time
+geometry_msgs/PoseStamped current_goal

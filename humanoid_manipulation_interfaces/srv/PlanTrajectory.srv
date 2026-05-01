@@ -1,0 +1,8 @@
+# Request
+geometry_msgs/PoseStamped target_pose
+geometry_msgs/PoseStamped start_pose
+bool left_arm
+---
+# Response
+bool success
+nav_msgs/Path trajectory
