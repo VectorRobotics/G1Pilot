@@ -10,7 +10,7 @@
 #include <rclcpp/clock.hpp>
 #include <stdio.h>
 
-Eigen::Matrix4d create_se3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
+inline Eigen::Matrix4d create_se3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
 {
     Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
     transform.block<3, 3>(0, 0) = q.normalized().toRotationMatrix();
@@ -18,7 +18,7 @@ Eigen::Matrix4d create_se3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t
     return transform;
 }
 
-Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
+inline Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
                             double tx, double ty, double tz)
 {
     Eigen::Quaterniond q(qw, qx, qy, qz);
@@ -26,7 +26,7 @@ Eigen::Matrix4d create_se3(double qw, double qx, double qy, double qz,
     return create_se3(q, t);
 }
 
-nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& poses, std::string frame_id, builtin_interfaces::msg::Time stamp) {
+inline nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& poses, std::string frame_id, builtin_interfaces::msg::Time stamp) {
     nav_msgs::msg::Path path;
     geometry_msgs::msg::PoseStamped pose_stamped;
 
@@ -55,7 +55,7 @@ nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& poses, std
     return path;
 };
 
-std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path,
+inline std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path,
                                                 bool reverse = false) {
     std::vector<Eigen::MatrixXd> trajectory;
     trajectory.reserve(path.poses.size());
@@ -74,7 +74,7 @@ std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path
     return trajectory;
 }
 
-geometry_msgs::msg::PoseStamped convertToPoseStamped(
+inline geometry_msgs::msg::PoseStamped convertToPoseStamped(
     const Eigen::MatrixXd& T,
     const std::string& frame_id,
     const rclcpp::Time& stamp)
@@ -98,7 +98,7 @@ geometry_msgs::msg::PoseStamped convertToPoseStamped(
     return pose_stamped;
 }
 
-bool isWithinLimits(const Eigen::MatrixXd& T,
+inline bool isWithinLimits(const Eigen::MatrixXd& T,
                     std::string& reason,
                     const Eigen::Vector3d& minPos = Eigen::Vector3d(0.1, -0.6, 0.0),
                     const Eigen::Vector3d& maxPos = Eigen::Vector3d(0.6, 0.6, 1.0),
@@ -135,15 +135,6 @@ bool isWithinLimits(const Eigen::MatrixXd& T,
 
     reason += violations;
     return false;
-}
-
-bool isWithinLimits(const Eigen::MatrixXd& T,
-                    const Eigen::Vector3d& minPos = Eigen::Vector3d(0.1, -0.6, 0.0),
-                    const Eigen::Vector3d& maxPos = Eigen::Vector3d(0.6, 0.6, 1.0),
-                    double maxAngle = 1.57)
-{
-    std::string reason;
-    return isWithinLimits(T, reason, minPos, maxPos, maxAngle);
 }
 
 #endif
