@@ -238,16 +238,16 @@ void HumanoidIK::reset() {
     smooth_filter_->reset();
 }
 
-std::pair<double, double> compute_error(Eigen::Matrix4d A, Eigen::Matrix4d B){
+std::pair<double, double> HumanoidIK::compute_error(Eigen::Matrix4d A, Eigen::Matrix4d B){
     return {
         (A.block<3,1>(0,3) - A.block<3,1>(0,3)).norm(),
         std::acos(std::clamp(
             0.5 * ((
                 A.block<3, 3>(0, 0) * B.block<3, 3>(0, 0).transpose()
             ).trace() - 1),
-            -1,1
-        ));
-    }
+            -1.0,1.0
+        ))
+    };
 }
 
 JointState HumanoidIK::solve_ik(
@@ -295,10 +295,10 @@ JointState HumanoidIK::solve_ik(
 
     pinocchio::framesForwardKinematics(model_, data_, sol_q);
 
-    auto {pos_err, rot_err} = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist);
-    std::cout << "IK result: left_wrist: pos_err: " << pos_err << ", rot_err: " << rot_err << std::endl;
-    auto {pos_err, rot_err} = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
-    std::cout << "IK result: right_wrist: pos_err: " << pos_err << ", rot_err: " << rot_err << std::endl;
+    auto [l_pos_err, l_rot_err] = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist);
+    std::cout << "IK result: left_wrist: pos_err: " << l_pos_err << ", rot_err: " << l_rot_err << std::endl;
+    auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
+    std::cout << "IK result: right_wrist: pos_err: " << r_pos_err << ", rot_err: " << r_rot_err << std::endl;
     
     // Apply smoothing filter
     // smooth_filter_->add_data(sol_q);
@@ -380,6 +380,16 @@ JointState HumanoidIK::solve_ik(
     // // Apply smoothing filter
     // smooth_filter_->add_data(sol_q);
     // sol_q = smooth_filter_->filtered_data();
+
+    pinocchio::framesForwardKinematics(model_, data_, sol_q);
+
+    if (left){
+        auto [l_pos_err, l_rot_err] = compute_error(data_.oMf[L_hand_id_].toHomogeneousMatrix(), left_wrist);
+        std::cout << "IK result: left_wrist: pos_err: " << l_pos_err << ", rot_err: " << l_rot_err << std::endl;
+    } else {
+        auto [r_pos_err, r_rot_err] = compute_error(data_.oMf[R_hand_id_].toHomogeneousMatrix(), right_wrist);
+        std::cout << "IK result: right_wrist: pos_err: " << r_pos_err << ", rot_err: " << r_rot_err << std::endl;
+    }
     
     // Compute velocity
     sol_v = Eigen::VectorXd::Zero(model_.nv);
