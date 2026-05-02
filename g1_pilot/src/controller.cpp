@@ -245,7 +245,7 @@ private:
                     return;
                 }
 
-                if (trajectory_.size() <= 1) {
+                if (trajectory_.empty()) {
                     trajectory_.clear();
                     arm_handle_->ik->reset();
                     handle_success_(goal_handle);
@@ -272,20 +272,12 @@ private:
             return;
         }
 
-        arm_handle_->controller->update(current_state_);
-
-        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
-        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
-
-        left_ee_pose_pub_->publish(convertToPoseStamped(left_ee_pose_, "pelvis", this->get_clock()->now()));
-        right_ee_pose_pub_->publish(convertToPoseStamped(right_ee_pose_, "pelvis", this->get_clock()->now()));
-
-
         if (trajectory_.empty()){
-            return;
+            (void) arm_handle_->controller->control_no_arms(
+                current_state_
+            ); // This return grav ff but is explicity stashed
         }
-
-        if (left_arm_active){
+        else if (left_arm_active){
             cmd_ = arm_handle_->controller->control_left_arm(
                 current_state_,
                 trajectory_.back()
@@ -298,17 +290,25 @@ private:
             );
         }
 
-        if (trajectory_.size() > 0){
-            error_ = left_arm_active ?
-                            arm_handle_->controller->get_current_left_ee_error() :
-                            arm_handle_->controller->get_current_right_ee_error();
+        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
+        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
 
-            if (error_ < this->get_parameter("waypoint_error_margin").as_double()){
-                trajectory_.pop_back();
-                goal_cv_.notify_all();
-            }
-            RCLCPP_INFO(this->get_logger(), "Error: %f, waypoints remaining: %lu", error_, trajectory_.size());
+        left_ee_pose_pub_->publish(convertToPoseStamped(left_ee_pose_, "pelvis", this->get_clock()->now()));
+        right_ee_pose_pub_->publish(convertToPoseStamped(right_ee_pose_, "pelvis", this->get_clock()->now()));
+
+        if (trajectory_.empty()){
+            return;
         }
+        
+        error_ = left_arm_active ?
+                        arm_handle_->controller->get_current_left_ee_error() :
+                        arm_handle_->controller->get_current_right_ee_error();
+
+        if (error_ < this->get_parameter("waypoint_error_margin").as_double()){
+            trajectory_.pop_back();
+            goal_cv_.notify_all();
+        }
+        RCLCPP_INFO(this->get_logger(), "Error: %f, waypoints remaining: %lu", error_, trajectory_.size());
 
         auto cmd_msg = sensor_msgs::msg::JointState();
         cmd_msg.header.stamp = this->get_clock()->now();

@@ -59,6 +59,8 @@ JointState ArmController::control_no_arms(
     JointState current_state
 )
 {
+    update(current_state);
+    
     torques = 1.0*grav_torques;
 
     JointState result = vectors_to_jointstate(

@@ -13,6 +13,8 @@ JointState ImpedanceController::control_both_arms(
     Eigen::VectorXd desired_r_ee_vel
 )
 {
+    update(current_state);
+
     Kp.head<3>().setConstant(Kp_linear);
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
@@ -46,7 +48,8 @@ JointState ImpedanceController::control_left_arm(
     Eigen::VectorXd desired_ee_vel
 )
 {
-
+    update(current_state);
+    
     Kp.head<3>().setConstant(Kp_linear);
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
@@ -76,7 +79,8 @@ JointState ImpedanceController::control_right_arm(
     Eigen::VectorXd desired_ee_vel
 )
 {
-
+    update(current_state);
+    
     Kp.head<3>().setConstant(Kp_linear);
     Kp.tail<3>().setConstant(Kp_angular);
     Kd.head<3>().setConstant(Kd_linear);
