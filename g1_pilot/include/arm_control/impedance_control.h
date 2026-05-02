@@ -40,13 +40,13 @@ public:
     void set_nullspace_target(const Eigen::VectorXd& q_d);
     void reset();
 
-    double Kp_linear  = 600;
-    double Kp_angular = 50;
-    double Kd_linear  = 3000;
-    double Kd_angular = 300;
+    double Kp_linear  = 50;
+    double Kp_angular = 5;
+    double Kd_linear  = 5;
+    double Kd_angular = 2;
 
     // Null-space joint impedance (off by default; pure null-space damping).
-    double Kp_nullspace = 0.0;
+    double Kp_nullspace = 25.0;
     double Kd_nullspace = 5.0;
 
     // Torque rate limit. Per-tick cap = max_torque_rate / update_frequency.

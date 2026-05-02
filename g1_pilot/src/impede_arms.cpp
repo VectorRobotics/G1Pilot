@@ -72,19 +72,14 @@ public:
 		goal_set_ = false;
 
 
-        // with motion planner
-        // arm_handle_->controller->Kp_linear = 120;
-        // arm_handle_->controller->Kp_angular = 0.8;
+		// arm_handle_->controller->Kp_linear = 50.0;
+        // arm_handle_->controller->Kp_angular = 5.0;
 
-        // arm_handle_->controller->Kd_linear = 2;
-        // arm_handle_->controller->Kd_angular = 0.0;
+        // arm_handle_->controller->Kd_linear = 5.0;
+        // arm_handle_->controller->Kd_angular = 2.0;
 
-		// without motion planner
-		arm_handle_->controller->Kp_linear = 100;
-        arm_handle_->controller->Kp_angular = 1;
-
-        arm_handle_->controller->Kd_linear = 2;
-        arm_handle_->controller->Kd_angular = 0.2;
+		// arm_handle_->controller->Kp_nullspace = 25.0;
+		// arm_handle_->controller->Kd_nullspace = 5.0;
 
 	}
 
