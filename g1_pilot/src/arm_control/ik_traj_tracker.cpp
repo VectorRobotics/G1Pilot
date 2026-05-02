@@ -18,12 +18,25 @@ JointState IKTrajTracker::control_both_arms(
     desired_left_ee_pose_ = pinocchio::SE3(desired_l_ee_pose);
     desired_right_ee_pose_ = pinocchio::SE3(desired_r_ee_pose);
 
+    double l_pos_err = 0.0, l_rot_err = 0.0, r_pos_err = 0.0, r_rot_err = 0.0;
+    bool collision = false;
     result = ik_handle_->solve_ik(
         desired_left_ee_pose_,
         desired_right_ee_pose_,
         &current_joint_pos_,
-        &current_joint_vel_
+        &current_joint_vel_,
+        nullptr,
+        nullptr,
+        &l_pos_err,
+        &l_rot_err,
+        &r_pos_err,
+        &r_rot_err,
+        &collision
     );
+    std::cout << "[IKTrajTracker] both arms"
+              << " l_pos_err=" << l_pos_err << " l_rot_err=" << l_rot_err
+              << " r_pos_err=" << r_pos_err << " r_rot_err=" << r_rot_err
+              << " collision=" << (collision ? "true" : "false") << std::endl;
 
     error_pose_in_ee_frame_ = current_left_ee_pose_.inverse()*desired_left_ee_pose_;
     error_twist_in_ee_frame_ = pinocchio::log6(error_pose_in_ee_frame_);
@@ -54,12 +67,21 @@ JointState IKTrajTracker::control_left_arm(
 
     desired_left_ee_pose_ = pinocchio::SE3(desired_ee_pose);
 
+    double l_pos_err = 0.0, l_rot_err = 0.0;
+    bool collision = false;
     result = ik_handle_->solve_ik(
         desired_left_ee_pose_,
         true,
         &current_joint_pos_,
-        &current_joint_vel_
+        &current_joint_vel_,
+        nullptr,
+        &l_pos_err,
+        &l_rot_err,
+        &collision
     );
+    std::cout << "[IKTrajTracker] left arm"
+              << " pos_err=" << l_pos_err << " rot_err=" << l_rot_err
+              << " collision=" << (collision ? "true" : "false") << std::endl;
 
     {
         JointState filtered;
@@ -98,12 +120,21 @@ JointState IKTrajTracker::control_right_arm(
     
     desired_right_ee_pose_ = pinocchio::SE3(desired_ee_pose);
 
+    double r_pos_err = 0.0, r_rot_err = 0.0;
+    bool collision = false;
     result = ik_handle_->solve_ik(
         desired_right_ee_pose_,
         false,
         &current_joint_pos_,
-        &current_joint_vel_
+        &current_joint_vel_,
+        nullptr,
+        &r_pos_err,
+        &r_rot_err,
+        &collision
     );
+    std::cout << "[IKTrajTracker] right arm"
+              << " pos_err=" << r_pos_err << " rot_err=" << r_rot_err
+              << " collision=" << (collision ? "true" : "false") << std::endl;
 
     {
         JointState filtered;
