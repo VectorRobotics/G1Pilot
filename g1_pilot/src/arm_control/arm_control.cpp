@@ -35,14 +35,14 @@ void ArmController::update(JointState current_state)
     pinocchio::computeJointJacobians(model_, data_);
     pinocchio::updateFramePlacements(model_, data_);
 
-    J_body_left_ee_ = pinocchio::getFrameJacobian(model_, data_, left_ee_id_, pinocchio::LOCAL);
-    J_body_right_ee_ = pinocchio::getFrameJacobian(model_, data_, right_ee_id_, pinocchio::LOCAL);
+    J_left_ee_  = pinocchio::getFrameJacobian(model_, data_, left_ee_id_,  pinocchio::LOCAL_WORLD_ALIGNED);
+    J_right_ee_ = pinocchio::getFrameJacobian(model_, data_, right_ee_id_, pinocchio::LOCAL_WORLD_ALIGNED);
 
     current_left_ee_pose_ = data_.oMf[left_ee_id_];
     current_right_ee_pose_ = data_.oMf[right_ee_id_];
 
-    current_left_ee_vel_in_ee_frame_ = pinocchio::getFrameVelocity(model_, data_,left_ee_id_);
-    current_right_ee_vel_in_ee_frame_ = pinocchio::getFrameVelocity(model_, data_,right_ee_id_);
+    current_left_ee_vel_in_world_  = pinocchio::getFrameVelocity(model_, data_, left_ee_id_,  pinocchio::LOCAL_WORLD_ALIGNED);
+    current_right_ee_vel_in_world_ = pinocchio::getFrameVelocity(model_, data_, right_ee_id_, pinocchio::LOCAL_WORLD_ALIGNED);
 
     l_control_torques = Eigen::VectorXd::Zero(model_.nv);
     r_control_torques = Eigen::VectorXd::Zero(model_.nv);

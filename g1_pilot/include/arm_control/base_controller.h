@@ -18,8 +18,8 @@ public:
     Eigen::MatrixXd get_current_left_ee_pose(){return current_left_ee_pose_.toHomogeneousMatrix();};
     Eigen::MatrixXd get_current_right_ee_pose(){return current_right_ee_pose_.toHomogeneousMatrix();};
 
-    Eigen::VectorXd get_current_left_ee_vel(){return current_left_ee_vel_in_ee_frame_.toVector();};
-    Eigen::VectorXd get_current_right_ee_vel(){return current_right_ee_vel_in_ee_frame_.toVector();};
+    Eigen::VectorXd get_current_left_ee_vel(){return current_left_ee_vel_in_world_.toVector();};
+    Eigen::VectorXd get_current_right_ee_vel(){return current_right_ee_vel_in_world_.toVector();};
 
     double get_current_left_ee_error(){return l_error_magnitude;};
     double get_current_right_ee_error(){return r_error_magnitude;};
@@ -46,11 +46,11 @@ protected:
     pinocchio::SE3 current_left_ee_pose_;
     pinocchio::SE3 current_right_ee_pose_;
 
-    pinocchio::Motion current_left_ee_vel_in_ee_frame_;
-    pinocchio::Motion current_right_ee_vel_in_ee_frame_;
+    pinocchio::Motion current_left_ee_vel_in_world_;
+    pinocchio::Motion current_right_ee_vel_in_world_;
 
-    pinocchio::Data::Matrix6x J_body_left_ee_;
-    pinocchio::Data::Matrix6x J_body_right_ee_;
+    pinocchio::Data::Matrix6x J_left_ee_;
+    pinocchio::Data::Matrix6x J_right_ee_;
 
     Eigen::VectorXd l_control_torques;
     Eigen::VectorXd r_control_torques;
