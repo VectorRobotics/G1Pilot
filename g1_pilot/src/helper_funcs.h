@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <nav_msgs/msg/path.hpp>
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/clock.hpp>
@@ -54,6 +55,31 @@ inline nav_msgs::msg::Path convertToPath(const std::vector<Eigen::MatrixXd>& pos
 
     return path;
 };
+
+inline trajectory_msgs::msg::JointTrajectory convertToTrajectory(
+    const std::vector<Eigen::VectorXd>& joint_traj,
+    const std::vector<std::string>& joint_names,
+    const std::string& frame_id,
+    const rclcpp::Time& stamp)
+{
+    trajectory_msgs::msg::JointTrajectory traj;
+    traj.header.frame_id = frame_id;
+    traj.header.stamp = stamp;
+    traj.joint_names = joint_names;
+    traj.points.reserve(joint_traj.size());
+
+    const std::size_t n = joint_names.size();
+    for (const auto& q : joint_traj) {
+        trajectory_msgs::msg::JointTrajectoryPoint point;
+        point.positions.assign(q.data(), q.data() + q.size());
+        point.velocities.assign(n, 0.0);
+        point.accelerations.assign(n, 0.0);
+        point.effort.assign(n, 0.0);
+        traj.points.push_back(std::move(point));
+    }
+
+    return traj;
+}
 
 inline std::vector<Eigen::MatrixXd> convertToTrajectory(const nav_msgs::msg::Path& path,
                                                 bool reverse = false) {

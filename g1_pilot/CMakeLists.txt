@@ -110,16 +110,24 @@ endif()
 
 if(ROS2_DEFAULT)
     find_package(ament_cmake REQUIRED)
-    find_package(ament_index_cpp REQUIRED)
-    find_package(rclcpp REQUIRED)
-    find_package(sensor_msgs REQUIRED)
-    find_package(nav_msgs REQUIRED)
-    find_package(geometry_msgs REQUIRED)
-    find_package(tf2_ros REQUIRED)
-    find_package(tf2_eigen REQUIRED)
-    find_package(tf2_geometry_msgs REQUIRED)
-    find_package(rclcpp_action REQUIRED)
-    find_package(humanoid_manipulation_interfaces REQUIRED)
+
+    set(ROS2_DEPS
+        ament_index_cpp
+        rclcpp
+        rclcpp_action
+        sensor_msgs
+        nav_msgs
+        geometry_msgs
+        trajectory_msgs
+        tf2_ros
+        tf2_eigen
+        tf2_geometry_msgs
+        humanoid_manipulation_interfaces
+    )
+
+    foreach(dep ${ROS2_DEPS})
+        find_package(${dep} REQUIRED)
+    endforeach()
 
     add_executable(ik_joint_state_publisher src/joint_state_publisher.cpp)
     add_executable(impede_arms src/impede_arms.cpp)
@@ -134,25 +142,25 @@ if(ROS2_DEFAULT)
     add_executable(controller src/controller.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
-    ament_target_dependencies(ik_joint_state_publisher ament_index_cpp rclcpp sensor_msgs nav_msgs)
+    ament_target_dependencies(ik_joint_state_publisher ${ROS2_DEPS})
 
     target_link_libraries(impede_arms g1_pilot)
-    ament_target_dependencies(impede_arms ament_index_cpp rclcpp sensor_msgs nav_msgs)
+    ament_target_dependencies(impede_arms ${ROS2_DEPS})
 
     target_link_libraries(joint_traj_publisher g1_pilot)
-    ament_target_dependencies(joint_traj_publisher ament_index_cpp rclcpp nav_msgs sensor_msgs)
+    ament_target_dependencies(joint_traj_publisher ${ROS2_DEPS})
 
     target_link_libraries(visual_servo g1_pilot)
-    ament_target_dependencies(visual_servo ament_index_cpp rclcpp nav_msgs sensor_msgs tf2_ros tf2_eigen)
+    ament_target_dependencies(visual_servo ${ROS2_DEPS})
 
     target_link_libraries(grav_ff g1_pilot)
-    ament_target_dependencies(grav_ff ament_index_cpp rclcpp sensor_msgs)
+    ament_target_dependencies(grav_ff ${ROS2_DEPS})
 
     target_link_libraries(controller g1_pilot)
-    ament_target_dependencies(controller ament_index_cpp rclcpp rclcpp_action sensor_msgs geometry_msgs humanoid_manipulation_interfaces)
+    ament_target_dependencies(controller ${ROS2_DEPS})
 
     target_link_libraries(plan_trajecory g1_pilot)
-    ament_target_dependencies(plan_trajecory ament_index_cpp rclcpp nav_msgs tf2_ros tf2_eigen tf2_geometry_msgs humanoid_manipulation_interfaces)
+    ament_target_dependencies(plan_trajecory ${ROS2_DEPS})
 
     install(TARGETS
         ik_joint_state_publisher
