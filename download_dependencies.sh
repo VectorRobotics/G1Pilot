@@ -7,3 +7,4 @@ echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/robotpkg.asc] http://robotpkg.
 
 sudo apt update
 sudo apt install -qqy robotpkg-py3*-pinocchio
+sudo apt install libompl-dev
