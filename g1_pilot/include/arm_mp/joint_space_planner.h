@@ -3,36 +3,41 @@
 
 #include "../arm_ik/arm_ik.h"
 
-#include <random>
+#include <memory>
+
+namespace ompl {
+namespace base {
+class StateSpace;
+class SpaceInformation;
+}
+namespace geometric {
+class RRTstar;
+}
+}
 
 namespace HumanoidPilot {
 
 /**
- * @brief RRT*-based joint-space motion planner.
+ * @brief OMPL RRT*-based joint-space motion planner.
  *
  * Matches the PolynomialTrajectoryGenerator / VisualServoPlanner interface:
  * planTrajectory(...) and planPath(...) accept 4x4 SE(3) goal/start poses.
  * The provided HumanoidIK handle converts task-space poses into joint-space
- * configurations, then RRT* plans in joint space with joint limits enforced
- * (with a safety offset).
- *
- * No collision checking is performed.
+ * configurations and provides collision checking; joint limits come from the
+ * pinocchio model and are enforced by OMPL bounds and the IK solver.
  */
 class JointSpacePlanner {
     public:
         JointSpacePlanner(
             pinocchio::Model& model,
-            pinocchio::GeometryModel& geom_model,
             HumanoidIK* ik_handle,
             bool left_arm = false,
-            double joint_limit_safety_offset = 0.05,
             double step_size = 0.05,
             double goal_bias = 0.1,
-            double rewire_radius = 0.5,
-            int max_iterations = 2000,
+            double rewire_factor = 1.1,
+            double solve_time_seconds = 1.0,
             double goal_tolerance = 0.01,
-            double approach_offset = 0.1,
-            int final_leg_steps = 10
+            double validity_resolution = 0.005
         );
         virtual ~JointSpacePlanner();
 
@@ -42,7 +47,10 @@ class JointSpacePlanner {
          * Velocity/acceleration arguments are accepted for interface parity
          * but ignored (RRT* is kinematic).
          */
-        virtual std::vector<Eigen::MatrixXd> planTrajectory(
+        virtual std::pair<
+        std::vector<Eigen::VectorXd>,
+        std::vector<Eigen::MatrixXd>>
+        planTrajectory(
             const Eigen::MatrixXd* goal_pose,
             const Eigen::MatrixXd* start_pose = nullptr,
             const Eigen::VectorXd* start_vel = nullptr,
@@ -56,91 +64,59 @@ class JointSpacePlanner {
             const double MAX_ANG_ACC = 4.0
         );
 
-        virtual std::vector<Eigen::MatrixXd> planPath(
+        virtual std::pair<
+        std::vector<Eigen::VectorXd>,
+        std::vector<Eigen::MatrixXd>>
+        planPath(
             const Eigen::MatrixXd* goal_pose,
             const Eigen::MatrixXd* start_pose = nullptr,
             const Eigen::VectorXd* start_vel = nullptr,
             const Eigen::VectorXd* goal_vel = nullptr,
             const Eigen::VectorXd* start_acc = nullptr,
-            const Eigen::VectorXd* goal_acc = nullptr,
-            int steps = -1
+            const Eigen::VectorXd* goal_acc = nullptr
         );
 
-        void setSeed(unsigned int seed);
         void setLeftArm(bool left_arm) { left_arm_ = left_arm; }
 
     protected:
-        struct Node {
-            Eigen::VectorXd q;
-            int parent;
-            double cost;
-        };
-
         std::vector<Eigen::VectorXd> runRRTStar(
             const Eigen::VectorXd& start_q,
-            const Eigen::VectorXd& goal_q,
-            double step
+            const Eigen::VectorXd& goal_q
         );
 
-        std::vector<Eigen::VectorXd> planTwoPhase(
-            const Eigen::MatrixXd& goal_pose,
-            const Eigen::MatrixXd* start_pose
-        );
-
-        struct TwoPhaseLegs {
-            std::vector<Eigen::VectorXd> leg1;      // start -> intermediate (RRT*)
-            std::vector<Eigen::MatrixXd> leg2;      // intermediate -> goal  (straight)
-            Eigen::Matrix4d T_start;
-            Eigen::Matrix4d T_intermediate;
-            bool is_close;
-        };
-
-        TwoPhaseLegs planTwoPhaseLegs(
-            const Eigen::MatrixXd& goal_pose,
-            const Eigen::MatrixXd* start_pose
-        );
-
-        std::vector<Eigen::VectorXd> resampleLinear(
-            const std::vector<Eigen::VectorXd>& path, int steps
+        std::vector<Eigen::VectorXd> resamplePath(
+            const std::vector<Eigen::VectorXd>& waypoints, int steps
         );
 
         Eigen::VectorXd poseToJointConfig(const Eigen::MatrixXd& pose);
-        Eigen::Matrix4d fkPose(const Eigen::VectorXd& q);
-
-        Eigen::VectorXd sampleRandom();
-        int nearest(const std::vector<Node>& tree, const Eigen::VectorXd& q);
-        std::vector<int> near(const std::vector<Node>& tree, const Eigen::VectorXd& q, double radius);
-        Eigen::VectorXd steer(const Eigen::VectorXd& from, const Eigen::VectorXd& to, double step);
-        std::vector<Eigen::VectorXd> reconstructPath(const std::vector<Node>& tree, int goal_idx);
-
-        std::vector<Eigen::MatrixXd> densify(
-            const std::vector<Eigen::VectorXd>& path, int steps
+        Eigen::Matrix4d configToPose(const Eigen::VectorXd& q);
+        std::vector<Eigen::MatrixXd> configsToPoses(
+            const std::vector<Eigen::VectorXd>& path
         );
 
-        Eigen::MatrixXd interpolate_poses(const Eigen::MatrixXd& T1, const Eigen::MatrixXd& T2, double t);
-
         pinocchio::Model model_;
-        pinocchio::GeometryModel geom_model_;
+        pinocchio::Data data_;
         HumanoidIK* ik_handle_;
         bool left_arm_;
 
         int nq_;
+        pinocchio::FrameIndex left_ee_id_;
+        pinocchio::FrameIndex right_ee_id_;
 
-        Eigen::VectorXd q_lower_;
-        Eigen::VectorXd q_upper_;
-
-        double safety_offset_;
         double step_size_;
         double goal_bias_;
-        double rewire_radius_;
-        int max_iterations_;
+        double rewire_factor_;
+        double solve_time_seconds_;
         double goal_tolerance_;
+        double validity_resolution_;
 
-        double approach_offset_;
-        int final_leg_steps_;
-        Eigen::Matrix4d intermediate_pose_offset_;
+        std::shared_ptr<ompl::base::StateSpace> ompl_space_;
+        std::shared_ptr<ompl::base::SpaceInformation> ompl_si_;
+        std::shared_ptr<ompl::geometric::RRTstar> planner_;
 
-        std::mt19937 rng_;
+        Eigen::VectorXd start_q_;
+        Eigen::VectorXd goal_q_;
+        std::vector<Eigen::VectorXd> waypoints_;
 };
 
 } // namespace HumanoidPilot

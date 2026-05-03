@@ -8,6 +8,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_eigen/tf2_eigen.hpp>
+#include <tuple>
 
 #include <algorithm>
 #include <chrono>
@@ -258,7 +259,8 @@ private:
 
         if (left){
 
-            left_trajectory_ = arm_handle_->motion_planner->planTrajectory(
+            std::vector<Eigen::VectorXd> stash;
+            std::tie(stash, left_trajectory_) = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &left_ee_pose_,
                 &left_ee_vel_
@@ -268,7 +270,8 @@ private:
 
         } else {
 
-            right_trajectory_ = arm_handle_->motion_planner->planTrajectory(
+            std::vector<Eigen::VectorXd> stash;
+            std::tie(stash, right_trajectory_) = arm_handle_->motion_planner->planTrajectory(
                 &goal_,
                 &right_ee_pose_,
                 &right_ee_vel_

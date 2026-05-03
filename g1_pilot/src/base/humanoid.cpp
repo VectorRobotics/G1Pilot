@@ -53,7 +53,7 @@ Humanoid::Humanoid(
         geom
     );
     controller = new IKTrajTracker(model, ik);
-    motion_planner = new JointSpacePlanner(model, geom, ik);
+    motion_planner = new VisualServoPlanner(model, ik);
 
 }
 

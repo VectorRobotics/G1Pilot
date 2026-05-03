@@ -1,103 +1,170 @@
 #include "arm_mp/visual_servo_planner.h"
+
 #include <iostream>
 #include <stdexcept>
-#include <unsupported/Eigen/MatrixFunctions>
 
 namespace HumanoidPilot{
 
-VisualServoPlanner::VisualServoPlanner(double offset, int order) : 
-    PolynomialTrajectoryGenerator(order)
+VisualServoPlanner::VisualServoPlanner(
+    pinocchio::Model& model,
+    HumanoidIK* ik_handle,
+    bool left_arm,
+    double approach_offset,
+    int final_leg_steps,
+    double step_size,
+    double goal_bias,
+    double rewire_factor,
+    double solve_time_seconds,
+    double goal_tolerance,
+    double validity_resolution
+) :
+    JointSpacePlanner(model, ik_handle, left_arm, step_size, goal_bias,
+                      rewire_factor, solve_time_seconds, goal_tolerance,
+                      validity_resolution)
 {
+    intermediate_pose_offset_ = Eigen::Matrix4d::Identity();
+    intermediate_pose_offset_(0, 3) = -approach_offset;
 
-    intermediate_pose_offset_ = Eigen::Matrix4d::Identity(4,4);
-    intermediate_pose_offset_ <<
-        1, 0, 0, -offset,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1;
-
-    goal_p_unscaled_ = Eigen::VectorXd::Zero(6);
-    goal_p_unscaled_(0) = offset;
-
-    start_p_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
-    start_vel_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
-    start_acc_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
-    goal_vel_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
-    goal_acc_unscaled_ = Eigen::VectorXd::Zero(goal_p_unscaled_.size());
-
-    construct_line_(20);
-
-    for (auto twist: line_){
-        final_leg_line_.push_back(hat(twist).exp());
-    }
-
+    // Final-leg cartesian poses in goal-relative frame: intermediate -> goal.
+    // At t=0 we're at intermediate (offset back from goal); at t=1 we're at goal.
+    final_leg_ = linearInterpolate(intermediate_pose_offset_,
+                                   Eigen::Matrix4d::Identity(),
+                                   final_leg_steps);
 }
 
 VisualServoPlanner::~VisualServoPlanner() {}
 
+std::vector<Eigen::Matrix4d> VisualServoPlanner::linearInterpolate(
+    const Eigen::Matrix4d& T_from,
+    const Eigen::Matrix4d& T_to,
+    int steps
+) {
+    std::vector<Eigen::Matrix4d> out(steps);
+    Eigen::Vector3d p_from = T_from.block<3,1>(0,3);
+    Eigen::Vector3d p_to   = T_to.block<3,1>(0,3);
+    Eigen::Quaterniond q_from(T_from.block<3,3>(0,0));
+    Eigen::Quaterniond q_to(T_to.block<3,3>(0,0));
 
-std::vector<Eigen::MatrixXd> 
+    for (int k = 0; k < steps; ++k) {
+        double t = (steps <= 1) ? 0.0 : static_cast<double>(k) / (steps - 1);
+        Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
+        T.block<3,3>(0,0) = q_from.slerp(t, q_to).toRotationMatrix();
+        T.block<3,1>(0,3) = p_from + t * (p_to - p_from);
+        out[k] = T;
+    }
+    return out;
+}
+
+std::pair<
+std::vector<Eigen::VectorXd>,
+std::vector<Eigen::MatrixXd>>
 VisualServoPlanner::planPath(
     const Eigen::MatrixXd* goal_pose,
     const Eigen::MatrixXd* start_pose,
     const Eigen::VectorXd* start_vel,
     const Eigen::VectorXd* goal_vel,
     const Eigen::VectorXd* start_acc,
-    const Eigen::VectorXd* goal_acc,
-    int steps
+    const Eigen::VectorXd* goal_acc
 ) {
-    assert(2*(goal_pose->cols()-1)==start_vel->rows());
+    if (goal_pose == nullptr) {
+        throw std::invalid_argument("VisualServoPlanner::planPath: goal_pose is null");
+    }
+    if (start_pose == nullptr) {
+        throw std::invalid_argument("VisualServoPlanner::planPath: start_pose is null");
+    }
 
-    int twist_size = 2*(goal_pose->rows()-1);
-
-    if (start_pose!=nullptr) 
-        start_pose_ = *start_pose; 
-    else 
-        start_pose_ = Eigen::MatrixXd::Identity(goal_pose->rows(), goal_pose->cols());
-
-    if (start_vel!=nullptr) 
-        start_vel_unscaled_ = *start_vel; 
-    else 
-        start_vel_unscaled_ = Eigen::VectorXd::Zero(twist_size);
-
-    if (start_acc!=nullptr) 
-        start_acc_unscaled_ = *start_acc; 
-    else 
-        start_acc_unscaled_ = Eigen::VectorXd::Zero(twist_size);
-
-
-    double pos_dist = (goal_pose->block<3,1>(0, 3) - start_pose_.block<3,1>(0, 3)).norm();
+    double pos_dist = (goal_pose->block<3,1>(0, 3) - start_pose->block<3,1>(0, 3)).norm();
     bool is_close = pos_dist < 0.05;
 
-    // Building the first part of the path
-    if (is_close){
-        goal_pose_ = start_pose_.lu().solve(*goal_pose);
-    } else {
-        goal_pose_ = start_pose_.lu().solve(intermediate_pose_offset_*(*goal_pose));
-    }
-    
-    goal_p_unscaled_ = vee(goal_pose_.log());
-
-    construct_line_(steps);
-
-    std::vector<Eigen::MatrixXd> path;
-
-    for (auto twist: line_){
-        path.push_back(start_pose_*(hat(twist).exp()));
+    if (is_close) {
+        return JointSpacePlanner::planPath(
+            goal_pose, start_pose, start_vel, goal_vel, start_acc, goal_acc);
     }
 
-    if (!is_close){
+    Eigen::Matrix4d T_intermediate = (*goal_pose) * intermediate_pose_offset_;
+    Eigen::MatrixXd intermediate_mat = T_intermediate;
 
-        // Building the second part of the path
-        for (auto pose: final_leg_line_){
-            path.push_back(start_pose_*goal_pose_*pose);
+    auto [joints, carts] = JointSpacePlanner::planPath(
+        &intermediate_mat, start_pose,
+        start_vel, goal_vel, start_acc, goal_acc);
+    if (joints.empty()) return {};
+
+    for (const auto& rel : final_leg_) {
+        Eigen::Matrix4d T_abs = (*goal_pose) * rel;
+        Eigen::VectorXd q = poseToJointConfig(T_abs);
+        if (q.size() == 0) {
+            std::cout << "[VisualServoPlanner::planPath] final-leg IK failed; truncating" << std::endl;
+            break;
         }
+        carts.push_back(configToPose(q));
+        joints.push_back(std::move(q));
+    }
+    return {joints, carts};
+}
+
+std::pair<
+std::vector<Eigen::VectorXd>,
+std::vector<Eigen::MatrixXd>>
+VisualServoPlanner::planTrajectory(
+    const Eigen::MatrixXd* goal_pose,
+    const Eigen::MatrixXd* start_pose,
+    const Eigen::VectorXd* start_vel,
+    const Eigen::VectorXd* goal_vel,
+    const Eigen::VectorXd* start_acc,
+    const Eigen::VectorXd* goal_acc,
+    double time_step,
+    const double MAX_LIN_VEL,
+    const double MAX_ANG_VEL,
+    const double MAX_LIN_ACC,
+    const double MAX_ANG_ACC
+) {
+    if (goal_pose == nullptr) {
+        throw std::invalid_argument("VisualServoPlanner::planTrajectory: goal_pose is null");
+    }
+    if (start_pose == nullptr) {
+        throw std::invalid_argument("VisualServoPlanner::planTrajectory: start_pose is null");
     }
 
-    last_pose_ = start_pose_;
+    double pos_dist = (goal_pose->block<3,1>(0, 3) - start_pose->block<3,1>(0, 3)).norm();
+    bool is_close = pos_dist < 0.05;
 
-    return path;
+    if (is_close) {
+        return JointSpacePlanner::planTrajectory(
+            goal_pose, start_pose,
+            start_vel, goal_vel, start_acc, goal_acc,
+            time_step, MAX_LIN_VEL, MAX_ANG_VEL, MAX_LIN_ACC, MAX_ANG_ACC);
+    }
 
+    Eigen::Matrix4d T_intermediate = (*goal_pose) * intermediate_pose_offset_;
+    Eigen::MatrixXd intermediate_mat = T_intermediate;
+
+    // Phase 1: time-scaled RRT* path to intermediate. Call base planPath
+    // explicitly (non-virtual) so we don't recurse into our own override.
+    JointSpacePlanner::planPath(
+        &intermediate_mat, start_pose,
+        start_vel, goal_vel, start_acc, goal_acc);
+    if (waypoints_.empty()) return {};
+
+    double phase1_dist = (T_intermediate.block<3,1>(0,3) - start_pose->block<3,1>(0,3)).norm();
+    double vel_cap = std::max(MAX_LIN_VEL, 1e-6);
+    int steps = std::max(2,
+        static_cast<int>(std::ceil((phase1_dist / vel_cap) / std::max(time_step, 1e-6))));
+
+    std::vector<Eigen::VectorXd> joints = resamplePath(waypoints_, steps);
+    std::vector<Eigen::MatrixXd> carts = configsToPoses(joints);
+
+    // Phase 2: final-leg cartesian linear approach
+    for (const auto& rel : final_leg_) {
+        Eigen::Matrix4d T_abs = (*goal_pose) * rel;
+        Eigen::VectorXd q = poseToJointConfig(T_abs);
+        if (q.size() == 0) {
+            std::cout << "[VisualServoPlanner::planTrajectory] final-leg IK failed; truncating" << std::endl;
+            break;
+        }
+        carts.push_back(configToPose(q));
+        joints.push_back(std::move(q));
+    }
+    return {joints, carts};
 }
 
 } // namespace HumanoidPilot

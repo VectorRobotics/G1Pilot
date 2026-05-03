@@ -18,7 +18,7 @@ int main(){
         std::cout <<"Initial" << initial <<std::endl;
         std::cout <<"target" << target  <<std::endl;
 
-        std::vector<Eigen::MatrixXd> path = handle.motion_planner->planTrajectory(
+        auto [stash, path] = handle.motion_planner->planTrajectory(
             new Eigen::MatrixXd(target),
             new Eigen::MatrixXd(initial)
         );

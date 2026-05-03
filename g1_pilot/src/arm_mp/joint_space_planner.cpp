@@ -4,62 +4,78 @@
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 
+#include <ompl/base/SpaceInformation.h>
+#include <ompl/base/PlannerTerminationCondition.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
+#include <ompl/base/ScopedState.h>
+#include <ompl/geometric/PathGeometric.h>
+#include <ompl/geometric/PathSimplifier.h>
+#include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 
+namespace ob = ompl::base;
+namespace og = ompl::geometric;
+
 namespace HumanoidPilot {
 
 JointSpacePlanner::JointSpacePlanner(
     pinocchio::Model& model,
-    pinocchio::GeometryModel& geom_model,
     HumanoidIK* ik_handle,
     bool left_arm,
-    double joint_limit_safety_offset,
     double step_size,
     double goal_bias,
-    double rewire_radius,
-    int max_iterations,
+    double rewire_factor,
+    double solve_time_seconds,
     double goal_tolerance,
-    double approach_offset,
-    int final_leg_steps
+    double validity_resolution
 ) :
     model_(model),
-    geom_model_(geom_model),
+    data_(model_),
     ik_handle_(ik_handle),
     left_arm_(left_arm),
     nq_(model.nq),
-    safety_offset_(joint_limit_safety_offset),
+    left_ee_id_(model_.getFrameId("L_ee")),
+    right_ee_id_(model_.getFrameId("R_ee")),
     step_size_(step_size),
     goal_bias_(goal_bias),
-    rewire_radius_(rewire_radius),
-    max_iterations_(max_iterations),
+    rewire_factor_(rewire_factor),
+    solve_time_seconds_(solve_time_seconds),
     goal_tolerance_(goal_tolerance),
-    approach_offset_(approach_offset),
-    final_leg_steps_(final_leg_steps),
-    rng_(std::random_device{}())
+    validity_resolution_(validity_resolution)
 {
-    intermediate_pose_offset_ = Eigen::Matrix4d::Identity();
-    intermediate_pose_offset_(0, 3) = -approach_offset_;
-    q_lower_ = model_.lowerPositionLimit.array() + safety_offset_;
-    q_upper_ = model_.upperPositionLimit.array() - safety_offset_;
-
+    auto rv_space = std::make_shared<ob::RealVectorStateSpace>(nq_);
+    ob::RealVectorBounds bounds(nq_);
     for (int i = 0; i < nq_; ++i) {
-        if (q_lower_(i) > q_upper_(i)) {
-            double mid = 0.5 * (model_.lowerPositionLimit(i) + model_.upperPositionLimit(i));
-            q_lower_(i) = mid;
-            q_upper_(i) = mid;
-        }
+        bounds.setLow(i, model_.lowerPositionLimit(i));
+        bounds.setHigh(i, model_.upperPositionLimit(i));
     }
+    rv_space->setBounds(bounds);
+    ompl_space_ = rv_space;
+
+    ompl_si_ = std::make_shared<ob::SpaceInformation>(ompl_space_);
+    ompl_si_->setStateValidityChecker([this](const ob::State* s) {
+        const auto* rv = s->as<ob::RealVectorStateSpace::StateType>();
+        Eigen::VectorXd q(nq_);
+        for (int i = 0; i < nq_; ++i) q(i) = rv->values[i];
+        if (ik_handle_ == nullptr) return true;
+        return !ik_handle_->check_collision(q);
+        // return true;
+    });
+    ompl_si_->setStateValidityCheckingResolution(validity_resolution_);
+    ompl_si_->setup();
+
+    planner_ = std::make_shared<og::RRTstar>(ompl_si_);
+    planner_->setRange(step_size_);
+    planner_->setGoalBias(goal_bias_);
+    planner_->setRewireFactor(rewire_factor_);
 }
 
 JointSpacePlanner::~JointSpacePlanner() {}
-
-void JointSpacePlanner::setSeed(unsigned int seed) {
-    rng_.seed(seed);
-}
 
 Eigen::VectorXd JointSpacePlanner::poseToJointConfig(const Eigen::MatrixXd& pose) {
     if (pose.rows() != 4 || pose.cols() != 4) {
@@ -69,339 +85,167 @@ Eigen::VectorXd JointSpacePlanner::poseToJointConfig(const Eigen::MatrixXd& pose
         throw std::runtime_error("JointSpacePlanner: ik_handle is null");
     }
 
-    Eigen::Matrix4d T = pose;
-    JointState js = ik_handle_->solve_ik(T, left_arm_);
+    double pos_err = 0.0;
+    double rot_err = 0.0;
+    JointState js = ik_handle_->solve_ik(
+        pose, left_arm_,
+        nullptr, nullptr, nullptr,
+        &pos_err, &rot_err);
 
     auto [q, v, e] = jointstate_to_vectors(js, model_);
     (void)v; (void)e;
 
-    Eigen::Matrix4d T_fk = fkPose(q);
-    Eigen::Vector3d pos_err = T_fk.block<3, 1>(0, 3) - T.block<3, 1>(0, 3);
-    Eigen::Matrix3d R_err = T_fk.block<3, 3>(0, 0) * T.block<3, 3>(0, 0).transpose();
-    double cos_angle = std::clamp(0.5 * (R_err.trace() - 1.0), -1.0, 1.0);
-    double rot_err = std::acos(cos_angle);
-    std::cout << "[poseToJointConfig] IK pos err (m): " << pos_err.norm()
+    std::cout << "[poseToJointConfig] IK pos err (m): " << pos_err
               << ", rot err (rad): " << rot_err << std::endl;
 
-    if (pos_err.norm() > 0.3 || rot_err > 0.4) {
-        std::cout << "[poseToJointConfig] IK error exceeds threshold; returning empty config" << std::endl;
-        return Eigen::VectorXd();
-    }
-
     return q;
-}
-
-Eigen::VectorXd JointSpacePlanner::sampleRandom() {
-    Eigen::VectorXd q(nq_);
-    std::uniform_real_distribution<double> u(0.0, 1.0);
-    for (int i = 0; i < nq_; ++i) {
-        q(i) = q_lower_(i) + u(rng_) * (q_upper_(i) - q_lower_(i));
-    }
-    return q;
-}
-
-int JointSpacePlanner::nearest(const std::vector<Node>& tree, const Eigen::VectorXd& q) {
-    int best = -1;
-    double best_d = std::numeric_limits<double>::infinity();
-    for (size_t i = 0; i < tree.size(); ++i) {
-        double d = (tree[i].q - q).norm();
-        if (d < best_d) {
-            best_d = d;
-            best = static_cast<int>(i);
-        }
-    }
-    return best;
-}
-
-std::vector<int> JointSpacePlanner::near(
-    const std::vector<Node>& tree, const Eigen::VectorXd& q, double radius
-) {
-    std::vector<int> out;
-    for (size_t i = 0; i < tree.size(); ++i) {
-        if ((tree[i].q - q).norm() <= radius) {
-            out.push_back(static_cast<int>(i));
-        }
-    }
-    return out;
-}
-
-Eigen::VectorXd JointSpacePlanner::steer(
-    const Eigen::VectorXd& from, const Eigen::VectorXd& to, double step
-) {
-    Eigen::VectorXd delta = to - from;
-    double d = delta.norm();
-    Eigen::VectorXd q_new = (d <= step) ? to : (from + (step / d) * delta);
-    q_new = q_new.cwiseMax(q_lower_).cwiseMin(q_upper_);
-    return q_new;
-}
-
-std::vector<Eigen::VectorXd> JointSpacePlanner::reconstructPath(
-    const std::vector<Node>& tree, int goal_idx
-) {
-    std::vector<Eigen::VectorXd> path;
-    int idx = goal_idx;
-    while (idx != -1) {
-        path.push_back(tree[idx].q);
-        idx = tree[idx].parent;
-    }
-    std::reverse(path.begin(), path.end());
-    return path;
 }
 
 std::vector<Eigen::VectorXd> JointSpacePlanner::runRRTStar(
     const Eigen::VectorXd& start_q,
-    const Eigen::VectorXd& goal_q,
-    double step
+    const Eigen::VectorXd& goal_q
 ) {
-    std::vector<Node> tree;
-    tree.push_back({start_q, -1, 0.0});
-
-    std::uniform_real_distribution<double> u01(0.0, 1.0);
-
-    int best_goal_idx = -1;
-    double best_goal_cost = std::numeric_limits<double>::infinity();
-
-    for (int it = 0; it < max_iterations_; ++it) {
-        Eigen::VectorXd q_rand = (u01(rng_) < goal_bias_) ? goal_q : sampleRandom();
-
-        int nearest_idx = nearest(tree, q_rand);
-        Eigen::VectorXd q_new = steer(tree[nearest_idx].q, q_rand, step);
-
-        std::vector<int> neighbors = near(tree, q_new, rewire_radius_);
-
-        int best_parent = nearest_idx;
-        double best_cost = tree[nearest_idx].cost + (tree[nearest_idx].q - q_new).norm();
-        for (int ni : neighbors) {
-            double c = tree[ni].cost + (tree[ni].q - q_new).norm();
-            if (c < best_cost) {
-                best_cost = c;
-                best_parent = ni;
-            }
-        }
-
-        int new_idx = static_cast<int>(tree.size());
-        tree.push_back({q_new, best_parent, best_cost});
-
-        for (int ni : neighbors) {
-            double c = best_cost + (q_new - tree[ni].q).norm();
-            if (c < tree[ni].cost) {
-                tree[ni].parent = new_idx;
-                tree[ni].cost = c;
-            }
-        }
-
-        double dist_to_goal = (q_new - goal_q).norm();
-        if (dist_to_goal <= goal_tolerance_) {
-            double total = best_cost + dist_to_goal;
-            if (total < best_goal_cost) {
-                int goal_idx = static_cast<int>(tree.size());
-                tree.push_back({goal_q, new_idx, total});
-                best_goal_cost = total;
-                best_goal_idx = goal_idx;
-            }
-        }
+    ob::ScopedState<ob::RealVectorStateSpace> start(ompl_space_);
+    ob::ScopedState<ob::RealVectorStateSpace> goal(ompl_space_);
+    for (int i = 0; i < nq_; ++i) {
+        start[i] = start_q(i);
+        goal[i] = goal_q(i);
     }
 
-    if (best_goal_idx == -1) {
+    if (!ompl_si_->isValid(start.get())) {
+        std::cout << "[runRRTStar] start state is in collision" << std::endl;
+        return {};
+    }
+    if (!ompl_si_->isValid(goal.get())) {
+        std::cout << "[runRRTStar] goal state is in collision" << std::endl;
         return {};
     }
 
-    return reconstructPath(tree, best_goal_idx);
-}
+    auto pdef = std::make_shared<ob::ProblemDefinition>(ompl_si_);
+    pdef->setStartAndGoalStates(start, goal, goal_tolerance_);
+    pdef->setOptimizationObjective(
+        std::make_shared<ob::PathLengthOptimizationObjective>(ompl_si_));
 
-Eigen::Matrix4d JointSpacePlanner::fkPose(const Eigen::VectorXd& q) {
-    pinocchio::Data data(model_);
-    pinocchio::framesForwardKinematics(model_, data, q);
+    planner_->clear();
+    planner_->setProblemDefinition(pdef);
 
-    const std::string frame_name = left_arm_ ? "L_ee" : "R_ee";
-    if (!model_.existFrame(frame_name)) {
-        return Eigen::Matrix4d::Identity();
-    }
-    pinocchio::FrameIndex fid = model_.getFrameId(frame_name);
-    return data.oMf[fid].toHomogeneousMatrix();
-}
-
-std::vector<Eigen::MatrixXd> JointSpacePlanner::densify(
-    const std::vector<Eigen::VectorXd>& path, int steps
-) {
-    std::vector<Eigen::MatrixXd> out;
-    if (path.empty()) return out;
-
-    std::vector<Eigen::VectorXd> dense_q;
-
-    if (steps <= 0 || static_cast<int>(path.size()) >= steps) {
-        dense_q = path;
-    } else {
-        std::vector<double> seg_len(path.size() - 1);
-        double total = 0.0;
-        for (size_t i = 0; i + 1 < path.size(); ++i) {
-            seg_len[i] = (path[i + 1] - path[i]).norm();
-            total += seg_len[i];
-        }
-
-        if (total <= 0.0) {
-            dense_q.push_back(path.front());
-        } else {
-            dense_q.reserve(steps);
-            for (int k = 0; k < steps; ++k) {
-                double s = (static_cast<double>(k) / (steps - 1)) * total;
-                double acc = 0.0;
-                size_t i = 0;
-                for (; i + 1 < path.size(); ++i) {
-                    if (acc + seg_len[i] >= s) break;
-                    acc += seg_len[i];
-                }
-                if (i + 1 >= path.size()) {
-                    dense_q.push_back(path.back());
-                    continue;
-                }
-                double t = (seg_len[i] > 0.0) ? (s - acc) / seg_len[i] : 0.0;
-                dense_q.push_back(path[i] + t * (path[i + 1] - path[i]));
-            }
-        }
+    ob::PlannerStatus status = planner_->solve(
+        ob::timedPlannerTerminationCondition(solve_time_seconds_));
+    if (status != ob::PlannerStatus::EXACT_SOLUTION) {
+        std::cout << "[runRRTStar] no exact solution (status="
+                  << status.asString() << ")" << std::endl;
+        return {};
     }
 
-    out.reserve(dense_q.size());
-    for (const auto& q : dense_q) {
-        out.push_back(fkPose(q));
-    }
-    return out;
-}
-
-JointSpacePlanner::TwoPhaseLegs JointSpacePlanner::planTwoPhaseLegs(
-    const Eigen::MatrixXd& goal_pose,
-    const Eigen::MatrixXd* start_pose
-) {
-    TwoPhaseLegs out;
-    
-    Eigen::VectorXd start_q;
-    if (start_pose != nullptr) {
-        out.T_start = *start_pose;
-        std::cout << "IK for start pose:" << std::endl;
-        start_q = poseToJointConfig(out.T_start);
-        if (start_q.size() == 0) {
-            return out;
-        }
-    } else {
-        out.T_start = Eigen::Matrix4d::Identity();
-        start_q = Eigen::VectorXd::Zero(nq_);
-    }
-    start_q = start_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
-
-    double translational_dist =
-        (goal_pose.block<3,1>(0,3) - start_pose->block<3,1>(0,3)).norm();
-    out.is_close = translational_dist < 0.85 * approach_offset_;
-
-    if (out.is_close) {
-        std::cout << "IK for goal pose:" << std::endl;
-        Eigen::VectorXd goal_q = poseToJointConfig(goal_pose);
-        if (goal_q.size() == 0) {
-            return out;
-        }
-        goal_q = goal_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
-        out.leg1 = runRRTStar(start_q, goal_q, step_size_);
-        return out;
+    auto path_geom = std::dynamic_pointer_cast<og::PathGeometric>(pdef->getSolutionPath());
+    if (!path_geom) {
+        return {};
     }
 
-    out.T_intermediate = goal_pose * intermediate_pose_offset_;
-    std::cout << "IK for intermediate pose:" << std::endl;
-    Eigen::VectorXd intermediate_q = poseToJointConfig(out.T_intermediate);
-    if (intermediate_q.size() == 0) {
-        return out;
-    }
-    intermediate_q = intermediate_q.cwiseMax(q_lower_).cwiseMin(q_upper_);
+    og::PathSimplifier simplifier(ompl_si_);
+    simplifier.ropeShortcutPath(*path_geom);
+    simplifier.smoothBSpline(*path_geom);
 
-    out.leg1 = runRRTStar(start_q, intermediate_q, step_size_);
-
-    int n2 = std::max(2, final_leg_steps_);
-    out.leg2.reserve(n2);
-    for (int k = 1; k <= n2; ++k) {
-        double t = static_cast<double>(k) / n2;
-        Eigen::Matrix4d T = interpolate_poses(out.T_intermediate, goal_pose, t);
-        out.leg2.push_back(T);
-    }
-
-    return out;
-}
-
-std::vector<Eigen::VectorXd> JointSpacePlanner::planTwoPhase(
-    const Eigen::MatrixXd& goal_pose,
-    const Eigen::MatrixXd* start_pose
-) {
-    TwoPhaseLegs legs = planTwoPhaseLegs(goal_pose, start_pose);
-    std::vector<Eigen::VectorXd> out = std::move(legs.leg1);
-    for (auto& q : legs.leg2) out.push_back(std::move(q));
-    return out;
-}
-
-std::vector<Eigen::VectorXd> JointSpacePlanner::resampleLinear(
-    const std::vector<Eigen::VectorXd>& path, int steps
-) {
     std::vector<Eigen::VectorXd> out;
-    if (path.empty()) return out;
-    if (steps <= 1 || path.size() == 1) {
-        out = path;
-        return out;
+    out.reserve(path_geom->getStateCount());
+    for (std::size_t i = 0; i < path_geom->getStateCount(); ++i) {
+        const auto* rv = path_geom->getState(i)->as<ob::RealVectorStateSpace::StateType>();
+        Eigen::VectorXd q(nq_);
+        for (int j = 0; j < nq_; ++j) q(j) = rv->values[j];
+        out.push_back(std::move(q));
     }
+    return out;
+}
 
-    std::vector<double> seg_len(path.size() - 1);
+Eigen::Matrix4d JointSpacePlanner::configToPose(const Eigen::VectorXd& q) {
+    pinocchio::framesForwardKinematics(model_, data_, q);
+
+    return left_arm_
+    ? data_.oMf[left_ee_id_].toHomogeneousMatrix()
+    : data_.oMf[right_ee_id_].toHomogeneousMatrix();
+}
+
+std::vector<Eigen::MatrixXd> JointSpacePlanner::configsToPoses(
+    const std::vector<Eigen::VectorXd>& path
+) {
+    std::vector<Eigen::MatrixXd> cart_space;
+    cart_space.reserve(path.size());
+    for (const auto& q : path) cart_space.push_back(configToPose(q));
+    return cart_space;
+}
+
+std::vector<Eigen::VectorXd> JointSpacePlanner::resamplePath(
+    const std::vector<Eigen::VectorXd>& waypoints, int steps
+) {
+    if (waypoints.empty()) return {};
+    if (steps <= 1 || waypoints.size() == 1) return waypoints;
+
+    const int N = static_cast<int>(waypoints.size());
+    std::vector<double> seg_len(N - 1);
     double total = 0.0;
-    for (size_t i = 0; i + 1 < path.size(); ++i) {
-        seg_len[i] = (path[i + 1] - path[i]).norm();
+    for (int i = 0; i < N - 1; ++i) {
+        seg_len[i] = (waypoints[i + 1] - waypoints[i]).norm();
         total += seg_len[i];
     }
-    if (total <= 0.0) {
-        out.push_back(path.front());
-        return out;
-    }
+    if (total <= 0.0) return {waypoints.front()};
 
-    out.reserve(steps);
+    std::vector<Eigen::VectorXd> out(steps);
     for (int k = 0; k < steps; ++k) {
         double s = (static_cast<double>(k) / (steps - 1)) * total;
         double acc = 0.0;
-        size_t i = 0;
-        for (; i + 1 < path.size(); ++i) {
+        int i = 0;
+        for (; i + 1 < N; ++i) {
             if (acc + seg_len[i] >= s) break;
             acc += seg_len[i];
         }
-        if (i + 1 >= path.size()) {
-            out.push_back(path.back());
+        if (i + 1 >= N) {
+            out[k] = waypoints.back();
             continue;
         }
         double t = (seg_len[i] > 0.0) ? (s - acc) / seg_len[i] : 0.0;
-        out.push_back(path[i] + t * (path[i + 1] - path[i]));
+        out[k] = waypoints[i] + t * (waypoints[i + 1] - waypoints[i]);
     }
     return out;
 }
 
-std::vector<Eigen::MatrixXd> JointSpacePlanner::planPath(
+std::pair<
+std::vector<Eigen::VectorXd>,
+std::vector<Eigen::MatrixXd>>
+JointSpacePlanner::planPath(
     const Eigen::MatrixXd* goal_pose,
     const Eigen::MatrixXd* start_pose,
     const Eigen::VectorXd* /*start_vel*/,
     const Eigen::VectorXd* /*goal_vel*/,
     const Eigen::VectorXd* /*start_acc*/,
-    const Eigen::VectorXd* /*goal_acc*/,
-    int steps
+    const Eigen::VectorXd* /*goal_acc*/
 ) {
     if (goal_pose == nullptr) {
         throw std::invalid_argument("JointSpacePlanner::planPath: goal_pose is null");
     }
 
-    TwoPhaseLegs legs = planTwoPhaseLegs(*goal_pose, start_pose);
-    if (legs.leg1.empty()) return {};
+    if (start_pose == nullptr) {
+        throw std::invalid_argument("JointSpacePlanner::planPath: start_pose is null");
+    }
 
-    std::vector<Eigen::VectorXd> leg1 = (steps > 0)
-        ? resampleLinear(legs.leg1, steps)
-        : legs.leg1;
+    std::cout << "IK for start pose:" << std::endl;
+    start_q_ = poseToJointConfig(*start_pose);
+    if (start_q_.size() == 0)
+        return {};
 
-    std::vector<Eigen::MatrixXd> out;
-    out.reserve(leg1.size() + legs.leg2.size());
-    for (const auto& q : leg1) out.push_back(fkPose(q));
-    for (const auto& T : legs.leg2) out.push_back(T);
-    return out;
+    std::cout << "IK for goal pose:" << std::endl;
+    goal_q_ = poseToJointConfig(*goal_pose);
+    if (goal_q_.size() == 0)
+        return {};
+
+    waypoints_ = runRRTStar(start_q_, goal_q_);
+
+    return {waypoints_, configsToPoses(waypoints_)};
 }
 
-std::vector<Eigen::MatrixXd> JointSpacePlanner::planTrajectory(
+std::pair<
+std::vector<Eigen::VectorXd>,
+std::vector<Eigen::MatrixXd>>
+JointSpacePlanner::planTrajectory(
     const Eigen::MatrixXd* goal_pose,
     const Eigen::MatrixXd* start_pose,
     const Eigen::VectorXd* start_vel,
@@ -418,52 +262,23 @@ std::vector<Eigen::MatrixXd> JointSpacePlanner::planTrajectory(
         throw std::invalid_argument("JointSpacePlanner::planTrajectory: goal_pose is null");
     }
 
-    (void)start_vel; (void)goal_vel; (void)start_acc; (void)goal_acc;
-
-    TwoPhaseLegs legs = planTwoPhaseLegs(*goal_pose, start_pose);
-    if (legs.leg1.empty()) return {};
-
-    // VSP-style step count for Phase 1: based on task-space translational
-    // distance of the Phase 1 segment (start -> intermediate) at MAX_LIN_VEL.
-    Eigen::Vector3d p_from = legs.T_start.block<3,1>(0,3);
-    Eigen::Vector3d p_to   = legs.is_close
-        ? Eigen::Vector3d(goal_pose->block<3,1>(0,3))
-        : Eigen::Vector3d(legs.T_intermediate.block<3,1>(0,3));
-    double task_dist = (p_to - p_from).norm();
-
+    Eigen::Vector3d p_start = (start_pose != nullptr)
+        ? Eigen::Vector3d(start_pose->block<3,1>(0,3))
+        : Eigen::Vector3d::Zero();
+    double task_dist = (goal_pose->block<3,1>(0,3) - p_start).norm();
     double vel_cap = std::max(MAX_LIN_VEL, 1e-6);
     double duration = task_dist / vel_cap;
-    int leg1_steps = std::max(2,
+    int steps = std::max(2,
         static_cast<int>(std::ceil(duration / std::max(time_step, 1e-6))));
 
-    std::vector<Eigen::VectorXd> leg1 = resampleLinear(legs.leg1, leg1_steps);
+    (void) planPath(goal_pose, start_pose,
+                           start_vel, goal_vel, start_acc, goal_acc);
 
-    std::vector<Eigen::MatrixXd> out;
-    out.reserve(leg1.size() + legs.leg2.size());
-    for (const auto& q : leg1) out.push_back(fkPose(q));
-    for (const auto& T : legs.leg2) out.push_back(T);
-    return out;
-}
+    std::vector<Eigen::VectorXd> path = resamplePath(waypoints_, steps);
+    return {path, configsToPoses(path)};
 
-Eigen::MatrixXd JointSpacePlanner::interpolate_poses(const Eigen::MatrixXd& T1, const Eigen::MatrixXd& T2, double t) {
-    Eigen::Vector3d pos1 = T1.block<3,1>(0,3);
-    Eigen::Vector3d pos2 = T2.block<3,1>(0,3);
-    Eigen::Vector3d pos_interp = pos1 + t * (pos2 - pos1);
-
-    // 2. Interpolate Rotation (SLERP)
-    // We cast the 3x3 block to a Quaternion
-    Eigen::Quaterniond q1(T1.block<3,3>(0,0));
-    Eigen::Quaterniond q2(T2.block<3,3>(0,0));
-    
-    // Slerp handles the spherical path between orientations
-    Eigen::Quaterniond rot_interp = q1.slerp(t, q2);
-
-    // 3. Reconstruct as MatrixXd
-    Eigen::MatrixXd T_out = Eigen::MatrixXd::Identity(4, 4);
-    T_out.block<3,3>(0,0) = rot_interp.toRotationMatrix();
-    T_out.block<3,1>(0,3) = pos_interp;
-    
-    return T_out;
+    // return planPath(goal_pose, start_pose,
+    //                        start_vel, goal_vel, start_acc, goal_acc);
 }
 
 } // namespace HumanoidPilot

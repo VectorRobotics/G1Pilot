@@ -30,6 +30,7 @@ set(CMAKE_BUILD_RPATH "/opt/openrobots/lib")
 find_package(casadi REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(ompl REQUIRED)
 
 option(BUILD_TESTING "Build tests" ON)
 cmake_dependent_option(INSTALL_TESTING "Install test sources" OFF "BUILD_TESTING" ON)
@@ -53,9 +54,10 @@ target_compile_definitions(g1_pilot PUBLIC COAL_DISABLE_HPP_FCL_WARNINGS)
 target_include_directories(g1_pilot PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${OMPL_INCLUDE_DIRS}
 )
 
-target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio casadi::casadi yaml-cpp)
+target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio casadi::casadi yaml-cpp ${OMPL_LIBRARIES})
 
 # ---- Testing ---- #
 

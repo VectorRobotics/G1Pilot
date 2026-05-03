@@ -12,11 +12,11 @@
 #include <mutex>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "humanoid_manipulation_interfaces/srv/plan_trajectory.hpp"
+#include "humanoid_manipulation_interfaces/srv/plan_joint_trajectory.hpp"
 
 using namespace HumanoidPilot;
 
-using PlanTrajectoryService = humanoid_manipulation_interfaces::srv::PlanTrajectory;
+using PlanTrajectoryService = humanoid_manipulation_interfaces::srv::PlanJointTrajectory;
 
 class PlanTrajectoryServer : public rclcpp::Node
 {
@@ -153,7 +153,7 @@ private:
 
         arm_handle_->motion_planner->setLeftArm(request->left_arm);
 
-        auto trajectory = arm_handle_->motion_planner->planTrajectory(
+        auto [joint_traj, trajectory] = arm_handle_->motion_planner->planTrajectory(
                 &goal_matrix, &start_matrix);
 
         if (trajectory.empty()) {
@@ -164,12 +164,12 @@ private:
         }
 
         response->success = true;
-        response->trajectory = convertToPath(trajectory, "pelvis", this->get_clock()->now());
+        response->trajectory = convertToTrajectory(joint_traj, arm_handle_->get_joint_names(), "pelvis", this->get_clock()->now());
 
-        path_pub_->publish(response->trajectory);
+        path_pub_->publish(convertToPath(trajectory, "pelvis", this->get_clock()->now()));
 
         RCLCPP_INFO(this->get_logger(), "Planned trajectory with %zu waypoints",
-                     response->trajectory.poses.size());
+                     trajectory.size());
     }
 };
 

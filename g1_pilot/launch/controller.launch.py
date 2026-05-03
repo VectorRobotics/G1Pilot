@@ -32,7 +32,7 @@ def generate_launch_description():
 
     ld.add_action(Node(
         package=package_name,
-        executable='controller',
+        executable='joint_controller',
         name='trajectory_controller',
         namespace=LaunchConfiguration('namespace'),
         output='screen',
