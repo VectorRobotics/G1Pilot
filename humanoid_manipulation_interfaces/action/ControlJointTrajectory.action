@@ -1,0 +1,12 @@
+# Goal
+bool left_arm
+trajectory_msgs/JointTrajectory trajectory
+---
+# Result
+bool success
+float64 final_error
+---
+# Feedback
+float64 current_error
+uint32 waypoints_remaining
+uint32 total_waypoints
