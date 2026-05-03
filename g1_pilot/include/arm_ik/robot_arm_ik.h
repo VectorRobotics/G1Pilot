@@ -46,6 +46,8 @@ public:
         bool* collision = nullptr
     );
 
+    bool check_collision(const Eigen::VectorXd& q);
+
     void reset();
 
 protected:

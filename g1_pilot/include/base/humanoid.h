@@ -31,6 +31,11 @@ public:
 
     JointState grav_ff(JointState input);
 
+    std::vector<std::string> get_joint_names() const {
+        return std::vector<std::string>(
+            model.names.begin() + 1, model.names.end());
+    }
+
 protected:
     struct EEFrame {
         std::string parent_joint;

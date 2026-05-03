@@ -46,6 +46,12 @@ HumanoidIK::HumanoidIK(
 
 }
 
+bool HumanoidIK::check_collision(const Eigen::VectorXd& q) {
+    return pinocchio::computeCollisions(
+        model_, data_, geom_model_, geom_data_, q, true
+    );
+}
+
 void HumanoidIK::filter_adjacent_collision_pairs() {
     // Get kinematic adjacency from the model
     std::set<std::pair<int, int>> adjacent_pairs;
