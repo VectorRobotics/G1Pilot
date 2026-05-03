@@ -140,6 +140,7 @@ if(ROS2_DEFAULT)
 
     # Action Servers
     add_executable(controller src/controller.cpp)
+    add_executable(joint_controller src/joint_controller.cpp)
 
     target_link_libraries(ik_joint_state_publisher g1_pilot)
     ament_target_dependencies(ik_joint_state_publisher ${ROS2_DEPS})
@@ -159,6 +160,9 @@ if(ROS2_DEFAULT)
     target_link_libraries(controller g1_pilot)
     ament_target_dependencies(controller ${ROS2_DEPS})
 
+    target_link_libraries(joint_controller g1_pilot)
+    ament_target_dependencies(joint_controller ${ROS2_DEPS})
+
     target_link_libraries(plan_trajecory g1_pilot)
     ament_target_dependencies(plan_trajecory ${ROS2_DEPS})
 
@@ -170,6 +174,7 @@ if(ROS2_DEFAULT)
         grav_ff
         controller
         plan_trajecory
+        joint_controller
         DESTINATION lib/${PROJECT_NAME}
     )
 
