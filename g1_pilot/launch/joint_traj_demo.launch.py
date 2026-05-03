@@ -10,7 +10,6 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     package_name = 'g1_pilot'
-    package_path = FindPackageShare(package_name)
 
     description_pkg_name = 'g1_description'
     description_pkg_path = FindPackageShare(description_pkg_name)
@@ -20,10 +19,8 @@ def generate_launch_description():
         'PublishTF', default_value='false',
         description='Whether to include display.launch.py for TF publishing'
     ))
-    ld.add_action(DeclareLaunchArgument('feedback_topic', default_value='feedback'))
-    ld.add_action(DeclareLaunchArgument('position_control_topic', default_value='position_control'))
-    ld.add_action(DeclareLaunchArgument('left_ee_pose_topic', default_value='left_ee_pose'))
-    ld.add_action(DeclareLaunchArgument('right_ee_pose_topic', default_value='right_ee_pose'))
+    ld.add_action(DeclareLaunchArgument('joint_trajectory_topic', default_value='joint_trajectory'))
+    ld.add_action(DeclareLaunchArgument('traj_topic', default_value='traj'))
 
     ld.add_action(IncludeLaunchDescription(
         PathJoinSubstitution([description_pkg_path, 'launch', 'display.launch.py']),
@@ -37,7 +34,7 @@ def generate_launch_description():
         namespace=LaunchConfiguration('namespace'),
         output='screen',
         parameters=[{
-            'position_control_topic': LaunchConfiguration('position_control_topic'),
+            'joint_trajectory_topic': LaunchConfiguration('joint_trajectory_topic'),
             'traj_topic': LaunchConfiguration('traj_topic'),
         }],
     ))
