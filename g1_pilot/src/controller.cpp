@@ -197,7 +197,7 @@ private:
         goal_handle->succeed(result);
         active_goal_handle_ = nullptr;
         RCLCPP_INFO(this->get_logger(), "Goal succeeded with error: %f", result->final_error);
-        arm_handle_->ik->reset();
+        arm_handle_->reset();
         return;
     }
 
@@ -235,7 +235,7 @@ private:
 
                 if (goal_handle->is_canceling()) {
                     trajectory_.clear();
-                    arm_handle_->ik->reset();
+                    arm_handle_->reset();
                     auto result = std::make_shared<TrajectoryControllerAction::Result>();
                     result->success = false;
                     result->final_error = -1.0;
@@ -247,7 +247,7 @@ private:
 
                 if (trajectory_.empty()) {
                     trajectory_.clear();
-                    arm_handle_->ik->reset();
+                    arm_handle_->reset();
                     handle_success_(goal_handle);
                 }
 
@@ -273,25 +273,25 @@ private:
         }
 
         if (trajectory_.empty()){
-            (void) arm_handle_->controller->control_no_arms(
+            (void) arm_handle_->control_no_arms(
                 current_state_
             ); // This return grav ff but is explicity stashed
         }
         else if (left_arm_active){
-            cmd_ = arm_handle_->controller->control_left_arm(
+            cmd_ = arm_handle_->control_left_arm(
                 current_state_,
                 trajectory_.back()
             );
         }
         else {
-            cmd_ = arm_handle_->controller->control_right_arm(
+            cmd_ = arm_handle_->control_right_arm(
                 current_state_,
                 trajectory_.back()
             );
         }
 
-        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
-        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
+        left_ee_pose_ = arm_handle_->get_current_left_ee_pose();
+        right_ee_pose_ = arm_handle_->get_current_right_ee_pose();
 
         left_ee_pose_pub_->publish(convertToPoseStamped(left_ee_pose_, "pelvis", this->get_clock()->now()));
         right_ee_pose_pub_->publish(convertToPoseStamped(right_ee_pose_, "pelvis", this->get_clock()->now()));
@@ -301,8 +301,8 @@ private:
         }
         
         error_ = left_arm_active ?
-                        arm_handle_->controller->get_current_left_ee_error() :
-                        arm_handle_->controller->get_current_right_ee_error();
+                        arm_handle_->get_current_left_ee_error() :
+                        arm_handle_->get_current_right_ee_error();
 
         if (error_ < this->get_parameter("waypoint_error_margin").as_double()){
             trajectory_.pop_back();

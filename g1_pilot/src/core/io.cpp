@@ -1,61 +1,8 @@
-#include "base/humanoid.h"
-
-#include <iostream>
-#include <set>
-#include <stdexcept>
+#include "core/interfaces.h"
 #include <yaml-cpp/yaml.h>
-#include <pinocchio/parsers/urdf.hpp>
-#include <pinocchio/algorithm/model.hpp>
-#include <pinocchio/algorithm/rnea.hpp>
 
-
-#include "arm_control/arm_control.h"
-#include "arm_ik/arm_ik.h"
-#include "arm_mp/arm_mp.h"
-
-namespace HumanoidPilot {
-
-Humanoid::Humanoid(
-    const RobotConfig* robot_config
-)
+namespace HumanoidPilot
 {
-    robot_config_ = RobotConfig();
-    if (robot_config != nullptr) {
-        robot_config_ = *robot_config;
-    }
-    extract_config();
-
-    pinocchio::urdf::buildModel(robot_config_.asset_file, model_full);
-    pinocchio::urdf::buildGeom(
-        model_full,
-        robot_config_.asset_file,
-        pinocchio::COLLISION,
-        geom_full,
-        robot_config_.asset_root
-    );
-    add_end_effector_frames();
-
-    reduce_model(
-        locked_joints_,
-        model_full,
-        geom_full,
-        model,
-        geom
-    );
-
-    apply_joint_limit_overrides();
-
-    data = pinocchio::Data(model);
-
-    // Initialize Tools with appropriate models
-    ik = new HumanoidIK(
-        model, 
-        geom
-    );
-    controller = new IKTrajTracker(model, ik);
-    motion_planner = new VisualServoPlanner(model, ik);
-
-}
 
 void Humanoid::extract_config() {
     YAML::Node root = YAML::LoadFile(robot_config_.config_file);
@@ -123,71 +70,7 @@ void Humanoid::extract_config() {
     }
 }
 
-void Humanoid::apply_joint_limit_overrides() {
-    for (const auto& [joint_name, lim] : joint_limit_overrides_) {
-        if (!model.existJointName(joint_name)) {
-            std::cerr
-                << "[Humanoid] joint_limit_overrides references joint '"
-                << joint_name << "' which is not in the reduced model "
-                << "(probably locked) — skipping" << std::endl;
-            continue;
-        }
-        int idx = model.joints[model.getJointId(joint_name)].idx_q();
-        model.lowerPositionLimit(idx) = lim.lower;
-        model.upperPositionLimit(idx) = lim.upper;
-    }
-}
-
-void Humanoid::add_end_effector_frames() {
-    auto add = [&](const std::string& frame_name, const EEFrame& ee) {
-        auto parent_id = model_full.getJointId(ee.parent_joint);
-        pinocchio::SE3 placement(Eigen::Matrix3d::Identity(), ee.offset);
-        model_full.addFrame(pinocchio::Frame(
-            frame_name, parent_id, placement, pinocchio::OP_FRAME
-        ));
-    };
-    add("L_ee", left_ee_);
-    add("R_ee", right_ee_);
-}
-
-JointState Humanoid::grav_ff(JointState current_state){
-
-    std::tie(q,v,e) = jointstate_to_vectors(current_state, model);
-
-    pinocchio::computeGeneralizedGravity(model, data, q);
-    grav_torques = data.g;
-
-    return vectors_to_jointstate(q,v,grav_torques, model);
-}
-
-void Humanoid::reduce_model(
-    std::vector<std::string> joint_names,
-    pinocchio::Model &model_in,
-    pinocchio::GeometryModel &gmodel_in,
-    pinocchio::Model &model_out,
-    pinocchio::GeometryModel &gmodel_out
-){
-    Eigen::VectorXd reference_config = Eigen::VectorXd::Zero(model_in.nq);
-    std::vector<pinocchio::JointIndex> joints_idx;
-
-    for (const auto& joint_name : joint_names) {
-        if (model_in.existJointName(joint_name)) {
-            joints_idx.push_back(
-                model_in.getJointId(joint_name)
-            );
-        }
-    }
-
-    pinocchio::buildReducedModel(
-        model_in, 
-        gmodel_in,
-        joints_idx, 
-        reference_config, 
-        model_out,
-        gmodel_out
-    );
-}
-
+    
 std::tuple<
     Eigen::VectorXd,
     Eigen::VectorXd,
@@ -234,4 +117,4 @@ JointState vectors_to_jointstate(
     return result;
 }
 
-} // HumanoidPilot namespace
+} // namespace HumanoidPilot

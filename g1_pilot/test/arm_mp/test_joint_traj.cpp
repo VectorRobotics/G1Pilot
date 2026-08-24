@@ -15,12 +15,12 @@ int main(){
 
         std::cout <<"Arm Initialized" <<std::endl;
 
-        std::vector<Eigen::MatrixXd> path = handle.motion_planner->planTrajectory(
+        std::vector<Eigen::MatrixXd> path = handle.planTrajectory(
             new Eigen::MatrixXd(right_target)
         );
 
         for (auto pose: path){
-            auto result = handle.ik->solve_ik(left_target, pose);
+            auto result = handle.solve_ik(left_target, pose);
             auto q = Eigen::VectorXd::Map(result.position.data(), result.position.size());
             std::cout << "IK solution q: " << q.transpose() << std::endl;
         }

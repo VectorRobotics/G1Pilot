@@ -15,6 +15,12 @@ def generate_launch_description():
     description_pkg_name = 'g1_description'
     description_pkg_path = FindPackageShare(description_pkg_name)
 
+    ld.add_action(DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation time'
+    ))
+
     ld.add_action(DeclareLaunchArgument('namespace', default_value=''))
     ld.add_action(DeclareLaunchArgument(
         'PublishTF', default_value='false',
@@ -38,6 +44,8 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'position_control_topic': LaunchConfiguration('position_control_topic'),
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
         }],
+        # prefix=['xterm -r gdb -ex run --args']
     ))
     return ld

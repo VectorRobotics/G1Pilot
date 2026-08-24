@@ -1,7 +1,7 @@
 #ifndef VISUAL_SERVO_PLANNER_H
 #define VISUAL_SERVO_PLANNER_H
 
-#include "joint_space_planner.h"
+#include "core/arm_mp/joint_space_planner.h"
 
 namespace HumanoidPilot{
 
@@ -9,7 +9,7 @@ class VisualServoPlanner : public JointSpacePlanner {
     public:
         VisualServoPlanner(
             pinocchio::Model& model,
-            HumanoidIK* ik_handle,
+            std::unique_ptr<HumanoidIK> ik_handle,
             bool left_arm = false,
             double approach_offset = 0.05,
             int final_leg_steps = 20,

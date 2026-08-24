@@ -1,4 +1,5 @@
-#include "arm_control/ik_traj_tracker.h"
+#include "core/arm_control/ik_traj_tracker.h"
+#include "core/interfaces.h"
 
 #include <pinocchio/algorithm/utils/motion.hpp>
 #include <iostream>
@@ -23,8 +24,7 @@ JointState IKTrajTracker::control_both_arms(
     result = ik_handle_->solve_ik(
         desired_left_ee_pose_,
         desired_right_ee_pose_,
-        &current_joint_pos_,
-        &current_joint_vel_,
+        &current_state,
         nullptr,
         nullptr,
         &l_pos_err,
@@ -72,8 +72,7 @@ JointState IKTrajTracker::control_left_arm(
     result = ik_handle_->solve_ik(
         desired_left_ee_pose_,
         true,
-        &current_joint_pos_,
-        &current_joint_vel_,
+        &current_state,
         nullptr,
         &l_pos_err,
         &l_rot_err,
@@ -125,8 +124,7 @@ JointState IKTrajTracker::control_right_arm(
     result = ik_handle_->solve_ik(
         desired_right_ee_pose_,
         false,
-        &current_joint_pos_,
-        &current_joint_vel_,
+        &current_state,
         nullptr,
         &r_pos_err,
         &r_rot_err,

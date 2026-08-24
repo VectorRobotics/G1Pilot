@@ -42,7 +42,7 @@ int main(){
         // #include <chrono>
 
         // auto start = std::chrono::high_resolution_clock::now();
-        // auto result = handle.controller->control_left_arm(current_config, right_target);
+        // auto result = handle.controller(current_config, right_target);
         // auto end = std::chrono::high_resolution_clock::now();
 
         // auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();

@@ -151,9 +151,9 @@ private:
             return;
         }
 
-        arm_handle_->motion_planner->setLeftArm(request->left_arm);
+        // arm_handle_->setLeftArm(request->left_arm);
 
-        auto [joint_traj, trajectory] = arm_handle_->motion_planner->planTrajectory(
+        auto [joint_traj, trajectory] = arm_handle_->planTrajectory(
                 &goal_matrix, &start_matrix);
 
         if (trajectory.empty()) {

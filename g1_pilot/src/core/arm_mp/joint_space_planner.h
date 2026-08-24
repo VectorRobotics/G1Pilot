@@ -1,7 +1,7 @@
 #ifndef JOINT_SPACE_PLANNER_H
 #define JOINT_SPACE_PLANNER_H
 
-#include "../arm_ik/arm_ik.h"
+#include "core/arm_ik/arm_ik.h"
 
 #include <memory>
 
@@ -30,7 +30,7 @@ class JointSpacePlanner {
     public:
         JointSpacePlanner(
             pinocchio::Model& model,
-            HumanoidIK* ik_handle,
+            std::shared_ptr<HumanoidIK> ik_handle,
             bool left_arm = false,
             double step_size = 0.05,
             double goal_bias = 0.1,
@@ -51,8 +51,8 @@ class JointSpacePlanner {
         std::vector<Eigen::VectorXd>,
         std::vector<Eigen::MatrixXd>>
         planTrajectory(
-            const Eigen::MatrixXd* goal_pose,
-            const Eigen::MatrixXd* start_pose = nullptr,
+            const Eigen::MatrixXd& goal_pose,
+            const Eigen::MatrixXd& start_pose,
             const Eigen::VectorXd* start_vel = nullptr,
             const Eigen::VectorXd* goal_vel = nullptr,
             const Eigen::VectorXd* start_acc = nullptr,
@@ -67,13 +67,35 @@ class JointSpacePlanner {
         virtual std::pair<
         std::vector<Eigen::VectorXd>,
         std::vector<Eigen::MatrixXd>>
-        planPath(
-            const Eigen::MatrixXd* goal_pose,
-            const Eigen::MatrixXd* start_pose = nullptr,
-            const Eigen::VectorXd* start_vel = nullptr,
+        planTrajectory(
+            const JointState& start_state,
+            const Eigen::MatrixXd& goal_pose,
             const Eigen::VectorXd* goal_vel = nullptr,
-            const Eigen::VectorXd* start_acc = nullptr,
-            const Eigen::VectorXd* goal_acc = nullptr
+            const Eigen::VectorXd* goal_acc = nullptr,
+            double time_step = 0.1,
+            const double MAX_LIN_VEL = 0.1,
+            const double MAX_ANG_VEL = 4.0,
+            const double MAX_LIN_ACC = 0.05,
+            const double MAX_ANG_ACC = 4.0
+        );
+
+        virtual std::pair<
+        std::vector<Eigen::VectorXd>,
+        std::vector<Eigen::MatrixXd>>
+        planTrajectory(
+            const JointState& start_state,
+            const JointState& goal_state,
+            double time_step = 0.1,
+            const double MAX_LIN_VEL = 0.1,
+            const double MAX_ANG_VEL = 4.0,
+            const double MAX_LIN_ACC = 0.05,
+            const double MAX_ANG_ACC = 4.0
+        );
+
+        std::vector<Eigen::VectorXd>
+        planPath(
+            const JointState& start_state,
+            const JointState& goal_state
         );
 
         void setLeftArm(bool left_arm) { left_arm_ = left_arm; }
@@ -88,15 +110,21 @@ class JointSpacePlanner {
             const std::vector<Eigen::VectorXd>& waypoints, int steps
         );
 
-        Eigen::VectorXd poseToJointConfig(const Eigen::MatrixXd& pose);
+        JointState poseToJointConfig(
+            const Eigen::MatrixXd& pose,
+            const JointState* reference_pose = nullptr
+        );
         Eigen::Matrix4d configToPose(const Eigen::VectorXd& q);
         std::vector<Eigen::MatrixXd> configsToPoses(
             const std::vector<Eigen::VectorXd>& path
         );
 
+        struct RRTData;
+        std::unique_ptr<RRTData> rrt;
+
         pinocchio::Model model_;
         pinocchio::Data data_;
-        HumanoidIK* ik_handle_;
+        std::shared_ptr<HumanoidIK> ik_handle_;
         bool left_arm_;
 
         int nq_;
@@ -110,9 +138,7 @@ class JointSpacePlanner {
         double goal_tolerance_;
         double validity_resolution_;
 
-        std::shared_ptr<ompl::base::StateSpace> ompl_space_;
-        std::shared_ptr<ompl::base::SpaceInformation> ompl_si_;
-        std::shared_ptr<ompl::geometric::RRTstar> planner_;
+        
 
         Eigen::VectorXd start_q_;
         Eigen::VectorXd goal_q_;

@@ -1,4 +1,4 @@
-#include "arm_ik/robot_arm_ik.h"
+#include "core/arm_ik/robot_arm_ik.h"
 
 #include <pinocchio/autodiff/casadi.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
@@ -33,8 +33,6 @@ HumanoidIK::HumanoidIK(
     geom_model_.addAllCollisionPairs();    
     filter_adjacent_collision_pairs();
 
-    // Setup IK problem
-    setup_optimization();
 
     // Initialize data structures
     data_ = pinocchio::Data(model_);
@@ -43,6 +41,9 @@ HumanoidIK::HumanoidIK(
 
     nq_ = model_.nq;
     nv_ = model_.nv;
+
+    // Setup IK problem
+    setup_optimization();
 
 }
 
@@ -236,8 +237,7 @@ std::pair<double, double> HumanoidIK::compute_error(Eigen::Matrix4d A, Eigen::Ma
 JointState HumanoidIK::solve_ik(
     const Eigen::Matrix4d& left_wrist,
     const Eigen::Matrix4d& right_wrist,
-    const Eigen::VectorXd* current_lr_arm_motor_q,
-    const Eigen::VectorXd* current_lr_arm_motor_dq,
+    const JointState* current_state,
     const Eigen::VectorXd* EE_efrc_L,
     const Eigen::VectorXd* EE_efrc_R,
     double* l_pos_err,
@@ -248,8 +248,13 @@ JointState HumanoidIK::solve_ik(
 )
 {
     // Update initial guess
-    if (current_lr_arm_motor_q != nullptr) {
-        init_data_ = *current_lr_arm_motor_q;
+    if (current_state != nullptr) {
+        std::tie(
+            current_joint_pos_,
+            current_joint_vel_,
+            current_joint_eff_
+        ) = jointstate_to_vectors(*current_state, model_);
+        init_data_ = current_joint_pos_;
     }
 
     // Set optimization initial guess and parameters
@@ -308,10 +313,17 @@ JointState HumanoidIK::solve_ik(
     sol_v = Eigen::VectorXd::Zero(model_.nv);
     
     // Compute feedforward torques using RNEA
-    sol_t = pinocchio::rnea(
-        model_, data_, sol_q, sol_v,
-        Eigen::VectorXd::Zero(model_.nv)
-    );
+    if (current_state != nullptr){
+        sol_t = pinocchio::rnea(
+            model_, data_, sol_q, sol_v,
+            Eigen::VectorXd::Zero(model_.nv)
+        );
+    } else {
+        sol_t = pinocchio::rnea(
+            model_, data_, sol_q, sol_v,
+            Eigen::VectorXd::Zero(model_.nv)
+        );
+    }
 
     generalize_ext_wrenches(EE_efrc_L, EE_efrc_R);
 
@@ -327,8 +339,7 @@ JointState HumanoidIK::solve_ik(
 JointState HumanoidIK::solve_ik(
     const Eigen::Matrix4d& wrist,
     const bool left,
-    const Eigen::VectorXd* current_lr_arm_motor_q,
-    const Eigen::VectorXd* current_lr_arm_motor_dq,
+    const JointState* current_state,
     const Eigen::VectorXd* EE_efrc,
     double* pos_err,
     double* rot_err,
@@ -336,8 +347,13 @@ JointState HumanoidIK::solve_ik(
 )
 {
     // Update initial guess
-    if (current_lr_arm_motor_q != nullptr) {
-        init_data_ = *current_lr_arm_motor_q;
+    if (current_state != nullptr) {
+        std::tie(
+            current_joint_pos_,
+            current_joint_vel_,
+            current_joint_eff_
+        ) = jointstate_to_vectors(*current_state, model_);
+        init_data_ = current_joint_pos_;
     }
 
     if (left){
@@ -368,11 +384,11 @@ JointState HumanoidIK::solve_ik(
         // Get debug solution
         if (left){
             sol_q_vec = static_cast<std::vector<double>>(
-                opti_.debug().value(l_var_q_)
+                opti_l_.debug().value(l_var_q_)
             );
         } else {
             sol_q_vec = static_cast<std::vector<double>>(
-                opti_.debug().value(r_var_q_)
+                opti_r_.debug().value(r_var_q_)
             );
         }
         
@@ -401,10 +417,17 @@ JointState HumanoidIK::solve_ik(
     sol_v = Eigen::VectorXd::Zero(model_.nv);
     
     // Compute feedforward torques using RNEA
-    sol_t = pinocchio::rnea(
-        model_, data_, sol_q, sol_v,
-        Eigen::VectorXd::Zero(model_.nv)
-    );
+    if (current_state != nullptr){
+        sol_t = pinocchio::rnea(
+            model_, data_, current_joint_pos_, sol_v,
+            Eigen::VectorXd::Zero(model_.nv)
+        );
+    } else {
+        sol_t = pinocchio::rnea(
+            model_, data_, sol_q, sol_v,
+            Eigen::VectorXd::Zero(model_.nv)
+        );
+    }
 
     if (left) generalize_ext_wrenches(EE_efrc, nullptr);
     else generalize_ext_wrenches(nullptr, EE_efrc);
@@ -435,7 +458,7 @@ void HumanoidIK::generalize_ext_wrenches(
             J_L
         );
 
-        sol_t = J_L.transpose() * (*EE_efrc_L);
+        sol_t += J_L.transpose() * (*EE_efrc_L);
     }
 
     if (EE_efrc_R != nullptr){
@@ -448,7 +471,7 @@ void HumanoidIK::generalize_ext_wrenches(
             J_R
         );
 
-        sol_t = J_R.transpose() * (*EE_efrc_R);
+        sol_t += J_R.transpose() * (*EE_efrc_R);
     }
 
     

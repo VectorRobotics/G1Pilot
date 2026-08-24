@@ -1,5 +1,5 @@
 #include <g1_pilot/g1_pilot.h>
-
+#include <chrono>
 #include <iostream>
 
 
@@ -26,7 +26,7 @@ int main(){
         #include <chrono>
 
         auto start = std::chrono::high_resolution_clock::now();
-        auto result = handle.ik->solve_ik(left_target, right_target);
+        auto result = handle.solve_ik(left_target, right_target);
         auto end = std::chrono::high_resolution_clock::now();
 
         auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();

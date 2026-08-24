@@ -2,7 +2,7 @@
 #define BASE_CONTROLLER_H
 
 #include <pinocchio/multibody/data.hpp>
-#include "../base/interfaces.h"
+#include "core/interfaces.h"
 
 namespace HumanoidPilot {
 
@@ -31,6 +31,15 @@ public:
     double dt = 0.01;
 
 protected:
+
+    void compute_ee_error(
+        Eigen::MatrixXd left_ee_desired,
+        Eigen::VectorXd ee_vel_desired,
+        Eigen::MatrixXd ee_pos,
+        Eigen::VectorXd ee_vel
+    );
+
+    
 
     pinocchio::Model model_;
     pinocchio::Data data_;

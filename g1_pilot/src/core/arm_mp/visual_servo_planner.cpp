@@ -1,4 +1,4 @@
-#include "arm_mp/visual_servo_planner.h"
+#include "core/arm_mp/visual_servo_planner.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -7,7 +7,7 @@ namespace HumanoidPilot{
 
 VisualServoPlanner::VisualServoPlanner(
     pinocchio::Model& model,
-    HumanoidIK* ik_handle,
+    std::unique_ptr<HumanoidIK> ik_handle,
     bool left_arm,
     double approach_offset,
     int final_leg_steps,
@@ -18,7 +18,7 @@ VisualServoPlanner::VisualServoPlanner(
     double goal_tolerance,
     double validity_resolution
 ) :
-    JointSpacePlanner(model, ik_handle, left_arm, step_size, goal_bias,
+    JointSpacePlanner(model, std::move(ik_handle), left_arm, step_size, goal_bias,
                       rewire_factor, solve_time_seconds, goal_tolerance,
                       validity_resolution)
 {

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.30)
 project(g1_pilot)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(CMakeDependentOption)
 
-add_compile_options(-w -Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 # ---- Integration & Path Logic ---- #
 
@@ -21,9 +21,9 @@ else()
     endif()
 endif()
 
-list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
-set(CMAKE_INSTALL_RPATH "/opt/openrobots/lib")
-set(CMAKE_BUILD_RPATH "/opt/openrobots/lib")
+# list(APPEND CMAKE_PREFIX_PATH /opt/openrobots)
+# set(CMAKE_INSTALL_RPATH "/opt/openrobots/lib")
+# set(CMAKE_BUILD_RPATH "/opt/openrobots/lib")
 
 # ---- Options & Dependencies ---- #
 
@@ -40,24 +40,38 @@ cmake_dependent_option(RUN_TESTING "Run test scripts" BUILD_TESTING "NOT ROS2_DE
 
 # ---- Library ---- #
 
-file(GLOB_RECURSE g1_pilot_SOURCES 
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/base/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_ik/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_control/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/arm_mp/*.cpp"
-    
+add_library(g1_pilot
+    src/core/humanoid.cpp
+    src/core/io.cpp
+    src/core/arm_ik/robot_arm_ik.cpp
+    src/core/arm_control/arm_control.cpp
+    src/core/arm_control/ik_traj_tracker.cpp
+    src/core/arm_control/impedance_control.cpp
+    src/core/arm_mp/motion_planner.cpp
+    src/core/arm_mp/joint_space_planner.cpp
+    src/core/arm_mp/visual_servo_planner.cpp
 )
-add_library(g1_pilot ${g1_pilot_SOURCES})
 
 target_compile_definitions(g1_pilot PUBLIC COAL_DISABLE_HPP_FCL_WARNINGS)
 
-target_include_directories(g1_pilot PUBLIC 
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    ${OMPL_INCLUDE_DIRS}
+target_include_directories(g1_pilot 
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${OMPL_INCLUDE_DIRS}
 )
 
-target_link_libraries(g1_pilot PUBLIC Eigen3::Eigen pinocchio::pinocchio casadi::casadi yaml-cpp ${OMPL_LIBRARIES})
+target_link_libraries(g1_pilot 
+    PUBLIC
+        Eigen3::Eigen
+    PRIVATE 
+        pinocchio::pinocchio 
+        casadi::casadi 
+        yaml-cpp::yaml-cpp 
+        ${OMPL_LIBRARIES}
+)
 
 # ---- Testing ---- #
 

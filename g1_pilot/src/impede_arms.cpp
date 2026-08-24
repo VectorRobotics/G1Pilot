@@ -69,17 +69,18 @@ public:
 		goal_ = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
 		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
 
-		goal_set_ = false;
+		// goal_set_ = false;
+		goal_set_ = true;
 
 
-		// arm_handle_->controller->Kp_linear = 50.0;
-        // arm_handle_->controller->Kp_angular = 5.0;
+		// arm_handle_->Kp_linear = 50.0;
+        // arm_handle_->Kp_angular = 5.0;
 
-        // arm_handle_->controller->Kd_linear = 5.0;
-        // arm_handle_->controller->Kd_angular = 2.0;
+        // arm_handle_->Kd_linear = 5.0;
+        // arm_handle_->Kd_angular = 2.0;
 
-		// arm_handle_->controller->Kp_nullspace = 25.0;
-		// arm_handle_->controller->Kd_nullspace = 5.0;
+		// arm_handle_->Kp_nullspace = 25.0;
+		// arm_handle_->Kd_nullspace = 5.0;
 
 	}
 
@@ -90,21 +91,24 @@ public:
 private:
 	void handle_new_state_(sensor_msgs::msg::JointState::UniquePtr msg)
 	{
-		if (!goal_set_) return;
+		// if (!goal_set_) return;
 
 		message_.name = msg->name;
 		message_.position = msg->position;
 		message_.velocity = msg->velocity;
 		message_.effort = msg->effort;
 
-		// left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		// right_target = create_se3(1.0, 0.0, 0.0, 0, 0.6, -0.4, 0.2);
+		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.6, -0.4, 0.2);
+
+		left_target = arm_handle_->get_current_left_ee_pose();
+		right_target = arm_handle_->get_current_right_ee_pose();
 
 		// Default pos:
-		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
-		right_target = goal_;
+		// left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
+		// right_target = goal_;
 
-		result_ = arm_handle_->controller->control_both_arms(
+		result_ = arm_handle_->control_both_arms(
 			message_,
 			left_target,
 			right_target

@@ -141,24 +141,24 @@ private:
         }
 
         if (left_trajectory_.empty() && right_trajectory_.empty()){
-            cmd_ = arm_handle_->controller->control_no_arms(
+            cmd_ = arm_handle_->control_no_arms(
                 current_state_
             );
         }
         else if (!left_trajectory_.empty() && right_trajectory_.empty()){
-            cmd_ = arm_handle_->controller->control_left_arm(
+            cmd_ = arm_handle_->control_left_arm(
                 current_state_, 
                 left_trajectory_.back()
             );
         } 
         else if (left_trajectory_.empty() && !right_trajectory_.empty()){
-            cmd_ = arm_handle_->controller->control_right_arm(
+            cmd_ = arm_handle_->control_right_arm(
                 current_state_, 
                 right_trajectory_.back()
             );
         } 
         else {
-            cmd_ = arm_handle_->controller->control_both_arms(
+            cmd_ = arm_handle_->control_both_arms(
                 current_state_, 
                 left_trajectory_.back(),
                 right_trajectory_.back()
@@ -166,7 +166,7 @@ private:
         }
 
         if (left_trajectory_.size()>1){
-            left_error_ = arm_handle_->controller->get_current_left_ee_error();
+            left_error_ = arm_handle_->get_current_left_ee_error();
             if (left_error_<0.02){ // 2 cm 
                 left_trajectory_.pop_back();
             }
@@ -174,17 +174,17 @@ private:
         }
 
         if (right_trajectory_.size()>1){
-            right_error_ = arm_handle_->controller->get_current_right_ee_error();
+            right_error_ = arm_handle_->get_current_right_ee_error();
             if (right_error_<0.02){ // 2 cm 
                 right_trajectory_.pop_back();
             }
             RCLCPP_INFO(this->get_logger(), "Right error: %f", right_error_);
         }
 
-        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
-        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
-        // left_ee_vel_ = arm_handle_->controller->get_current_left_ee_vel();
-        // right_ee_vel_ = arm_handle_->controller->get_current_right_ee_vel();
+        left_ee_pose_ = arm_handle_->get_current_left_ee_pose();
+        right_ee_pose_ = arm_handle_->get_current_right_ee_pose();
+        // left_ee_vel_ = arm_handle_->get_current_left_ee_vel();
+        // right_ee_vel_ = arm_handle_->get_current_right_ee_vel();
 
         auto cmd_msg_ = sensor_msgs::msg::JointState();
         cmd_msg_.header.stamp = this->get_clock()->now();
@@ -260,7 +260,7 @@ private:
         if (left){
 
             std::vector<Eigen::VectorXd> stash;
-            std::tie(stash, left_trajectory_) = arm_handle_->motion_planner->planTrajectory(
+            std::tie(stash, left_trajectory_) = arm_handle_->planTrajectory(
                 &goal_,
                 &left_ee_pose_,
                 &left_ee_vel_
@@ -271,7 +271,7 @@ private:
         } else {
 
             std::vector<Eigen::VectorXd> stash;
-            std::tie(stash, right_trajectory_) = arm_handle_->motion_planner->planTrajectory(
+            std::tie(stash, right_trajectory_) = arm_handle_->planTrajectory(
                 &goal_,
                 &right_ee_pose_,
                 &right_ee_vel_

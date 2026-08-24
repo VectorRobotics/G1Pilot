@@ -1,8 +1,8 @@
 #ifndef IK_TRAJ_H
 #define IK_TRAJ_H
 
-#include "base_controller.h"
-#include "../arm_ik/arm_ik.h"
+#include "core/arm_control/base_controller.h"
+#include "core/arm_ik/arm_ik.h"
 
 namespace HumanoidPilot {
 
@@ -11,7 +11,7 @@ class IKTrajTracker : public ArmController {
 public:
     IKTrajTracker(
         pinocchio::Model& model,
-        HumanoidIK* ik_handle
+        std::shared_ptr<HumanoidIK> ik_handle
     ) : ArmController(model), ik_handle_(ik_handle){ };
 
     JointState control_both_arms(
@@ -52,7 +52,7 @@ private:
     pinocchio::SE3 error_pose_in_ee_frame_;
     pinocchio::Motion error_twist_in_ee_frame_;
    
-    HumanoidIK* ik_handle_;
+    std::shared_ptr<HumanoidIK> ik_handle_;
 
 }; // IKTrajTracker class
 } // ArmControl namespace

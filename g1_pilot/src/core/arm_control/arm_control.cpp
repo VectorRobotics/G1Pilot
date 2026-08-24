@@ -1,4 +1,4 @@
-#include "arm_control/base_controller.h"
+#include "core/arm_control/base_controller.h"
 
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
@@ -71,6 +71,16 @@ JointState ArmController::control_no_arms(
     );
 
     return result;
+}
+
+void ArmController::compute_ee_error(
+    Eigen::MatrixXd ee_pos_desired,
+    Eigen::VectorXd ee_vel_desired,
+    Eigen::MatrixXd ee_pos,
+    Eigen::VectorXd ee_vel
+){
+    
+
 }
 
 } // ArmControl namespace

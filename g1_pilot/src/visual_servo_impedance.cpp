@@ -60,18 +60,18 @@ public:
 		t = 0;
 
 		// with motion planner
-        // arm_handle_->controller->Kp_linear = 120;
-        // arm_handle_->controller->Kp_angular = 0.8;
+        // arm_handle_->Kp_linear = 120;
+        // arm_handle_->Kp_angular = 0.8;
 
-        // arm_handle_->controller->Kd_linear = 2;
-        // arm_handle_->controller->Kd_angular = 0.0;
+        // arm_handle_->Kd_linear = 2;
+        // arm_handle_->Kd_angular = 0.0;
 
 		// without motion planner
-		arm_handle_->controller->Kp_linear = 30;
-        arm_handle_->controller->Kp_angular = 30;
+		arm_handle_->Kp_linear = 30;
+        arm_handle_->Kp_angular = 30;
 
-        arm_handle_->controller->Kd_linear = 2;
-        arm_handle_->controller->Kd_angular = 2;
+        arm_handle_->Kd_linear = 2;
+        arm_handle_->Kd_angular = 2;
 
 	}
 
@@ -94,7 +94,7 @@ private:
 		left_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, 0.2, 0.1);
 		right_target = create_se3(1.0, 0.0, 0.0, 0, 0.2, -0.2, 0.1);
 
-		result_ = arm_handle_->controller->control_both_arms(
+		result_ = arm_handle_->control_both_arms(
 			message_,
 			left_target,
 			right_target

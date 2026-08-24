@@ -1,4 +1,4 @@
-#include "arm_mp/poly_traj_gen.h"
+#include "core/arm_mp/poly_traj_gen.h"
 #include <iostream>
 #include <stdexcept>
 #include <unsupported/Eigen/MatrixFunctions>

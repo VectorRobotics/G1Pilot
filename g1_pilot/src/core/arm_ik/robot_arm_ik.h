@@ -2,7 +2,7 @@
 #define ROBOT_ARM_IK_H
 
 #include "utils.h"
-#include "../base/interfaces.h"
+#include "core/interfaces.h"
 
 #include <pinocchio/multibody/data.hpp>
 #include <pinocchio/multibody/geometry.hpp>
@@ -24,8 +24,7 @@ public:
     virtual JointState solve_ik(
         const Eigen::Matrix4d& left_wrist,
         const Eigen::Matrix4d& right_wrist,
-        const Eigen::VectorXd* current_lr_arm_motor_q = nullptr,
-        const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr,
+        const JointState* current_state = nullptr,
         const Eigen::VectorXd* EE_efrc_L = nullptr,
         const Eigen::VectorXd* EE_efrc_R = nullptr,
         double* l_pos_err = nullptr,
@@ -38,8 +37,7 @@ public:
     virtual JointState solve_ik(
         const Eigen::Matrix4d& wrist,
         const bool left = false,
-        const Eigen::VectorXd* current_lr_arm_motor_q = nullptr,
-        const Eigen::VectorXd* current_lr_arm_motor_dq = nullptr,
+        const JointState* current_state = nullptr,
         const Eigen::VectorXd* EE_efrc = nullptr,
         double* pos_err = nullptr,
         double* rot_err = nullptr,
@@ -101,6 +99,10 @@ protected:
 
     pinocchio::Data::Matrix6x J_L;
     pinocchio::Data::Matrix6x J_R;
+
+    Eigen::VectorXd current_joint_pos_;
+    Eigen::VectorXd current_joint_vel_;
+    Eigen::VectorXd current_joint_eff_;
 
 };
 

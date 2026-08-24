@@ -1,5 +1,4 @@
-#include "arm_mp/joint_space_planner.h"
-#include "base/humanoid.h"
+#include "core/arm_mp/joint_space_planner.h"
 
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/algorithm/frames.hpp>
@@ -23,9 +22,26 @@ namespace og = ompl::geometric;
 
 namespace HumanoidPilot {
 
+struct JointSpacePlanner::RRTData{
+    ob::ScopedState<ob::RealVectorStateSpace> start;
+    ob::ScopedState<ob::RealVectorStateSpace> goal;
+
+    std::shared_ptr<ompl::base::StateSpace> ompl_space_;
+    std::shared_ptr<ompl::base::SpaceInformation> ompl_si_;
+    std::shared_ptr<ompl::geometric::RRTstar> planner_;
+
+    ob::RealVectorBounds bounds;
+
+    RRTData(){
+
+        start = ob::ScopedState<ob::RealVectorStateSpace>(ompl_space_);
+        goal = ob::ScopedState<ob::RealVectorStateSpace>(ompl_space_);
+    }
+}
+
 JointSpacePlanner::JointSpacePlanner(
     pinocchio::Model& model,
-    HumanoidIK* ik_handle,
+    std::shared_ptr<HumanoidIK> ik_handle,
     bool left_arm,
     double step_size,
     double goal_bias,
@@ -48,6 +64,10 @@ JointSpacePlanner::JointSpacePlanner(
     goal_tolerance_(goal_tolerance),
     validity_resolution_(validity_resolution)
 {
+    if (ik_handle_ == nullptr) {
+        throw std::runtime_error("JointSpacePlanner: ik_handle is null");
+    }
+
     auto rv_space = std::make_shared<ob::RealVectorStateSpace>(nq_);
     ob::RealVectorBounds bounds(nq_);
     for (int i = 0; i < nq_; ++i) {
@@ -77,28 +97,26 @@ JointSpacePlanner::JointSpacePlanner(
 
 JointSpacePlanner::~JointSpacePlanner() {}
 
-Eigen::VectorXd JointSpacePlanner::poseToJointConfig(const Eigen::MatrixXd& pose) {
+JointState JointSpacePlanner::poseToJointConfig(
+    const Eigen::MatrixXd& pose,
+    const JointState* reference_pose
+) {
     if (pose.rows() != 4 || pose.cols() != 4) {
         throw std::invalid_argument("JointSpacePlanner: pose must be 4x4 SE(3)");
-    }
-    if (ik_handle_ == nullptr) {
-        throw std::runtime_error("JointSpacePlanner: ik_handle is null");
     }
 
     double pos_err = 0.0;
     double rot_err = 0.0;
     JointState js = ik_handle_->solve_ik(
         pose, left_arm_,
-        nullptr, nullptr, nullptr,
-        &pos_err, &rot_err);
-
-    auto [q, v, e] = jointstate_to_vectors(js, model_);
-    (void)v; (void)e;
+        reference_pose, nullptr,
+        &pos_err, &rot_err
+    );
 
     std::cout << "[poseToJointConfig] IK pos err (m): " << pos_err
               << ", rot err (rad): " << rot_err << std::endl;
 
-    return q;
+    return js;
 }
 
 std::vector<Eigen::VectorXd> JointSpacePlanner::runRRTStar(
@@ -208,77 +226,110 @@ std::vector<Eigen::VectorXd> JointSpacePlanner::resamplePath(
     return out;
 }
 
-std::pair<
-std::vector<Eigen::VectorXd>,
-std::vector<Eigen::MatrixXd>>
+std::vector<Eigen::VectorXd>
 JointSpacePlanner::planPath(
-    const Eigen::MatrixXd* goal_pose,
-    const Eigen::MatrixXd* start_pose,
-    const Eigen::VectorXd* /*start_vel*/,
-    const Eigen::VectorXd* /*goal_vel*/,
-    const Eigen::VectorXd* /*start_acc*/,
-    const Eigen::VectorXd* /*goal_acc*/
+    const JointState& start_state,
+    const JointState& goal_state
 ) {
-    if (goal_pose == nullptr) {
-        throw std::invalid_argument("JointSpacePlanner::planPath: goal_pose is null");
+    if (goal_state.position.size() == 0) {
+        throw std::invalid_argument("JointSpacePlanner::planPath: goal pose is null");
     }
 
-    if (start_pose == nullptr) {
-        throw std::invalid_argument("JointSpacePlanner::planPath: start_pose is null");
+    if (start_state.position.size() == 0) {
+        throw std::invalid_argument("JointSpacePlanner::planPath: start pose is null");
     }
 
-    std::cout << "IK for start pose:" << std::endl;
-    start_q_ = poseToJointConfig(*start_pose);
-    if (start_q_.size() == 0)
-        return {};
+    waypoints_ = runRRTStar(start_state->position, goal_state->position);
 
-    std::cout << "IK for goal pose:" << std::endl;
-    goal_q_ = poseToJointConfig(*goal_pose);
-    if (goal_q_.size() == 0)
-        return {};
-
-    waypoints_ = runRRTStar(start_q_, goal_q_);
-
-    return {waypoints_, configsToPoses(waypoints_)};
+    return waypoints_;
 }
 
 std::pair<
 std::vector<Eigen::VectorXd>,
 std::vector<Eigen::MatrixXd>>
 JointSpacePlanner::planTrajectory(
-    const Eigen::MatrixXd* goal_pose,
-    const Eigen::MatrixXd* start_pose,
+    const Eigen::MatrixXd& goal_pose,
+    const Eigen::MatrixXd& start_pose,
     const Eigen::VectorXd* start_vel,
     const Eigen::VectorXd* goal_vel,
     const Eigen::VectorXd* start_acc,
     const Eigen::VectorXd* goal_acc,
     double time_step,
     const double MAX_LIN_VEL,
-    const double /*MAX_ANG_VEL*/,
-    const double /*MAX_LIN_ACC*/,
-    const double /*MAX_ANG_ACC*/
+    const double MAX_ANG_VEL,
+    const double MAX_LIN_ACC,
+    const double MAX_ANG_ACC
 ) {
-    if (goal_pose == nullptr) {
-        throw std::invalid_argument("JointSpacePlanner::planTrajectory: goal_pose is null");
-    }
 
-    Eigen::Vector3d p_start = (start_pose != nullptr)
-        ? Eigen::Vector3d(start_pose->block<3,1>(0,3))
-        : Eigen::Vector3d::Zero();
-    double task_dist = (goal_pose->block<3,1>(0,3) - p_start).norm();
+    std::cout << "IK for start pose:" << std::endl;
+    auto start_state = poseToJointConfig(start_pose);
+    if (start_state.position.size() == 0)
+        return {};
+
+    return planTrajectory(
+        start_state,
+        goal_pose,
+        time_step,
+        MAX_LIN_VEL, MAX_ANG_VEL,
+        MAX_LIN_ACC, MAX_ANG_ACC
+    );    
+}
+
+virtual std::pair<
+std::vector<Eigen::VectorXd>,
+std::vector<Eigen::MatrixXd>>
+JointSpacePlanner::planTrajectory(
+    const JointState& start_state,
+    const Eigen::MatrixXd& goal_pose,
+    const Eigen::VectorXd* goal_vel,
+    const Eigen::VectorXd* goal_acc,
+    double time_step,
+    const double MAX_LIN_VEL,
+    const double MAX_ANG_VEL,
+    const double MAX_LIN_ACC,
+    const double MAX_ANG_ACC
+){
+
+    std::cout << "IK for goal pose:" << std::endl;
+    auto goal_state = poseToJointConfig(goal_pose, &start_state);
+    if (goal_state.position.size() == 0)
+        return {};
+
+    return planTrajectory(
+        start_state,
+        goal_state,
+        time_step,
+        MAX_LIN_VEL, MAX_ANG_VEL,
+        MAX_LIN_ACC, MAX_ANG_ACC
+    );
+}
+
+virtual std::pair<
+std::vector<Eigen::VectorXd>,
+std::vector<Eigen::MatrixXd>>
+JointSpacePlanner::planTrajectory(
+    const JointState& start_state,
+    const JointState& goal_state,
+    double time_step,
+    const double MAX_LIN_VEL,
+    const double MAX_ANG_VEL,
+    const double MAX_LIN_ACC,
+    const double MAX_ANG_ACC
+){
+
+    (void) planPath(start_state, goal_state);
+
+    double task_dist = (start_state.position - goal_state.position).norm();
     double vel_cap = std::max(MAX_LIN_VEL, 1e-6);
     double duration = task_dist / vel_cap;
     int steps = std::max(2,
         static_cast<int>(std::ceil(duration / std::max(time_step, 1e-6))));
 
-    (void) planPath(goal_pose, start_pose,
-                           start_vel, goal_vel, start_acc, goal_acc);
-
     std::vector<Eigen::VectorXd> path = resamplePath(waypoints_, steps);
     return {path, configsToPoses(path)};
 
-    // return planPath(goal_pose, start_pose,
-    //                        start_vel, goal_vel, start_acc, goal_acc);
 }
+
+
 
 } // namespace HumanoidPilot

@@ -246,10 +246,10 @@ private:
             return;
         }
 
-        arm_handle_->controller->update(current_state_);
+        arm_handle_->update(current_state_);
 
-        left_ee_pose_ = arm_handle_->controller->get_current_left_ee_pose();
-        right_ee_pose_ = arm_handle_->controller->get_current_right_ee_pose();
+        left_ee_pose_ = arm_handle_->get_current_left_ee_pose();
+        right_ee_pose_ = arm_handle_->get_current_right_ee_pose();
 
         left_ee_pose_pub_->publish(convertToPoseStamped(left_ee_pose_, "pelvis", this->get_clock()->now()));
         right_ee_pose_pub_->publish(convertToPoseStamped(right_ee_pose_, "pelvis", this->get_clock()->now()));

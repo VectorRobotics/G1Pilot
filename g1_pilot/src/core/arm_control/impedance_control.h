@@ -1,7 +1,7 @@
 #ifndef IMPD_CTRL_H
 #define IMPD_CTRL_H
 
-#include "base_controller.h"
+#include "core/arm_control/base_controller.h"
 
 namespace HumanoidPilot {
 
@@ -40,14 +40,14 @@ public:
     void set_nullspace_target(const Eigen::VectorXd& q_d);
     void reset();
 
-    double Kp_linear  = 50;
-    double Kp_angular = 5;
-    double Kd_linear  = 5;
-    double Kd_angular = 2;
+    double Kp_linear  = 15.0;
+    double Kp_angular = 1.0;
+    double Kd_linear  = 3.0;
+    double Kd_angular = 0.5;
 
     // Null-space joint impedance (off by default; pure null-space damping).
-    double Kp_nullspace = 25.0;
-    double Kd_nullspace = 5.0;
+    double Kp_nullspace = 0.0;
+    double Kd_nullspace = 1.0;
 
     // Torque rate limit. Per-tick cap = max_torque_rate / update_frequency.
     // Bump update_frequency to match the actual control-loop rate.

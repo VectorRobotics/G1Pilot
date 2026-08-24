@@ -57,7 +57,7 @@ public:
 
         arm_ = std::make_unique<Humanoid>(&config);
         left_arm_ = this->get_parameter("left_arm").as_bool();
-        arm_->motion_planner->setLeftArm(left_arm_);
+        // arm_->setLeftArm(left_arm_);
 
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -135,10 +135,10 @@ private:
                     "No joint feedback received yet — cannot plan");
                 return;
             }
-            arm_->controller->update(current_state_);
+            arm_->update(current_state_);
             start_matrix = left_arm_
-                ? arm_->controller->get_current_left_ee_pose()
-                : arm_->controller->get_current_right_ee_pose();
+                ? arm_->get_current_left_ee_pose()
+                : arm_->get_current_right_ee_pose();
         }
 
         Eigen::MatrixXd goal_matrix = transform_to_pelvis_(*msg);
@@ -147,7 +147,7 @@ private:
             return;
         }
 
-        auto [joint_traj, cart_traj] = arm_->motion_planner->planTrajectory(
+        auto [joint_traj, cart_traj] = arm_->planTrajectory(
             &goal_matrix, &start_matrix);
 
         if (joint_traj.empty()) {
@@ -156,7 +156,7 @@ private:
             return;
         }
 
-        auto first = arm_->ik->solve_ik(cart_traj.front(), left_arm_);
+        auto first = arm_->solve_ik(cart_traj.front(), left_arm_);
 
         {
             std::lock_guard<std::mutex> lock(traj_mutex_);
@@ -193,7 +193,7 @@ private:
             return;
         }
 
-        arm_->controller->update(current_state_);
+        arm_->update(current_state_);
 
         if (trajectory_points_.empty() || next_waypoint_idx_ >= trajectory_points_.size()) {
             return;

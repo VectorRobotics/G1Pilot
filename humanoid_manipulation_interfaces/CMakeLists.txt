@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.30)
 project(humanoid_manipulation_interfaces)
 
 find_package(ament_cmake REQUIRED)
@@ -13,6 +13,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/VisualServoingArm.action"
   "srv/PlanTrajectory.srv"
   "srv/PlanJointTrajectory.srv"
+  "msg/JointState.msg"
+  "msg/JointCmd.msg"
   DEPENDENCIES geometry_msgs nav_msgs trajectory_msgs
 )
 
